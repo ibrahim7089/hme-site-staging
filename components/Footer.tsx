@@ -29,7 +29,7 @@ export default function Footer() {
           <div>
             <h5 className="mb-4 font-display text-[13px] font-bold uppercase tracking-widest text-white">Services</h5>
             <ul className="flex flex-col gap-2.5 text-[13.5px]">
-              <li><Link className="hover:text-white" href="/currency-exchange">Foreign Currency Exchange</Link></li>
+              <li><Link className="hover:text-white" href="/currency-exchange">Currency Exchange</Link></li>
               <li><Link className="hover:text-white" href="/money-transfer">International Money Transfer</Link></li>
               <li><Link className="hover:text-white" href="/currency-booking">Currency Booking</Link></li>
               <li><Link className="hover:text-white" href="/corporate">Corporate Services</Link></li>

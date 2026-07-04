@@ -3,7 +3,7 @@ import { ArrowLeftRight, Globe, CalendarClock, Building2, Star, Handshake, MapPi
 import SectionHeading from "./SectionHeading";
 
 const services = [
-  { icon: ArrowLeftRight, title: "Foreign Currency Exchange",
+  { icon: ArrowLeftRight, title: "Currency Exchange",
     copy: "Buy and sell foreign currencies at competitive rates through HME's branch network.",
     href: "/currency-exchange" },
   { icon: Globe, title: "International Money Transfer",

@@ -26,7 +26,7 @@ export const nav = [
   {
     label: "Services", href: "/currency-exchange",
     children: [
-      { label: "Foreign Currency Exchange", href: "/currency-exchange" },
+      { label: "Currency Exchange", href: "/currency-exchange" },
       { label: "International Money Transfer", href: "/money-transfer" },
       { label: "Currency Booking", href: "/currency-booking" },
       { label: "Be Our Agent", href: "/be-our-agent" },
