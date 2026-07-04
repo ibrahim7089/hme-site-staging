@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { scroll-behavior: smooth; }
+  body { @apply font-body text-ink antialiased; }
+  h1, h2, h3, h4 { @apply font-display tracking-tight; }
+}
+
+@layer components {
+  .wrap { @apply mx-auto max-w-[1180px] px-5; }
+  .eyebrow {
+    @apply inline-flex items-center gap-2 font-display text-xs font-bold uppercase tracking-[0.14em] text-brand-red;
+  }
+  .eyebrow::before { content: ""; @apply h-0.5 w-6 rounded bg-brand-red; }
+  .sec-title { @apply mt-2.5 mb-3 text-[clamp(26px,4vw,38px)] font-extrabold text-navy; }
+  .sec-lead { @apply max-w-2xl text-slate2; }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3.5 font-display text-[15px] font-bold transition
+    hover:-translate-y-px focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-brand-blue focus-visible:outline-offset-2;
+  }
+  .btn-primary { @apply btn bg-brand-blue text-white shadow-cta hover:bg-[#0E51B4]; }
+  .btn-red { @apply btn bg-brand-red text-white shadow-ctaRed hover:bg-[#C21128]; }
+  .btn-outline { @apply btn border-[1.5px] border-line bg-white text-navy hover:border-brand-blue hover:text-brand-blue; }
+  .btn-ghost { @apply btn border-[1.5px] border-white/35 text-white hover:border-white hover:bg-white/10; }
+}
