@@ -32,7 +32,7 @@ export default function CurrencyExchangePage() {
           </div>
         </div>
       </section>
-      <BranchLocatorPreview />
+      <BranchLocatorPreview limit={4} />
     </>
   );
 }
