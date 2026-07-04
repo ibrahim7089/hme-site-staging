@@ -9,9 +9,17 @@ export const metadata: Metadata = {
 };
 
 const fields = [
-  ["Name", "text"], ["Company name", "text"], ["Location (city / state)", "text"],
-  ["Email", "email"], ["Phone", "tel"], ["Business type", "text"],
+  ["Full Name", "text", true], ["Company Name (SDN BHD)", "text", true],
+  ["Company Registration No. (SSM)", "text", false],
+  ["Business Type / Nature of Business", "text", false],
+  ["Phone", "tel", true], ["Email Address", "email", true],
 ] as const;
+
+const states = [
+  "Johor", "Kedah", "Kelantan", "Kuala Lumpur", "Labuan", "Malacca",
+  "Negeri Sembilan", "Pahang", "Penang", "Perak", "Perlis", "Putrajaya",
+  "Sabah", "Sarawak", "Selangor", "Terengganu",
+];
 
 export default function AgentPage() {
   return (
@@ -34,11 +42,28 @@ export default function AgentPage() {
           <div className="rounded-card border border-line bg-white p-7 shadow-soft">
             <h3 className="text-xl font-bold text-navy">Apply as Agent</h3>
             <form className="mt-6 grid gap-4">
-              {fields.map(([label, type]) => (
-                <input key={label} type={type} placeholder={label}
-                  className="rounded-xl border border-line px-4 py-3 text-sm" />
+              {fields.map(([label, type, required]) => (
+                <label key={label} className="grid gap-1.5 text-sm font-medium text-navy">
+                  {label}{required && <span className="text-brand-red"> *</span>}
+                  <input type={type} required={required}
+                    className="rounded-xl border border-line px-4 py-3 text-sm font-normal" />
+                </label>
               ))}
-              <textarea placeholder="Message" rows={4} className="rounded-xl border border-line px-4 py-3 text-sm" />
+              <label className="grid gap-1.5 text-sm font-medium text-navy">
+                Proposed State
+                <select defaultValue="" className="rounded-xl border border-line px-4 py-3 text-sm font-normal text-slate2">
+                  <option value="" disabled>Select proposed state</option>
+                  {states.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </label>
+              <label className="grid gap-1.5 text-sm font-medium text-navy">
+                Proposed Location / Address
+                <input type="text" className="rounded-xl border border-line px-4 py-3 text-sm font-normal" />
+              </label>
+              <label className="grid gap-1.5 text-sm font-medium text-navy">
+                Message<span className="text-brand-red"> *</span>
+                <textarea required rows={4} className="rounded-xl border border-line px-4 py-3 text-sm font-normal" />
+              </label>
               <button type="button" className="btn-red">Apply as Agent</button>
             </form>
           </div>
