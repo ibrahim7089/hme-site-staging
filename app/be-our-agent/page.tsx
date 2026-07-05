@@ -85,7 +85,7 @@ export default function AgentPage() {
         eyebrow="Be Our Agent"
         title="Partner with Malaysia's growing MSB network"
         lead="Expand your business and earn additional revenue by offering licensed currency exchange and money transfer services at your location."
-        image="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=1920&q=80"
+        image="https://images.unsplash.com/photo-1573496358961-3c82861ab8f5?auto=format&fit=crop&w=1920&q=80"
       />
 
       {/* Stats band */}
