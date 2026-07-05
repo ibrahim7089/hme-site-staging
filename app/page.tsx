@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import BannerCarousel from "@/components/BannerCarousel";
+import VideoHero from "@/components/VideoHero";
 import HeroSection from "@/components/HeroSection";
 import ServiceCards from "@/components/ServiceCards";
 import ReachUsBand from "@/components/ReachUsBand";
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 export default function HomePage() {
   return (
     <>
-      <BannerCarousel />
+      <VideoHero />
       <HeroSection />
       <ServiceCards />
       <ReachUsBand />
