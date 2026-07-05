@@ -8,7 +8,7 @@ import { ChevronDown } from "lucide-react";
  */
 export default function VideoHero() {
   return (
-    <section className="-mt-[72px] relative h-screen min-h-[580px] overflow-hidden bg-navy-deep">
+    <section className="relative h-screen min-h-[580px] overflow-hidden bg-navy-deep">
       <video
         className="absolute inset-0 h-full w-full object-cover"
         autoPlay muted loop playsInline preload="metadata"

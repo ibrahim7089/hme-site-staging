@@ -22,7 +22,7 @@ export default function Header() {
     : "text-white/90 hover:bg-white/10 hover:text-white";
 
   return (
-    <header className={`sticky top-0 z-50 transition-all duration-300 ${
+    <header className={`fixed left-0 right-0 top-0 z-50 w-full transition-all duration-300 ${
       scrolled
         ? "border-b border-line bg-white/95 shadow-sm backdrop-blur-md"
         : "border-b border-white/10 bg-transparent"
