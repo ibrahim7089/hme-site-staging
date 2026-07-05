@@ -14,7 +14,8 @@ export default function RatesPage() {
   return (
     <>
       <PageHero eyebrow="Exchange Rates" title="Today's full rate board"
-        lead={`All published buy and sell rates against MYR, last updated ${lastUpdated}. Refreshed throughout the business day.`} />
+        lead={`All published buy and sell rates against MYR, last updated ${lastUpdated}. Refreshed throughout the business day.`}
+        image="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=1920&q=80" />
       <section className="py-20">
         <div className="wrap">
           <div className="overflow-hidden rounded-card border border-line shadow-soft">

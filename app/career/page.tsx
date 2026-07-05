@@ -18,7 +18,8 @@ export default function CareerPage() {
   return (
     <>
       <PageHero eyebrow="Career" title="Grow your career in regulated financial services"
-        lead="Join a team where compliance, technology and customer service come together — with real responsibility from day one." />
+        lead="Join a team where compliance, technology and customer service come together — with real responsibility from day one."
+        image="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1920&q=80" />
       <section className="py-20">
         <div className="wrap">
           <div className="grid gap-4 md:grid-cols-3">
