@@ -38,7 +38,7 @@ function Tile({ icon: Icon, title, copy, href }: { icon: typeof ArrowLeftRight; 
 
 export default function ServiceCards() {
   return (
-    <section className="py-20">
+    <section className="py-20" id="services">
       <div className="wrap text-center">
         <SectionHeading center eyebrow="Our Services" title="What we offer" />
         <div className="mt-12 grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
