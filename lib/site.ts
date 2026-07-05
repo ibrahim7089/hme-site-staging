@@ -29,8 +29,7 @@ export const nav = [
       { label: "Currency Exchange", href: "/currency-exchange" },
       { label: "International Money Transfer", href: "/money-transfer" },
       { label: "Currency Booking", href: "/currency-booking" },
-      { label: "Exchange Rates", href: "/rates" },
-      { label: "Money Transfer Rates", href: "/money-transfer-rates" },
+      { label: "Rates", href: "/rates" },
     ],
   },
   {
