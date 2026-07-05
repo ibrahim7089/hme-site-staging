@@ -1,22 +1,16 @@
+/* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 
-/**
- * Full-screen entry video, Merchantrade-style.
- * Drop the brand video at public/videos/hero.mp4 (H.264 MP4, ~10-20s loop,
- * compressed for web). Until then the poster image is shown.
- */
 export default function VideoHero() {
   return (
     <section className="relative h-screen min-h-[580px] overflow-hidden bg-navy-deep">
-      <video
-        className="absolute inset-0 h-full w-full object-cover"
-        autoPlay muted loop playsInline preload="metadata"
-        poster="/images/banner-1.jpg"
+      <img
+        src="/images/banner-1.jpg"
+        alt=""
         aria-hidden="true"
-      >
-        <source src="/videos/hero.mp4" type="video/mp4" />
-      </video>
+        className="absolute inset-0 h-full w-full object-cover object-center"
+      />
       <div className="absolute inset-0 bg-gradient-to-t from-navy-deep/90 via-navy-deep/30 to-navy-deep/40" />
 
       <div className="wrap relative flex h-full flex-col justify-center pt-[72px] text-white">
