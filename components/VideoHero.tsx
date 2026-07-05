@@ -8,7 +8,7 @@ import { ChevronDown } from "lucide-react";
  */
 export default function VideoHero() {
   return (
-    <section className="relative h-[82vh] min-h-[520px] overflow-hidden bg-navy-deep">
+    <section className="-mt-[72px] relative h-screen min-h-[580px] overflow-hidden bg-navy-deep">
       <video
         className="absolute inset-0 h-full w-full object-cover"
         autoPlay muted loop playsInline preload="metadata"
@@ -19,7 +19,7 @@ export default function VideoHero() {
       </video>
       <div className="absolute inset-0 bg-gradient-to-t from-navy-deep/90 via-navy-deep/30 to-navy-deep/40" />
 
-      <div className="wrap relative flex h-full flex-col justify-center text-white">
+      <div className="wrap relative flex h-full flex-col justify-center pt-[72px] text-white">
         <p className="mb-3 font-display text-lg font-light sm:text-2xl">This is HME.</p>
         <h1 className="max-w-3xl text-[clamp(32px,5.5vw,60px)] font-extrabold leading-[1.08]">
           Trusted in every exchange.
