@@ -84,13 +84,15 @@ export default function AgentPage() {
       <section className="relative overflow-hidden bg-navy-deep pt-[72px] min-h-[480px] md:min-h-[520px] flex items-center">
         {/* Radial glow */}
         <div className="absolute right-0 top-0 h-full w-1/2 bg-[radial-gradient(ellipse_at_center,_rgba(74,144,217,0.15)_0%,_transparent_70%)]" />
-        {/* HME logo — centred in left empty space */}
-        <img
-          src="/logo.png"
-          alt=""
-          aria-hidden="true"
-          className="absolute left-[13%] top-1/2 -translate-x-1/2 -translate-y-1/2 w-[200px] rounded-2xl object-contain opacity-[0.08] hidden xl:block"
-        />
+        {/* HME logo — padded card centred in left space */}
+        <div className="absolute left-[13%] top-1/2 -translate-x-1/2 -translate-y-1/2 hidden xl:block rounded-2xl bg-white/10 p-5">
+          <img
+            src="/logo.png"
+            alt=""
+            aria-hidden="true"
+            className="w-[200px] object-contain"
+          />
+        </div>
         {/* Handshake image */}
         <img
           src="/images/agent-handshake.png"
