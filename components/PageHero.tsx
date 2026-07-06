@@ -9,7 +9,7 @@ export default function PageHero({
 }) {
   if (image) {
     return (
-      <section className="relative h-[420px] overflow-hidden text-white md:h-[500px]">
+      <section className="relative h-screen min-h-[500px] overflow-hidden text-white">
         <img
           src={image}
           alt=""
