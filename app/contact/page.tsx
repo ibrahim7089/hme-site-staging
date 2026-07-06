@@ -13,7 +13,8 @@ export default function ContactPage() {
   return (
     <>
       <PageHero eyebrow="Contact Us" title="We're here to help"
-        lead="Questions about rates, a transaction, booking or partnership — reach the HME team whichever way suits you." />
+        lead="Questions about rates, a transaction, booking or partnership — reach the HME team whichever way suits you."
+        image="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=1920&q=80" />
       <section className="py-20">
         <div className="wrap grid gap-10 md:grid-cols-2">
           <div className="space-y-4">

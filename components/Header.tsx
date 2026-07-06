@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 import { nav } from "@/lib/site";
 import Logo from "./Logo";
@@ -8,12 +8,28 @@ import Logo from "./Logo";
 export default function Header() {
   const [open, setOpen] = useState(false);
   const [openMobileMenu, setOpenMobileMenu] = useState<string | null>(null);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const linkCls = scrolled
+    ? "text-slate2 hover:bg-brand-bluesoft hover:text-navy"
+    : "text-white/90 hover:bg-white/10 hover:text-white";
 
   return (
-    <header className="sticky top-0 z-50 border-b border-line bg-white/90 backdrop-blur-md">
+    <header className={`fixed left-0 right-0 top-0 z-50 w-full transition-all duration-300 ${
+      scrolled
+        ? "border-b border-line bg-white/95 shadow-sm backdrop-blur-md"
+        : "border-b border-white/10 bg-transparent"
+    }`}>
       <div className="wrap flex h-[72px] items-center gap-6">
         <Link href="/" className="flex flex-none items-center">
-          <Logo size="sm" />
+          <Logo size="sm" dark={!scrolled} />
         </Link>
 
         <Link href="/money-transfer" className="btn-red hidden !px-4 !py-2.5 !text-[13.5px] lg:inline-flex">
@@ -24,7 +40,7 @@ export default function Header() {
           {nav.map((i) =>
             "children" in i && i.children ? (
               <div key={i.label} className="group relative">
-                <button className="flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium text-slate2 transition group-hover:bg-brand-bluesoft group-hover:text-navy">
+                <button className={`flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium transition ${linkCls}`}>
                   {i.label}
                   <ChevronDown className="h-3.5 w-3.5 transition group-hover:rotate-180" strokeWidth={2.5} />
                 </button>
@@ -39,7 +55,7 @@ export default function Header() {
               </div>
             ) : (
               <Link key={i.href} href={i.href}
-                className="rounded-lg px-3 py-2 text-sm font-medium text-slate2 transition hover:bg-brand-bluesoft hover:text-navy">
+                className={`rounded-lg px-3 py-2 text-sm font-medium transition ${linkCls}`}>
                 {i.label}
               </Link>
             )
@@ -51,11 +67,14 @@ export default function Header() {
             Check Today&rsquo;s Rates
           </Link>
           <button aria-label="Menu" onClick={() => setOpen(!open)}
-            className="grid h-10 w-10 place-items-center rounded-lg border border-line lg:hidden">
-            <span className="text-navy">{open ? "✕" : "☰"}</span>
+            className={`grid h-10 w-10 place-items-center rounded-lg border lg:hidden ${
+              scrolled ? "border-line text-navy" : "border-white/30 text-white"
+            }`}>
+            <span>{open ? "✕" : "☰"}</span>
           </button>
         </div>
       </div>
+
       {open && (
         <nav className="border-t border-line bg-white lg:hidden">
           <div className="wrap flex flex-col py-3">

@@ -13,7 +13,8 @@ export default function CurrencyBookingPage() {
     <>
       <PageHero eyebrow="Currency Booking"
         title="Book your currency. Collect at your branch."
-        lead="Travelling soon? Reserve your preferred currency and amount online, then collect it at a selected HME branch — no queuing twice, no missed availability." />
+        lead="Travelling soon? Reserve your preferred currency and amount online, then collect it at a selected HME branch — no queuing twice, no missed availability."
+        image="https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1920&q=80" />
       <section className="py-20">
         <div className="wrap grid gap-6 md:grid-cols-2 md:items-start">
           <CurrencyExchangeSteps />

@@ -24,18 +24,22 @@ export const site = {
 export const nav = [
   { label: "About Us", href: "/about" },
   {
-    label: "Services", href: "/currency-exchange",
+    label: "Personal", href: "/currency-exchange",
     children: [
       { label: "Currency Exchange", href: "/currency-exchange" },
-      { label: "International Money Transfer", href: "/money-transfer" },
+      { label: "Money Transfer", href: "/money-transfer" },
       { label: "Currency Booking", href: "/currency-booking" },
+      { label: "Rates", href: "/rates" },
+    ],
+  },
+  {
+    label: "Business", href: "/corporate",
+    children: [
+      { label: "Biz FX and Remit", href: "/corporate" },
       { label: "Be Our Agent", href: "/be-our-agent" },
-      { label: "Exchange Rates", href: "/rates" },
-      { label: "Money Transfer Rates", href: "/money-transfer-rates" },
     ],
   },
   { label: "Branches", href: "/locate-us" },
-  { label: "Corporate", href: "/corporate" },
   { label: "Careers", href: "/career" },
   {
     label: "Media", href: "/media/news",

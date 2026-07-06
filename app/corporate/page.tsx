@@ -19,7 +19,8 @@ export default function CorporatePage() {
   return (
     <>
       <PageHero eyebrow="Corporate Services" title="FX and money transfer support for business"
-        lead="From SMEs to established corporates — HME supports recurring foreign currency and money transfer needs with competitive rates and compliant, documented processes." />
+        lead="From SMEs to established corporates — HME supports recurring foreign currency and money transfer needs with competitive rates and compliant, documented processes."
+        image="https://images.unsplash.com/photo-1560472354-b33ff0c44a43?auto=format&fit=crop&w=1920&q=80" />
       <section className="py-20">
         <div className="wrap">
           <div className="grid gap-4 sm:grid-cols-2">
