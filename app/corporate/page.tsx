@@ -20,7 +20,7 @@ export default function CorporatePage() {
     <>
       <PageHero eyebrow="Biz FX" title="Business foreign currency exchange"
         lead="From SMEs to established corporates — HME supports recurring foreign currency needs with competitive rates and compliant, documented processes."
-        image="https://images.unsplash.com/photo-1560472354-b33ff0c44a43?auto=format&fit=crop&w=1920&q=80" />
+        image="https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&w=1920&q=80" />
       <section className="py-20">
         <div className="wrap">
           <div className="grid gap-4 sm:grid-cols-2">
