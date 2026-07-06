@@ -42,12 +42,12 @@ export default function VideoHero() {
       {/* Radial glow behind person */}
       <div className="absolute right-0 top-0 h-full w-1/2 bg-[radial-gradient(ellipse_at_center,_rgba(74,144,217,0.15)_0%,_transparent_70%)]" />
 
-      {/* Person cutout */}
+      {/* Person cutout — hidden on mobile, shown from md up */}
       <img
         src="/images/hero-person.png"
         alt=""
         aria-hidden="true"
-        className="absolute bottom-0 right-0 h-[95%] max-h-[760px] w-auto object-contain object-bottom lg:right-8 xl:right-16"
+        className="hidden md:block absolute bottom-0 right-0 h-[95%] max-h-[760px] w-auto object-contain object-bottom lg:right-8 xl:right-16"
       />
 
       {/* Text — left side */}
