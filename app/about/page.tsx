@@ -17,26 +17,28 @@ export default function AboutPage() {
         lead="Hasani Munawarah Exchange Sdn Bhd operates currency exchange and money transfer services as a licensed Money Services Business, serving travellers, foreign workers, families and businesses across Malaysia."
         image="https://images.unsplash.com/photo-1573164713988-8665fc963095?auto=format&fit=crop&w=1920&q=80" />
       <section className="py-20">
-        <div className="wrap grid gap-10 md:grid-cols-2">
-          <div>
-            <h2 className="sec-title !text-2xl">Our story</h2>
-            <p className="text-slate2">
-              HME began as a trusted local money changer and has grown into a
-              regulated network offering foreign currency exchange, international
-              money transfer under the HM eRemit brand, and currency booking. Every
-              part of our operation &mdash; from the counter to the back office &mdash; is
-              built around regulatory compliance and customer protection.
-            </p>
-          </div>
-          <div>
-            <h2 className="sec-title !text-2xl">What we stand for</h2>
-            <ul className="space-y-3 text-slate2">
-              <li><b className="text-navy">Trust</b> &mdash; licensed, regulated and transparent in everything we do.</li>
-              <li><b className="text-navy">Access</b> &mdash; convenient branches and clear digital rate information.</li>
-              <li><b className="text-navy">Care</b> &mdash; friendly, multilingual service for every customer.</li>
-              <li><b className="text-navy">Compliance</b> &mdash; AML/CFT controls embedded in daily operations.</li>
-            </ul>
-          </div>
+        <div className="wrap max-w-3xl">
+          <h2 className="sec-title !text-2xl">Who we are</h2>
+          <p className="text-slate2 leading-relaxed">
+            Hasani Munawarah Exchange Sdn. Bhd. is a licensed Money Services Business in Malaysia,
+            providing trusted currency exchange and remittance services to customers across our
+            growing branch network.
+          </p>
+          <h2 className="sec-title !text-2xl mt-10">Our journey</h2>
+          <p className="text-slate2 leading-relaxed">
+            Our journey is built on years of experience in the money services industry, with roots
+            dating back to 1980. In July 2022, Hasani Munawarah Exchange was formed through the
+            coming together of Munawarah Exchange and Hasani Bumi Identiti, combining experience,
+            trust, and a shared vision to serve customers better.
+          </p>
+          <h2 className="sec-title !text-2xl mt-10">Our commitment</h2>
+          <p className="text-slate2 leading-relaxed">
+            Today, we continue to grow as a reliable exchange and remittance provider, committed to
+            secure transactions, competitive rates, strong compliance standards, and friendly
+            customer service. At Hasani Munawarah Exchange, we aim to make money exchange and
+            international money transfer simple, accessible, and trustworthy for individuals,
+            businesses, and communities.
+          </p>
         </div>
       </section>
       <WhyChooseHME />
