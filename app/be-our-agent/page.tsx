@@ -89,7 +89,6 @@ export default function AgentPage() {
           src="/images/agent-handshake.png"
           alt=""
           aria-hidden="true"
-          style={{ mixBlendMode: "multiply" }}
           className="absolute bottom-0 right-0 h-[90%] max-h-[480px] w-auto object-contain object-bottom md:right-4 lg:right-16"
         />
         <div className="wrap relative py-16 text-white">
