@@ -10,6 +10,7 @@ export default function VideoHero() {
         src="/images/hero-person.png"
         alt=""
         aria-hidden="true"
+        style={{ mixBlendMode: "multiply" }}
         className="absolute bottom-0 right-0 h-[90%] max-h-[720px] w-auto object-contain object-bottom lg:right-12 xl:right-24"
       />
 
