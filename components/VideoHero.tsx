@@ -7,10 +7,9 @@ export default function VideoHero() {
     <section className="relative h-screen min-h-[580px] overflow-hidden bg-navy-deep">
       {/* Person cutout — right side, bottom-anchored, blended via multiply */}
       <img
-        src="/images/hero-person.jpg"
+        src="/images/hero-person.png"
         alt=""
         aria-hidden="true"
-        style={{ mixBlendMode: "multiply" }}
         className="absolute bottom-0 right-0 h-[90%] max-h-[720px] w-auto object-contain object-bottom lg:right-12 xl:right-24"
       />
 
