@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   },
   description:
     "HME (Hasani Munawarah Exchange Sdn Bhd) is a licensed Malaysian Money Services Business offering currency exchange, international money transfer and currency booking.",
-  openGraph: { siteName: "HME \u2014 HM eRemit", type: "website", locale: "en_MY" },
+  openGraph: { siteName: "HME \u2014 HME Remit", type: "website", locale: "en_MY" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -7,7 +7,7 @@ import { disclaimer } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Money Transfer Rates Today | Send Money Overseas Rates",
   description:
-    "Today's HM eRemit money transfer rates from Malaysia to Indonesia, Bangladesh, India, Nepal, the Philippines and more \u2014 transparent and updated daily.",
+    "Today's HME Remit money transfer rates from Malaysia to Indonesia, Bangladesh, India, Nepal, the Philippines and more \u2014 transparent and updated daily.",
 };
 
 const rows = [

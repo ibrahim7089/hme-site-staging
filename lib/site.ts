@@ -1,7 +1,7 @@
 export const site = {
   name: "HME",
   legalName: "Hasani Munawarah Exchange Sdn Bhd",
-  brand: "HM eRemit",
+  brand: "HME Remit",
   domain: "https://hmeremit.com.my",
   phone: "+604 421 3811",
   klPhone: "+603 4131 9639",

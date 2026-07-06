@@ -7,7 +7,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "International Money Transfer Malaysia | Send Money Overseas with HME",
   description:
-    "Send money overseas securely with HM eRemit \u2014 transparent rates, proper verification and full branch support from a licensed Malaysian Money Services Business.",
+    "Send money overseas securely with HME Remit \u2014 transparent rates, proper verification and full branch support from a licensed Malaysian Money Services Business.",
 };
 
 const corridors = ["Indonesia", "Bangladesh", "India", "Nepal", "Philippines", "Pakistan", "Myanmar", "Vietnam"];
@@ -17,7 +17,7 @@ export default function MoneyTransferPage() {
     <>
       <PageHero eyebrow="International Money Transfer"
         title="Send money home, the trusted way"
-        lead="HM eRemit moves your money overseas with transparent rates, secure verification and support at every HME branch — built for foreign workers, families and businesses."
+        lead="HME Remit moves your money overseas with transparent rates, secure verification and support at every HME branch — built for foreign workers, families and businesses."
         image="/images/Moneytransfer-Counter.png" />
       <section className="py-20">
         <div className="wrap grid gap-6 md:grid-cols-2 md:items-start">
