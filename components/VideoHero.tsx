@@ -42,16 +42,16 @@ export default function VideoHero() {
       {/* Radial glow behind person */}
       <div className="absolute right-0 top-0 h-full w-1/2 bg-[radial-gradient(ellipse_at_center,_rgba(74,144,217,0.15)_0%,_transparent_70%)]" />
 
-      {/* Person cutout — hidden on mobile, shown from md up */}
+      {/* Person cutout — small at bottom on mobile, full size on desktop */}
       <img
         src="/images/hero-person.png"
         alt=""
         aria-hidden="true"
-        className="hidden md:block absolute bottom-0 right-0 h-[95%] max-h-[760px] w-auto object-contain object-bottom lg:right-8 xl:right-16"
+        className="absolute bottom-0 right-0 h-[52%] w-auto object-contain object-bottom md:h-[95%] md:max-h-[760px] md:right-0 lg:right-8 xl:right-16"
       />
 
-      {/* Text — left side */}
-      <div className="wrap relative flex h-full flex-col justify-center pt-[72px] text-white">
+      {/* Text — top on mobile, centered on desktop */}
+      <div className="wrap relative flex h-full flex-col justify-start pt-[100px] md:justify-center md:pt-[72px] text-white">
         <div className="max-w-lg">
           <p className="mb-3 font-display text-lg font-light sm:text-xl opacity-80">This is HME.</p>
           <h1 className="text-[clamp(36px,5.5vw,64px)] font-extrabold leading-[1.08]">
