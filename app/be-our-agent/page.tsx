@@ -1,5 +1,5 @@
+/* eslint-disable @next/next/no-img-element */
 import type { Metadata } from "next";
-import PageHero from "@/components/PageHero";
 import SectionHeading from "@/components/SectionHeading";
 import {
   DollarSign, ShieldCheck, GraduationCap, TrendingUp,
@@ -81,12 +81,28 @@ export default function AgentPage() {
   return (
     <>
       {/* Hero */}
-      <PageHero
-        eyebrow="Be Our Agent"
-        title="Partner with Malaysia's growing MSB network"
-        lead="Expand your business and earn additional revenue by offering licensed currency exchange and money transfer services at your location."
-        image="https://images.unsplash.com/photo-1573496358961-3c82861ab8f5?auto=format&fit=crop&w=1920&q=80"
-      />
+      <section className="relative overflow-hidden bg-navy-deep pt-[72px] min-h-[480px] md:min-h-[520px] flex items-center">
+        {/* Radial glow */}
+        <div className="absolute right-0 top-0 h-full w-1/2 bg-[radial-gradient(ellipse_at_center,_rgba(74,144,217,0.15)_0%,_transparent_70%)]" />
+        {/* Handshake image */}
+        <img
+          src="/images/agent-handshake.png"
+          alt=""
+          aria-hidden="true"
+          style={{ mixBlendMode: "multiply" }}
+          className="absolute bottom-0 right-0 h-[90%] max-h-[480px] w-auto object-contain object-bottom md:right-4 lg:right-16"
+        />
+        <div className="wrap relative py-16 text-white">
+          <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-brand-blue">Be Our Agent</p>
+          <h1 className="max-w-xl text-[clamp(30px,4.5vw,54px)] font-extrabold leading-[1.1]">
+            Partner with Malaysia&rsquo;s growing MSB network
+          </h1>
+          <p className="mt-5 max-w-md text-[16px] text-white/70 leading-relaxed">
+            Expand your business and earn additional revenue by offering licensed currency exchange and money transfer services at your location.
+          </p>
+          <a href="#apply" className="btn-red mt-8 inline-flex">Apply Now</a>
+        </div>
+      </section>
 
       {/* Stats band */}
       <div className="border-b border-line bg-white py-10">
