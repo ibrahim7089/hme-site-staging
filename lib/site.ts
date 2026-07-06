@@ -35,7 +35,8 @@ export const nav = [
   {
     label: "Business", href: "/corporate",
     children: [
-      { label: "Biz FX and Remit", href: "/corporate" },
+      { label: "Biz FX", href: "/corporate" },
+      { label: "Biz Remit", href: "/biz-remit" },
       { label: "Be Our Agent", href: "/be-our-agent" },
     ],
   },
