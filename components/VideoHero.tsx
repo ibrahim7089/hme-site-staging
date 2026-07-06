@@ -6,10 +6,13 @@ export default function VideoHero() {
   return (
     <section className="relative h-screen min-h-[580px] overflow-hidden bg-navy-deep">
 
-      {/* Decorative globe circle — right background */}
+      {/* Darker overlay for deeper navy feel */}
+      <div className="absolute inset-0 bg-navy-deep/40" />
+
+      {/* Decorative globe circle — centered behind person */}
       <svg
         aria-hidden="true"
-        className="absolute right-[-10%] top-1/2 -translate-y-1/2 h-[90%] w-auto opacity-20"
+        className="absolute right-[5%] top-1/2 -translate-y-1/2 h-[85%] w-auto opacity-35"
         viewBox="0 0 600 600"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -40,14 +43,14 @@ export default function VideoHero() {
       </svg>
 
       {/* Radial glow behind person */}
-      <div className="absolute right-0 top-0 h-full w-1/2 bg-[radial-gradient(ellipse_at_center,_rgba(74,144,217,0.15)_0%,_transparent_70%)]" />
+      <div className="absolute right-[5%] top-0 h-full w-[55%] bg-[radial-gradient(ellipse_at_center,_rgba(74,144,217,0.18)_0%,_transparent_65%)]" />
 
-      {/* Person cutout — small at bottom on mobile, full size on desktop */}
+      {/* Person cutout — shifted left from edge */}
       <img
         src="/images/hero-person.png"
         alt=""
         aria-hidden="true"
-        className="absolute bottom-0 right-0 h-[52%] w-auto object-contain object-bottom md:h-[95%] md:max-h-[760px] md:right-0 lg:right-8 xl:right-16"
+        className="absolute bottom-0 right-0 h-[52%] w-auto object-contain object-bottom md:h-[95%] md:max-h-[760px] md:right-[8%] lg:right-[12%] xl:right-[14%]"
       />
 
       {/* Text — top on mobile, centered on desktop */}
