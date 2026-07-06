@@ -6,7 +6,7 @@ export default function VideoHero() {
   return (
     <section className="relative h-screen min-h-[580px] overflow-hidden bg-navy-deep">
       <img
-        src="/images/banner-1.jpg"
+        src="/images/banner-4.jpg"
         alt=""
         aria-hidden="true"
         className="absolute inset-0 h-full w-full object-cover object-center"
