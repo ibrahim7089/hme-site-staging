@@ -40,7 +40,7 @@ export const nav = [
       { label: "Be Our Agent", href: "/be-our-agent" },
     ],
   },
-  { label: "Branches", href: "/locate-us" },
+  { label: "Locate Us", href: "/locate-us" },
   { label: "Careers", href: "/career" },
   {
     label: "Media", href: "/media/news",
