@@ -98,7 +98,7 @@ export default function AgentPage() {
           src="/images/agent-handshake.png"
           alt=""
           aria-hidden="true"
-          className="absolute bottom-0 right-0 h-[90%] max-h-[480px] w-auto object-contain object-bottom md:right-4 lg:right-16"
+          className="absolute bottom-0 right-0 h-[85%] w-auto object-contain object-bottom md:right-4 lg:right-16"
         />
         <div className="wrap relative py-16 text-white">
           <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-brand-blue">Be Our Agent</p>
