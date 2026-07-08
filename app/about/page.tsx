@@ -14,8 +14,8 @@ export default function AboutPage() {
     <>
       <PageHero eyebrow="About HME"
         title="A Malaysian exchange house built on trust and regulation"
-        lead="Hasani Munawarah Exchange Sdn Bhd operates currency exchange and money transfer services as a licensed Money Services Business, serving travellers, foreign workers, families and businesses across Malaysia."
-        image="/images/aboutus-counter.jpg" />
+        lead=""
+        image="/images/aboutus-counter.png" />
       <section className="py-20">
         <div className="wrap max-w-3xl">
           <h2 className="sec-title !text-2xl">Who we are</h2>
