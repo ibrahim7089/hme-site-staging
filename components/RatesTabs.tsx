@@ -6,12 +6,12 @@ import { popularRates, lastUpdated } from "@/lib/rates";
 import { disclaimer } from "@/lib/site";
 
 const remittanceRates = [
-  { code: "ID", country: "Indonesia", ccy: "IDR", rate: "3,690.00" },
-  { code: "BD", country: "Bangladesh", ccy: "BDT", rate: "27.15" },
-  { code: "IN", country: "India", ccy: "INR", rate: "19.40" },
-  { code: "NP", country: "Nepal", ccy: "NPR", rate: "31.05" },
-  { code: "PH", country: "Philippines", ccy: "PHP", rate: "13.10" },
-  { code: "PK", country: "Pakistan", ccy: "PKR", rate: "63.20" },
+  { code: "ID", country: "Indonesia", ccy: "IDR", rate: "0.00" },
+  { code: "BD", country: "Bangladesh", ccy: "BDT", rate: "0.00" },
+  { code: "IN", country: "India", ccy: "INR", rate: "0.00" },
+  { code: "NP", country: "Nepal", ccy: "NPR", rate: "0.00" },
+  { code: "PH", country: "Philippines", ccy: "PHP", rate: "0.00" },
+  { code: "PK", country: "Pakistan", ccy: "PKR", rate: "0.00" },
 ];
 
 type Tab = "fx" | "remittance";
