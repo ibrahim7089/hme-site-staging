@@ -1,8 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import type { Metadata } from "next";
 import { ShieldCheck, DollarSign, Star, MapPin, ArrowLeftRight, Headphones } from "lucide-react";
-import WhyChooseHME from "@/components/WhyChooseHME";
-import ComplianceTrustSection from "@/components/ComplianceTrustSection";
 
 export const metadata: Metadata = {
   title: "About HME | Licensed Malaysian Money Services Business",
@@ -129,8 +127,6 @@ export default function AboutPage() {
           </p>
         </div>
       </section>
-      <WhyChooseHME />
-      <ComplianceTrustSection />
     </>
   );
 }
