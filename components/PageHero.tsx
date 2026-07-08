@@ -1,12 +1,13 @@
 /* eslint-disable @next/next/no-img-element */
 export default function PageHero({
-  eyebrow, title, lead, image, noOverlay,
+  eyebrow, title, lead, image, noOverlay, objectPosition = "center",
 }: {
   eyebrow?: string;
   title?: string;
   lead?: string;
   image?: string;
   noOverlay?: boolean;
+  objectPosition?: string;
 }) {
   if (image) {
     return (
@@ -15,7 +16,8 @@ export default function PageHero({
           src={image}
           alt=""
           aria-hidden="true"
-          className="absolute inset-0 h-full w-full object-cover object-center"
+          className="absolute inset-0 h-full w-full object-cover"
+          style={{ objectPosition }}
         />
         {!noOverlay && <div className="absolute inset-0 bg-gradient-to-t from-navy-deep/80 via-navy-deep/45 to-navy-deep/15" />}
         {(eyebrow || title || lead) && (
