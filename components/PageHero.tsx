@@ -1,11 +1,12 @@
 /* eslint-disable @next/next/no-img-element */
 export default function PageHero({
-  eyebrow, title, lead, image,
+  eyebrow, title, lead, image, noOverlay,
 }: {
-  eyebrow: string;
-  title: string;
-  lead: string;
+  eyebrow?: string;
+  title?: string;
+  lead?: string;
   image?: string;
+  noOverlay?: boolean;
 }) {
   if (image) {
     return (
@@ -16,12 +17,14 @@ export default function PageHero({
           aria-hidden="true"
           className="absolute inset-0 h-full w-full object-cover object-center"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-navy-deep/80 via-navy-deep/45 to-navy-deep/15" />
-        <div className="wrap relative flex h-full flex-col justify-end pb-12 pt-[88px]">
-          <span className="eyebrow !text-[#FF8A9A]">{eyebrow}</span>
-          <h1 className="mt-3 max-w-3xl text-[clamp(30px,4.2vw,46px)] font-extrabold leading-tight">{title}</h1>
-          <p className="mt-4 max-w-2xl text-[16.5px] text-[#B9C8E0]">{lead}</p>
-        </div>
+        {!noOverlay && <div className="absolute inset-0 bg-gradient-to-t from-navy-deep/80 via-navy-deep/45 to-navy-deep/15" />}
+        {(eyebrow || title || lead) && (
+          <div className="wrap relative flex h-full flex-col justify-end pb-12 pt-[88px]">
+            {eyebrow && <span className="eyebrow !text-[#FF8A9A]">{eyebrow}</span>}
+            {title && <h1 className="mt-3 max-w-3xl text-[clamp(30px,4.2vw,46px)] font-extrabold leading-tight">{title}</h1>}
+            {lead && <p className="mt-4 max-w-2xl text-[16.5px] text-[#B9C8E0]">{lead}</p>}
+          </div>
+        )}
       </section>
     );
   }
