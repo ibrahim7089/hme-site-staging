@@ -12,10 +12,7 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <>
-      <PageHero eyebrow="About HME"
-        title="A Malaysian exchange house built on trust and regulation"
-        lead=""
-        image="/images/aboutus-counter.png" />
+      <PageHero image="/images/aboutus-counter.png" noOverlay />
       <section className="py-20">
         <div className="wrap max-w-3xl">
           <h2 className="sec-title !text-2xl">Who we are</h2>
