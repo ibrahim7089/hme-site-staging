@@ -16,7 +16,7 @@ export default function PageHero({
           aria-hidden="true"
           className="absolute inset-0 h-full w-full object-cover object-center"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-navy-deep/95 via-navy-deep/65 to-navy-deep/35" />
+        <div className="absolute inset-0 bg-gradient-to-t from-navy-deep/80 via-navy-deep/45 to-navy-deep/15" />
         <div className="wrap relative flex h-full flex-col justify-end pb-12 pt-[88px]">
           <span className="eyebrow !text-[#FF8A9A]">{eyebrow}</span>
           <h1 className="mt-3 max-w-3xl text-[clamp(30px,4.2vw,46px)] font-extrabold leading-tight">{title}</h1>
