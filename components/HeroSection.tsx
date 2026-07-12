@@ -1,4 +1,3 @@
-import Link from "next/link";
 import CurrencyConverterCard from "./CurrencyConverterCard";
 
 const stats = [

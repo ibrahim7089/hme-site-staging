@@ -5,7 +5,7 @@ export const site = {
   domain: "https://hmeremit.com.my",
   phone: "+604 421 3811",
   klPhone: "+603 4131 9639",
-  whatsapp: "https://wa.me/60444213811",
+  whatsapp: "https://wa.me/6044213811",
   email: "info@hmeremit.com.my",
   hqAddress1: "No. 25C, Bangunan Ban Bee, Jalan Kampung Baru",
   hqAddress2: "08000 Sungai Petani, Kedah",

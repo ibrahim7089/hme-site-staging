@@ -2,7 +2,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import FlagIcon from "./FlagIcon";
-import { popularRates } from "@/lib/rates";
+import { parsePublishedRate, popularRates } from "@/lib/rates";
 
 type Mode = "exchange" | "transfer";
 
@@ -14,8 +14,9 @@ export default function CurrencyConverterCard() {
   const rate = popularRates.find((r) => r.code === code) ?? popularRates[0];
   const result = useMemo(() => {
     const n = parseFloat(amount);
-    if (!n || n <= 0) return null;
-    return (n / parseFloat(rate.sell)).toLocaleString(undefined, { maximumFractionDigits: 2 });
+    const sellRate = parsePublishedRate(rate.sell);
+    if (!Number.isFinite(n) || n <= 0 || sellRate === null) return null;
+    return (n / sellRate).toLocaleString(undefined, { maximumFractionDigits: 2 });
   }, [amount, rate]);
 
   return (
@@ -53,7 +54,9 @@ export default function CurrencyConverterCard() {
         Recipient gets
       </label>
       <div className="mb-5 flex items-center gap-3 rounded-xl border border-[#7FB2F5]/25 bg-white/5 px-4 py-3">
-        <span className="flex-1 truncate font-mono text-lg font-semibold text-white">{result ?? "0.00"}</span>
+        <span className="flex-1 truncate font-mono text-lg font-semibold text-white">
+          {result ?? "Rate unavailable"}
+        </span>
         <FlagIcon country={rate.country} className="h-5 w-7" />
         <select value={code} onChange={(e) => setCode(e.target.value)}
           className="flex-none rounded-lg border border-[#7FB2F5]/25 bg-[#0A244E] px-2 py-1.5 font-display text-sm font-bold text-white outline-none">

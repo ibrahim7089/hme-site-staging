@@ -1,7 +1,7 @@
 import Link from "next/link";
 import SectionHeading from "./SectionHeading";
 import FlagIcon from "./FlagIcon";
-import { popularRates } from "@/lib/rates";
+import { displayPublishedRate, popularRates } from "@/lib/rates";
 import { disclaimer } from "@/lib/site";
 
 export default function RateWidget() {
@@ -24,10 +24,10 @@ export default function RateWidget() {
                 <span>Buy</span><span>Sell</span>
               </div>
               <div className="flex justify-between font-mono text-[14.5px] font-semibold">
-                <span className="text-brand-blue">{r.buy}</span>
-                <span className="text-brand-red">{r.sell}</span>
+                <span className="text-brand-blue">{displayPublishedRate(r.buy)}</span>
+                <span className="text-brand-red">{displayPublishedRate(r.sell)}</span>
               </div>
-              <div className="mt-3 border-t border-dashed border-line pt-2.5 text-[10.5px] text-mist">Updated today</div>
+              <div className="mt-3 border-t border-dashed border-line pt-2.5 text-[10.5px] text-mist">Confirm at branch</div>
             </div>
           ))}
         </div>

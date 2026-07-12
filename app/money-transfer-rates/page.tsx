@@ -3,6 +3,7 @@ import PageHero from "@/components/PageHero";
 import FlagIcon from "@/components/FlagIcon";
 import Link from "next/link";
 import { disclaimer } from "@/lib/site";
+import { displayPublishedRate } from "@/lib/rates";
 
 export const metadata: Metadata = {
   title: "Money Transfer Rates Today | Send Money Overseas Rates",
@@ -36,7 +37,7 @@ export default function MoneyTransferRatesPage() {
                   <FlagIcon country={r.code} className="h-6 w-8" />{r.country}
                 </span>
                 <span className="text-right text-sm text-slate2">{r.ccy}</span>
-                <span className="text-right font-mono font-semibold text-brand-blue">{r.rate}</span>
+                <span className="text-right font-mono font-semibold text-brand-blue">{displayPublishedRate(r.rate)}</span>
               </div>
             ))}
           </div>

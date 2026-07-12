@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import FlagIcon from "./FlagIcon";
-import { popularRates, lastUpdated } from "@/lib/rates";
+import { displayPublishedRate, popularRates, lastUpdated } from "@/lib/rates";
 import { disclaimer } from "@/lib/site";
 
 const remittanceRates = [
@@ -65,12 +65,15 @@ export default function RatesTabs() {
                       <small className="text-xs text-mist">{r.name}</small>
                     </span>
                   </span>
-                  <span className="text-right font-mono font-semibold text-brand-blue">{r.buy}</span>
-                  <span className="text-right font-mono font-semibold text-brand-red">{r.sell}</span>
+                  <span className="text-right font-mono font-semibold text-brand-blue">{displayPublishedRate(r.buy)}</span>
+                  <span className="text-right font-mono font-semibold text-brand-red">{displayPublishedRate(r.sell)}</span>
                 </div>
               ))}
             </div>
-            <p className="mt-5 text-xs text-mist">Last updated: {lastUpdated}. {disclaimer}</p>
+            <p className="mt-5 text-xs text-mist">
+              {lastUpdated ? `Last updated: ${lastUpdated}. ` : "Online rates are temporarily unavailable. "}
+              {disclaimer}
+            </p>
           </>
         )}
 
@@ -90,7 +93,7 @@ export default function RatesTabs() {
                     <FlagIcon country={r.code} className="h-6 w-8" />{r.country}
                   </span>
                   <span className="text-right text-sm text-slate2">{r.ccy}</span>
-                  <span className="text-right font-mono font-semibold text-brand-blue">{r.rate}</span>
+                  <span className="text-right font-mono font-semibold text-brand-blue">{displayPublishedRate(r.rate)}</span>
                 </div>
               ))}
             </div>

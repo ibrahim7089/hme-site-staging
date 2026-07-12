@@ -18,14 +18,43 @@ export const metadata: Metadata = {
   },
   description:
     "HME (Hasani Munawarah Exchange Sdn Bhd) is a licensed Malaysian Money Services Business offering currency exchange, international money transfer and currency booking.",
+  alternates: { canonical: "./" },
+  twitter: {
+    card: "summary_large_image",
+    images: ["/images/banner-1.jpg"],
+  },
   openGraph: { siteName: "HME \u2014 HME Remit", type: "website", locale: "en_MY" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const organizationSchema = {
+    "@context": "https://schema.org",
+    "@type": "FinancialService",
+    name: site.legalName,
+    alternateName: site.brand,
+    url: site.domain,
+    logo: `${site.domain}/logo.png`,
+    telephone: site.phone,
+    email: site.email,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: site.hqAddress1,
+      addressLocality: "Sungai Petani",
+      postalCode: "08000",
+      addressRegion: "Kedah",
+      addressCountry: "MY",
+    },
+    sameAs: Object.values(site.social),
+  };
+
   return (
     <html lang="en" className={`${display.variable} ${body.variable} ${mono.variable}`}>
       <body className="pb-[76px] md:pb-0">
         <Header />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema).replace(/</g, "\\u003c") }}
+        />
         <main>{children}</main>
         <Footer />
         <MobileStickyCTA />

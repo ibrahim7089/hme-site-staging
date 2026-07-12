@@ -6,6 +6,15 @@ export type Rate = {
   sell: string;
 };
 
+export function parsePublishedRate(value: string): number | null {
+  const rate = Number(value);
+  return Number.isFinite(rate) && rate > 0 ? rate : null;
+}
+
+export function displayPublishedRate(value: string): string {
+  return parsePublishedRate(value) === null ? "Unavailable" : value;
+}
+
 // Replace with a live feed (API route / CMS / rate engine) in production.
 export const popularRates: Rate[] = [
   { code: "USD", name: "US Dollar", country: "US", buy: "0.00", sell: "0.00" },
@@ -20,4 +29,4 @@ export const popularRates: Rate[] = [
   { code: "SAR", name: "Saudi Riyal", country: "SA", buy: "0.00", sell: "0.00" },
 ];
 
-export const lastUpdated = "09:30, 02 Jul 2026";
+export const lastUpdated: string | null = null;

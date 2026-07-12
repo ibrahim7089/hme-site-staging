@@ -1,6 +1,7 @@
-/* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronDown } from "lucide-react";
+import heroPerson from "@/public/images/hero-person.png";
 
 export default function VideoHero() {
   return (
@@ -46,10 +47,13 @@ export default function VideoHero() {
       <div className="absolute right-[5%] top-0 h-full w-[55%] bg-[radial-gradient(ellipse_at_center,_rgba(74,144,217,0.18)_0%,_transparent_65%)]" />
 
       {/* Person cutout — shifted left from edge */}
-      <img
-        src="/images/hero-person.png"
+      <Image
+        src={heroPerson}
         alt=""
         aria-hidden="true"
+        priority
+        quality={82}
+        sizes="(max-width: 767px) 55vw, (max-width: 1279px) 48vw, 42vw"
         className="absolute bottom-0 right-0 h-[52%] w-auto object-contain object-bottom md:h-[95%] md:max-h-[760px] md:right-[8%] lg:right-[12%] xl:right-[14%]"
       />
 
