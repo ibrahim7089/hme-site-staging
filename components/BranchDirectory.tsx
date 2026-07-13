@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Banknote, Clock3, MapPin, MapPinned, Navigation, Phone } from "lucide-react";
 import type { Branch } from "@/lib/branches";
-import { states } from "@/lib/branches";
 
 const serviceTypes = ["Money Transfer", "Currency Exchange", "Agents", "Corporate Office"];
 
@@ -16,6 +15,7 @@ export default function BranchDirectory({
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState(0);
   const [mapVisible, setMapVisible] = useState(false);
+  const states = useMemo(() => Array.from(new Set(branches.map((branch) => branch.state))).sort(), [branches]);
 
   const filtered = useMemo(() => {
     if (limit) return branches.slice(0, limit);

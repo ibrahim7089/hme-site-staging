@@ -2,10 +2,16 @@ import Link from "next/link";
 import SectionHeading from "./SectionHeading";
 import FlagIcon from "./FlagIcon";
 import RateUnavailableNotice from "./RateUnavailableNotice";
-import { displayPublishedRate, hasPublishedExchangeRates, popularRates } from "@/lib/rates";
+import { displayPublishedRate, parsePublishedRate } from "@/lib/rates";
+import { getPublishedRates } from "@/lib/cms";
 import { disclaimer } from "@/lib/site";
 
-export default function RateWidget() {
+export default async function RateWidget() {
+  const published = await getPublishedRates();
+  const popularRates = published.rates;
+  const hasPublishedExchangeRates = popularRates.some(
+    (rate) => parsePublishedRate(rate.buy) !== null && parsePublishedRate(rate.sell) !== null,
+  );
   return (
     <section className="py-16 md:py-20" id="rates">
       <div className="wrap">
@@ -35,7 +41,7 @@ export default function RateWidget() {
               ))}
             </div>
             <div className="mt-7 flex flex-wrap items-center justify-between gap-4">
-              <p className="max-w-xl text-xs text-slate2">{disclaimer}</p>
+              <p className="max-w-xl text-xs text-slate2">{published.disclaimer || disclaimer}</p>
               <Link href="/rates" className="btn-primary">View Full Rates</Link>
             </div>
           </>

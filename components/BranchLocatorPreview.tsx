@@ -1,8 +1,17 @@
 import SectionHeading from "./SectionHeading";
 import BranchDirectory from "./BranchDirectory";
-import { branches } from "@/lib/branches";
+import type { Branch } from "@/lib/branches";
+import { getPublishedBranches } from "@/lib/cms";
 
-export default function BranchLocatorPreview({ limit }: { limit?: number } = {}) {
+export default async function BranchLocatorPreview({
+  limit,
+  branches: suppliedBranches,
+}: {
+  limit?: number;
+  branches?: Branch[];
+} = {}) {
+  const branches = suppliedBranches || await getPublishedBranches();
+
   return (
     <section className="py-20" id="locate">
       <div className="wrap">

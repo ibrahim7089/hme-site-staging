@@ -5,10 +5,8 @@ import FlagIcon from "./FlagIcon";
 import RateUnavailableNotice from "./RateUnavailableNotice";
 import {
   displayPublishedRate,
-  hasPublishedExchangeRates,
-  lastUpdated,
   parsePublishedRate,
-  popularRates,
+  type Rate,
 } from "@/lib/rates";
 import { disclaimer } from "@/lib/site";
 
@@ -25,7 +23,20 @@ const hasRemittanceRates = remittanceRates.some((rate) => parsePublishedRate(rat
 
 type Tab = "fx" | "remittance";
 
-export default function RatesTabs() {
+type RatesTabsProps = {
+  rates: Rate[];
+  lastUpdated?: string | null;
+  disclaimerText?: string | null;
+};
+
+export default function RatesTabs({
+  rates: popularRates,
+  lastUpdated = null,
+  disclaimerText = disclaimer,
+}: RatesTabsProps) {
+  const hasPublishedExchangeRates = popularRates.some(
+    (rate) => parsePublishedRate(rate.buy) !== null && parsePublishedRate(rate.sell) !== null,
+  );
   const [active, setActive] = useState<Tab>("fx");
 
   useEffect(() => {
@@ -91,7 +102,7 @@ export default function RatesTabs() {
               </div>
               <p className="mt-5 text-xs text-slate2">
                 {lastUpdated ? `Last updated: ${lastUpdated}. ` : ""}
-                {disclaimer}
+                {disclaimerText || disclaimer}
               </p>
             </>
           ) : <RateUnavailableNotice />
@@ -118,7 +129,7 @@ export default function RatesTabs() {
                 ))}
               </div>
               <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
-                <p className="max-w-xl text-xs text-slate2">{disclaimer}</p>
+                <p className="max-w-xl text-xs text-slate2">{disclaimerText || disclaimer}</p>
                 <Link href="/locate-us" className="btn-primary">Find a Branch to Send</Link>
               </div>
             </>

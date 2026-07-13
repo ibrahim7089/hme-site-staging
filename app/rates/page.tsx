@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import PageHero from "@/components/PageHero";
 import RatesTabs from "@/components/RatesTabs";
+import { getPublishedRates } from "@/lib/cms";
 
 export const metadata: Metadata = {
   title: "Exchange & Money Transfer Rates | HME Malaysia",
@@ -8,7 +9,8 @@ export const metadata: Metadata = {
     "Review HME currency exchange and international money transfer rates when published, or contact a branch for the latest available rate.",
 };
 
-export default function RatesPage() {
+export default async function RatesPage() {
+  const published = await getPublishedRates();
   return (
     <>
       <PageHero
@@ -16,7 +18,7 @@ export default function RatesPage() {
         title="Rates with no guesswork"
         lead="Switch between currency exchange and money transfer. Published rates are indicative; final rates are confirmed at the branch."
       />
-      <RatesTabs />
+      <RatesTabs rates={published.rates} lastUpdated={published.effectiveAt} disclaimerText={published.disclaimer} />
     </>
   );
 }
