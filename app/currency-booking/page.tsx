@@ -1,40 +1,82 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { CalendarClock, CheckCircle2, MapPin, MessageCircle, Phone } from "lucide-react";
 import PageHero from "@/components/PageHero";
-import CurrencyExchangeSteps from "@/components/CurrencyExchangeSteps";
+import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "Currency Booking | Reserve Foreign Currency Online",
+  title: "Currency Booking | Reserve Foreign Currency",
   description:
-    "Reserve your foreign currency online and collect at selected HME branches in Malaysia \u2014 ideal for travellers who want their currency ready on arrival.",
+    "Ask HME about foreign currency availability and arrange collection at a selected branch in Malaysia. Bookings are confirmed by the branch.",
 };
 
+const steps = [
+  { title: "Tell us the currency and amount", copy: "Share what you need so the branch can check current availability." },
+  { title: "Choose a preferred branch and date", copy: "Let us know where and when you would like to collect." },
+  { title: "Wait for branch confirmation", copy: "Your booking is only confirmed after the branch verifies availability and collection details." },
+  { title: "Pay and collect at the counter", copy: "Bring accepted identification. The final rate is confirmed at collection." },
+];
+
 export default function CurrencyBookingPage() {
+  const message = encodeURIComponent(
+    "Hi HME, I would like to ask about a currency booking. Currency: [currency], Amount: [amount], Preferred branch: [branch], Collection date: [date].",
+  );
+  const whatsappUrl = `${site.whatsapp}?text=${message}`;
+
   return (
     <>
       <PageHero eyebrow="Currency Booking"
-        title="Book your currency. Collect at your branch."
-        lead="Travelling soon? Reserve your preferred currency and amount online, then collect it at a selected HME branch — no queuing twice, no missed availability."
-        image="https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1920&q=80" />
-      <section className="py-20">
-        <div className="wrap grid gap-6 md:grid-cols-2 md:items-start">
-          <CurrencyExchangeSteps />
-          <div className="rounded-card border border-line bg-white p-7 shadow-soft">
-            <h3 className="text-xl font-bold text-navy">Submit a booking inquiry</h3>
-            <p className="mt-1 text-sm text-slate2">We will confirm availability, collection branch and window.</p>
-            <form className="mt-6 grid gap-4">
-              <input className="rounded-xl border border-line px-4 py-3 text-sm" placeholder="Full name" />
-              <div className="grid grid-cols-2 gap-4">
-                <input className="rounded-xl border border-line px-4 py-3 text-sm" placeholder="Currency (e.g. USD)" />
-                <input className="rounded-xl border border-line px-4 py-3 text-sm" placeholder="Amount" />
-              </div>
-              <input className="rounded-xl border border-line px-4 py-3 text-sm" placeholder="Preferred collection branch" />
-              <div className="grid grid-cols-2 gap-4">
-                <input className="rounded-xl border border-line px-4 py-3 text-sm" placeholder="Phone" />
-                <input className="rounded-xl border border-line px-4 py-3 text-sm" placeholder="Email" />
-              </div>
-              <button type="button" className="btn-red">Submit Booking Inquiry</button>
-              <p className="text-[11px] text-mist">Bookings are subject to availability and confirmation. Final rate is applied at collection.</p>
-            </form>
+        title="Plan ahead. Collect with confidence."
+        lead="Ask your preferred HME branch to check currency availability and arrange a collection date. The branch will confirm your request before you travel." />
+      <section className="py-14 md:py-20">
+        <div className="wrap grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
+          <div>
+            <p className="eyebrow mb-3">How it works</p>
+            <h2 className="text-2xl font-extrabold text-navy sm:text-3xl">Four clear steps</h2>
+            <div className="mt-7 space-y-3">
+              {steps.map((step, index) => (
+                <div key={step.title} className="flex gap-4 rounded-tile border border-line bg-white p-5">
+                  <span className="grid h-9 w-9 flex-none place-items-center rounded-lg bg-brand-bluesoft font-mono text-xs font-bold text-brand-blue">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <span>
+                    <b className="block font-display text-sm text-navy">{step.title}</b>
+                    <span className="mt-1 block text-[13px] leading-relaxed text-slate2">{step.copy}</span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-card border border-line bg-white p-7 shadow-soft sm:p-9">
+            <span className="mb-5 grid h-12 w-12 place-items-center rounded-xl bg-brand-redsoft">
+              <CalendarClock className="h-6 w-6 text-brand-red" />
+            </span>
+            <h2 className="text-2xl font-bold text-navy">Start your booking inquiry</h2>
+            <p className="mt-2 text-sm leading-relaxed text-slate2">
+              Send these details on WhatsApp so the team can direct your request to the right branch:
+            </p>
+            <ul className="mt-6 grid gap-3 sm:grid-cols-2">
+              {["Currency and amount", "Preferred HME branch", "Collection date", "Your name and contact"].map((item) => (
+                <li key={item} className="flex items-center gap-2 text-sm text-slate2">
+                  <CheckCircle2 className="h-4 w-4 flex-none text-brand-blue" />{item}
+                </li>
+              ))}
+            </ul>
+            <div className="mt-7 grid gap-3 sm:grid-cols-2">
+              <a href={whatsappUrl} target="_blank" rel="noreferrer" className="btn-red">
+                <MessageCircle className="h-4 w-4" /> Ask on WhatsApp
+              </a>
+              <a href={`tel:${site.phone}`} className="btn-primary">
+                <Phone className="h-4 w-4" /> Call HME
+              </a>
+            </div>
+            <Link href="/locate-us" className="mt-3 inline-flex items-center gap-2 text-sm font-bold text-brand-blue hover:underline">
+              <MapPin className="h-4 w-4" /> Choose a branch
+            </Link>
+            <p className="mt-6 border-t border-line pt-5 text-xs leading-relaxed text-slate2">
+              A WhatsApp message is an inquiry, not a confirmed booking. Availability, collection window and final rate are confirmed by the branch.
+            </p>
           </div>
         </div>
       </section>

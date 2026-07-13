@@ -12,7 +12,7 @@ const socialLinks = [
 
 export default function Footer() {
   return (
-    <footer className="bg-navy-ink pt-16 text-mist">
+    <footer className="bg-navy-ink pt-16 text-[#B9C8E0]">
       <div className="wrap">
         <div className="grid gap-9 pb-11 sm:grid-cols-2 lg:grid-cols-[1.6fr_1fr_1fr_1fr]">
           <div>

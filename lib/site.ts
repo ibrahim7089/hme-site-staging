@@ -35,21 +35,23 @@ export const nav = [
   {
     label: "Business", href: "/corporate",
     children: [
-      { label: "Biz FX", href: "/corporate" },
+      { label: "Business Services", href: "/corporate" },
       { label: "Biz Remit", href: "/biz-remit" },
       { label: "Be Our Agent", href: "/be-our-agent" },
     ],
   },
   { label: "Locate Us", href: "/locate-us" },
-  { label: "Careers", href: "/career" },
   {
-    label: "Media", href: "/media/news",
+    label: "More", href: "/contact",
     children: [
+      { label: "Careers", href: "/career" },
       { label: "News", href: "/media/news" },
       { label: "Blog", href: "/media/blog" },
+      { label: "Promotions", href: "/promotions" },
+      { label: "Compliance", href: "/compliance" },
+      { label: "Contact", href: "/contact" },
     ],
   },
-  { label: "Promotions", href: "/promotions" },
 ];
 
 export const legalLinks = [

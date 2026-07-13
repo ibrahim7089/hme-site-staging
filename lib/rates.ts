@@ -29,4 +29,8 @@ export const popularRates: Rate[] = [
   { code: "SAR", name: "Saudi Riyal", country: "SA", buy: "0.00", sell: "0.00" },
 ];
 
+export const hasPublishedExchangeRates = popularRates.some(
+  (rate) => parsePublishedRate(rate.buy) !== null || parsePublishedRate(rate.sell) !== null,
+);
+
 export const lastUpdated: string | null = null;

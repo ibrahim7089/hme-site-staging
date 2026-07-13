@@ -1,143 +1,145 @@
-/* eslint-disable @next/next/no-img-element */
 import type { Metadata } from "next";
-import SectionHeading from "@/components/SectionHeading";
+import Image from "next/image";
 import {
-  DollarSign, ShieldCheck, GraduationCap, TrendingUp,
-  Users, Zap, CheckCircle2,
+  CheckCircle2,
+  DollarSign,
+  GraduationCap,
+  Mail,
+  MessageCircle,
+  ShieldCheck,
+  TrendingUp,
+  Users,
+  Zap,
 } from "lucide-react";
+import SectionHeading from "@/components/SectionHeading";
+import { site } from "@/lib/site";
+import agentHandshake from "@/public/images/agent-handshake.png";
 
 export const metadata: Metadata = {
   title: "Be Our Agent | Partner with HME Money Services",
   description:
-    "Become an HME agent and offer licensed currency exchange and money transfer services at your location — with training, compliance and operational support.",
+    "Talk to HME about becoming an agent for currency exchange and money transfer services, subject to due diligence, regulatory requirements and approval.",
 };
 
 const benefits = [
   {
     icon: DollarSign,
-    title: "Multiple revenue streams",
-    desc: "Earn commission on every currency exchange and international money transfer transaction processed at your location.",
+    title: "Commercial opportunity",
+    desc: "Learn about available service lines and commercial terms for approved HME agent locations.",
   },
   {
     icon: ShieldCheck,
-    title: "Fully licensed & regulated",
-    desc: "Operate under HME's MSB licence — no separate licensing required. We handle the regulatory obligations so you can focus on serving customers.",
+    title: "Regulated network",
+    desc: "Agent appointments are assessed under HME's applicable regulatory, compliance and operational requirements.",
   },
   {
     icon: GraduationCap,
-    title: "Training & onboarding support",
-    desc: "Full AML/CFT training, system onboarding and compliance guidance provided before you go live — and ongoing throughout the partnership.",
+    title: "Training and onboarding",
+    desc: "Approved agents receive relevant system, operational and AML/CFT guidance before going live.",
   },
   {
     icon: TrendingUp,
-    title: "Established rate infrastructure",
-    desc: "Access HME's live rate feeds and pricing systems. Competitive buy/sell spreads that attract customers and drive repeat business.",
+    title: "Operational infrastructure",
+    desc: "Approved locations can access the systems and processes needed to deliver assigned HME services.",
   },
   {
     icon: Users,
-    title: "Dedicated agent support",
-    desc: "A dedicated point of contact for day-to-day operational queries, escalations and compliance questions.",
+    title: "Agent support",
+    desc: "A support contact helps approved agents with operational questions, escalations and compliance matters.",
   },
   {
     icon: Zap,
-    title: "Fast onboarding",
-    desc: "Streamlined onboarding process. From application to first transaction, our team works to get you operational quickly.",
+    title: "Structured onboarding",
+    desc: "HME guides suitable applicants through due diligence, assessment, agreement and onboarding stages.",
   },
 ];
 
 const steps = [
   {
     num: "01",
-    title: "Submit your application",
-    desc: "Fill out the form below with your business details. Our team reviews every application within 3 business days.",
+    title: "Start a conversation",
+    desc: "Share your company, premises, proposed location and contact details with the partnerships team.",
   },
   {
     num: "02",
-    title: "Due diligence & approval",
-    desc: "We conduct standard KYB checks and a site assessment. Successful applicants receive an agent agreement.",
+    title: "Due diligence and assessment",
+    desc: "HME will explain the required business checks, documents, site assessment and approval process.",
   },
   {
     num: "03",
-    title: "Onboard & start earning",
-    desc: "Complete training, get system access and go live. Your dedicated support contact is available from day one.",
+    title: "Agreement and onboarding",
+    desc: "Approved applicants complete the relevant agreement, training and operational setup before launch.",
   },
 ];
 
 const eligibility = [
   "Registered business in Malaysia (SSM-registered sole proprietor, partnership or Sdn Bhd)",
   "Physical business premises with public access",
-  "Willing to complete AML/CFT training and comply with MSB regulatory requirements",
-  "Reliable internet access and ability to operate HME's systems",
-  "Good standing — no prior financial crime convictions or regulatory sanctions",
-];
-
-const states = [
-  "Johor","Kedah","Kelantan","Kuala Lumpur","Labuan","Malacca",
-  "Negeri Sembilan","Pahang","Penang","Perak","Perlis","Putrajaya",
-  "Sabah","Sarawak","Selangor","Terengganu",
+  "Willing to complete AML/CFT training and comply with applicable regulatory requirements",
+  "Reliable internet access and ability to operate HME systems",
+  "Good standing with no known financial crime convictions or regulatory sanctions",
 ];
 
 export default function AgentPage() {
+  const message = encodeURIComponent(
+    "Hi HME, I am interested in becoming an agent. Company name: [company], SSM no.: [number], Business type: [type], Proposed location: [location], Contact person: [name].",
+  );
+  const whatsappUrl = `${site.whatsapp}?text=${message}`;
+
   return (
     <>
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-navy-deep pt-[72px] h-screen min-h-[500px] flex items-center">
-        {/* Radial glow */}
-        <div className="absolute right-0 top-0 h-full w-1/2 bg-[radial-gradient(ellipse_at_center,_rgba(74,144,217,0.15)_0%,_transparent_70%)]" />
-        {/* HME logo — white card centred in left space */}
-        <div className="absolute left-[13%] top-1/2 -translate-x-1/2 -translate-y-1/2 hidden xl:block rounded-2xl bg-white p-5">
-          <img
-            src="/logo.png"
-            alt=""
-            aria-hidden="true"
-            className="w-[200px] object-contain"
-          />
-        </div>
-        {/* Handshake image */}
-        <img
-          src="/images/agent-handshake.png"
+      <section className="relative flex min-h-[620px] items-center overflow-hidden bg-navy-deep pt-[72px]">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_78%_50%,rgba(74,144,217,0.22)_0%,transparent_52%)]" />
+        <div className="absolute inset-0 bg-gradient-to-r from-navy-deep via-navy-deep/90 to-navy-deep/20" />
+        <Image
+          src={agentHandshake}
           alt=""
           aria-hidden="true"
-          className="absolute bottom-0 right-0 h-[85%] w-auto object-contain object-bottom md:right-4 lg:right-16"
+          priority
+          sizes="(max-width: 767px) 80vw, 55vw"
+          className="absolute bottom-0 right-[-18%] h-[58%] w-auto object-contain object-bottom opacity-55 sm:right-[-8%] md:right-0 md:h-[78%] md:opacity-90 lg:right-[4%]"
         />
-        <div className="wrap relative py-16 text-white">
-          <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-brand-blue">Be Our Agent</p>
-          <h1 className="max-w-xl text-[clamp(30px,4.5vw,54px)] font-extrabold leading-[1.1]">
-            Partner with Malaysia&rsquo;s growing MSB network
-          </h1>
-          <p className="mt-5 max-w-md text-[16px] text-white/70 leading-relaxed">
-            Expand your business and earn additional revenue by offering licensed currency exchange and money transfer services at your location.
-          </p>
-          <a href="#apply" className="btn-red mt-8 inline-flex">Apply Now</a>
+        <div className="wrap relative py-20 text-white">
+          <div className="max-w-xl">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-[#7FB2F5]">Be Our Agent</p>
+            <h1 className="text-[clamp(34px,5vw,58px)] font-extrabold leading-[1.08]">
+              Grow with a trusted Malaysian MSB network
+            </h1>
+            <p className="mt-5 max-w-lg text-[16px] leading-relaxed text-[#D4E0F2]">
+              If you operate an established business in Malaysia, talk to HME about agent opportunities and the requirements for your proposed location.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <a href="#apply" className="btn-red">Start an Agent Inquiry</a>
+              <a href={`mailto:${site.email}?subject=HME%20Agent%20Inquiry`} className="btn-ghost">Email Partnerships</a>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Stats band */}
-      <div className="border-b border-line bg-white py-10">
-        <div className="wrap grid grid-cols-3 gap-6 text-center">
+      <div className="border-b border-line bg-white py-9">
+        <div className="wrap grid grid-cols-3 gap-4 text-center">
           {[
-            ["54+", "Active locations nationwide"],
-            ["Licensed", "Under MSB Act 2011"],
-            ["150K+", "Global payout network"],
-          ].map(([n, l]) => (
-            <div key={l}>
-              <p className="text-[clamp(22px,3vw,34px)] font-extrabold text-brand-blue">{n}</p>
-              <p className="mt-1 text-[13px] text-slate2">{l}</p>
+            ["50+", "Locations nationwide"],
+            ["Licensed", "Malaysian MSB network"],
+            ["150K+", "Global payout locations"],
+          ].map(([number, label]) => (
+            <div key={label}>
+              <p className="text-[clamp(20px,3vw,32px)] font-extrabold text-brand-blue">{number}</p>
+              <p className="mt-1 text-[12px] leading-tight text-slate2 sm:text-[13px]">{label}</p>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Benefits */}
-      <section className="py-20">
+      <section className="py-16 md:py-20">
         <div className="wrap">
           <SectionHeading center eyebrow="Why partner with HME"
-            title="Everything you need to grow"
-            lead="Join a licensed network with the systems, training and support to run a compliant and profitable money services business." />
-          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            title="Support for approved agents"
+            lead="Explore the systems, training and operational support available to suitable businesses appointed to the HME network." />
+          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {benefits.map(({ icon: Icon, title, desc }) => (
               <div key={title} className="rounded-card border border-line bg-white p-6 shadow-soft">
-                <span className="mb-4 grid h-12 w-12 place-items-center rounded-full bg-brand-bluesoft">
+                <span className="mb-4 grid h-12 w-12 place-items-center rounded-xl bg-brand-bluesoft">
                   <Icon className="h-5 w-5 text-brand-blue" strokeWidth={1.75} />
                 </span>
                 <h3 className="mb-2 font-display text-[15px] font-bold text-navy">{title}</h3>
@@ -148,12 +150,10 @@ export default function AgentPage() {
         </div>
       </section>
 
-      {/* How it works */}
-      <section className="bg-cloud py-20">
+      <section className="bg-cloud py-16 md:py-20">
         <div className="wrap">
-          <SectionHeading center eyebrow="The Process" title="How it works" />
-          <div className="relative mt-14 grid gap-10 md:grid-cols-3">
-            {/* connecting line */}
+          <SectionHeading center eyebrow="The Process" title="What happens next" />
+          <div className="relative mt-12 grid gap-9 md:grid-cols-3">
             <div className="absolute left-[16.67%] right-[16.67%] top-7 hidden h-px bg-line md:block" />
             {steps.map(({ num, title, desc }) => (
               <div key={num} className="relative flex flex-col items-center text-center">
@@ -161,24 +161,19 @@ export default function AgentPage() {
                   {num}
                 </div>
                 <h3 className="mb-2 font-display text-[16px] font-bold text-navy">{title}</h3>
-                <p className="max-w-xs text-[13.5px] text-slate2">{desc}</p>
+                <p className="max-w-xs text-[13.5px] leading-relaxed text-slate2">{desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Eligibility + Form */}
-      <section className="py-20" id="apply">
-        <div className="wrap grid gap-14 lg:grid-cols-[1fr_1.1fr]">
-
-          {/* Eligibility */}
+      <section className="py-16 md:py-20" id="apply">
+        <div className="wrap grid gap-10 lg:grid-cols-[1fr_1.05fr] lg:items-start">
           <div>
-            <SectionHeading eyebrow="Eligibility" title="Who can apply?" />
-            <p className="mt-4 text-[15px] text-slate2">
-              We welcome applications from businesses of all types across Malaysia.
-              If your premises have public access and you can meet our compliance
-              requirements, we&rsquo;d love to hear from you.
+            <SectionHeading eyebrow="Eligibility" title="Who can inquire?" />
+            <p className="mt-4 text-[15px] leading-relaxed text-slate2">
+              HME welcomes inquiries from established businesses across Malaysia. Appointment remains subject to due diligence, site assessment, regulatory requirements and approval.
             </p>
             <ul className="mt-6 space-y-3.5">
               {eligibility.map((item) => (
@@ -188,63 +183,32 @@ export default function AgentPage() {
                 </li>
               ))}
             </ul>
-            <p className="mt-6 text-[12px] text-mist">
-              Agent appointments are subject to due diligence, site assessment and
-              applicable BNM / MSB regulatory requirements.
-            </p>
           </div>
 
-          {/* Application form */}
-          <div className="rounded-card border border-line bg-white p-7 shadow-soft">
-            <h3 className="text-xl font-bold text-navy">Apply as Agent</h3>
-            <p className="mt-1 text-[13.5px] text-slate2">
-              Our team will review your application and be in touch within 3 business days.
+          <div className="rounded-card border border-line bg-white p-7 shadow-soft sm:p-9">
+            <p className="eyebrow mb-3">Agent inquiry</p>
+            <h2 className="text-2xl font-bold text-navy">Start with your business details</h2>
+            <p className="mt-2 text-sm leading-relaxed text-slate2">
+              Include the following information so the partnerships team can understand your proposed location:
             </p>
-            <form className="mt-6 grid gap-4">
-              {([
-                ["Full Name", "text", true],
-                ["Company Name", "text", true],
-                ["Company Registration No. (SSM)", "text", false],
-                ["Business Type / Nature of Business", "text", false],
-                ["Phone Number", "tel", true],
-                ["Email Address", "email", true],
-              ] as const).map(([label, type, required]) => (
-                <label key={label} className="grid gap-1.5 text-sm font-medium text-navy">
-                  {label}{required && <span className="text-brand-red"> *</span>}
-                  <input type={type} required={required}
-                    className="rounded-xl border border-line px-4 py-3 text-sm font-normal outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/15" />
-                </label>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              {["Company and SSM number", "Business type", "Proposed location", "Contact person and phone"].map((item) => (
+                <span key={item} className="flex items-center gap-2 rounded-xl bg-cloud p-3 text-sm text-slate2">
+                  <CheckCircle2 className="h-4 w-4 flex-none text-brand-blue" />{item}
+                </span>
               ))}
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <label className="grid gap-1.5 text-sm font-medium text-navy">
-                  Proposed State
-                  <select defaultValue="" className="rounded-xl border border-line px-4 py-3 text-sm font-normal text-slate2 outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/15">
-                    <option value="" disabled>Select state</option>
-                    {states.map((s) => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </label>
-                <label className="grid gap-1.5 text-sm font-medium text-navy">
-                  Proposed Location / Address
-                  <input type="text" className="rounded-xl border border-line px-4 py-3 text-sm font-normal outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/15" />
-                </label>
-              </div>
-
-              <label className="grid gap-1.5 text-sm font-medium text-navy">
-                Tell us about your business<span className="text-brand-red"> *</span>
-                <textarea required rows={4}
-                  placeholder="Describe your business, customer base and why you'd like to become an HME agent…"
-                  className="rounded-xl border border-line px-4 py-3 text-sm font-normal outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/15" />
-              </label>
-
-              <button type="button" className="btn-red mt-1 w-full justify-center">
-                Submit Application
-              </button>
-              <p className="text-center text-[11.5px] text-mist">
-                By submitting you agree to our{" "}
-                <a href="/compliance/privacy-policy" className="underline hover:text-navy">Privacy Policy</a>.
-              </p>
-            </form>
+            </div>
+            <div className="mt-7 grid gap-3 sm:grid-cols-2">
+              <a href={whatsappUrl} target="_blank" rel="noreferrer" className="btn-red">
+                <MessageCircle className="h-4 w-4" /> WhatsApp HME
+              </a>
+              <a href={`mailto:${site.email}?subject=HME%20Agent%20Inquiry`} className="btn-primary">
+                <Mail className="h-4 w-4" /> Email Inquiry
+              </a>
+            </div>
+            <p className="mt-6 border-t border-line pt-5 text-xs leading-relaxed text-slate2">
+              An inquiry does not guarantee appointment. HME will advise suitable applicants about documents and next steps.
+            </p>
           </div>
         </div>
       </section>

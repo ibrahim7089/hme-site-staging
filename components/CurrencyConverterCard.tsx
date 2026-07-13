@@ -2,7 +2,9 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import FlagIcon from "./FlagIcon";
-import { parsePublishedRate, popularRates } from "@/lib/rates";
+import { Clock3, MapPin, MessageCircle } from "lucide-react";
+import { hasPublishedExchangeRates, parsePublishedRate, popularRates } from "@/lib/rates";
+import { site } from "@/lib/site";
 
 type Mode = "exchange" | "transfer";
 
@@ -18,6 +20,29 @@ export default function CurrencyConverterCard() {
     if (!Number.isFinite(n) || n <= 0 || sellRate === null) return null;
     return (n / sellRate).toLocaleString(undefined, { maximumFractionDigits: 2 });
   }, [amount, rate]);
+
+  if (!hasPublishedExchangeRates) {
+    return (
+      <div className="overflow-hidden rounded-card border border-[#7FB2F5]/25 bg-gradient-to-b from-[#0A244E] to-[#071B3C] p-6 text-white shadow-deep sm:p-7">
+        <span className="mb-5 grid h-12 w-12 place-items-center rounded-xl bg-white/10">
+          <Clock3 className="h-6 w-6 text-[#7FB2F5]" />
+        </span>
+        <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-[#7FB2F5]">Latest rates</p>
+        <h3 className="font-display text-2xl font-extrabold">Online rates are being updated</h3>
+        <p className="mt-3 text-sm leading-relaxed text-[#B9C8E0]">
+          Contact a branch for the latest available rate before you exchange or send money.
+        </p>
+        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          <a href={site.whatsapp} target="_blank" rel="noreferrer" className="btn-red">
+            <MessageCircle className="h-4 w-4" /> WhatsApp Us
+          </a>
+          <Link href="/locate-us" className="btn-ghost">
+            <MapPin className="h-4 w-4" /> Find a Branch
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="overflow-hidden rounded-card border border-[#7FB2F5]/25 bg-gradient-to-b from-[#0A244E] to-[#071B3C] p-6 text-white shadow-deep sm:p-7">

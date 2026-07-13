@@ -5,7 +5,7 @@ import heroPerson from "@/public/images/hero-person.png";
 
 export default function VideoHero() {
   return (
-    <section className="relative h-screen min-h-[580px] overflow-hidden bg-navy-deep">
+    <section className="relative min-h-[660px] overflow-hidden bg-navy-deep md:min-h-[720px]">
 
       {/* Darker overlay for deeper navy feel */}
       <div className="absolute inset-0 bg-navy-deep/40" />
@@ -58,7 +58,7 @@ export default function VideoHero() {
       />
 
       {/* Text — top on mobile, centered on desktop */}
-      <div className="wrap relative flex h-full flex-col justify-start pt-[100px] md:justify-center md:pt-[72px] text-white">
+      <div className="wrap relative flex min-h-[660px] flex-col justify-start pt-[118px] text-white md:min-h-[720px] md:justify-center md:pt-[72px]">
         <div className="max-w-lg">
           <p className="mb-3 font-display text-lg font-light sm:text-xl opacity-80">This is HME.</p>
           <h1 className="text-[clamp(36px,5.5vw,64px)] font-extrabold leading-[1.08]">
@@ -71,6 +71,10 @@ export default function VideoHero() {
           <div className="mt-8 flex flex-wrap gap-3">
             <Link href="/rates" className="btn-red">Check Today&rsquo;s Rates</Link>
             <Link href="/locate-us" className="btn-ghost backdrop-blur">Find a Branch</Link>
+          </div>
+          <div className="mt-7 flex flex-wrap gap-x-5 gap-y-2 text-xs font-semibold text-white/65">
+            <span>Licensed Malaysian MSB</span>
+            <span>50+ locations nationwide</span>
           </div>
         </div>
       </div>

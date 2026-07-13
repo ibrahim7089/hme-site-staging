@@ -5,7 +5,7 @@ import RatesTabs from "@/components/RatesTabs";
 export const metadata: Metadata = {
   title: "Exchange & Money Transfer Rates | HME Malaysia",
   description:
-    "Today's HME currency exchange buy/sell rates and international money transfer rates — USD, SGD, IDR, BDT, INR and more, updated throughout the business day.",
+    "Review HME currency exchange and international money transfer rates when published, or contact a branch for the latest available rate.",
 };
 
 export default function RatesPage() {
@@ -13,9 +13,8 @@ export default function RatesPage() {
     <>
       <PageHero
         eyebrow="Rates"
-        title="Today's rates"
-        lead="Switch between currency exchange and money transfer rates — all published by HME and refreshed throughout the business day."
-        image="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=1920&q=80"
+        title="Rates with no guesswork"
+        lead="Switch between currency exchange and money transfer. Published rates are indicative; final rates are confirmed at the branch."
       />
       <RatesTabs />
     </>

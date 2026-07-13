@@ -9,7 +9,7 @@ const config: Config = {
         brand: { blue: "#1263D8", bluesoft: "#E8F0FC", red: "#E11931", redsoft: "#FDEBEE" },
         ink: "#0F1722",
         slate2: "#4A5A72",
-        mist: "#8DA0BC",
+        mist: "#64748B",
         cloud: "#F4F7FB",
         line: "#E2E9F4",
       },

@@ -2,11 +2,11 @@ import SectionHeading from "./SectionHeading";
 
 export const faqs = [
   { q: "Are the rates on the website final?",
-    a: "Rates shown online are indicative and updated throughout the day. The final rate is confirmed at the branch at the time of your transaction." },
+    a: "Published online rates are indicative. If rates are unavailable online, contact your chosen branch. The final rate is confirmed at the time of your transaction." },
   { q: "What do I need to bring to exchange currency or send money?",
     a: "Please bring a valid identification document (MyKad, passport or other accepted ID). For a money transfer, you will also need your beneficiary's details. Larger transactions may require additional verification in line with regulatory requirements." },
   { q: "How does currency booking work?",
-    a: "Choose your currency and amount, submit a booking, and collect at your selected branch within the stated collection window. Payment is completed at the counter." },
+    a: "Send the currency, amount, preferred branch and collection date to HME. Your booking and collection window are confirmed by the branch, and payment is completed at the counter." },
   { q: "Is HME licensed?",
     a: "Yes. Hasani Munawarah Exchange Sdn Bhd is a licensed Money Services Business regulated in Malaysia, operating currency exchange and money transfer services." },
   { q: "Can businesses use HME services?",

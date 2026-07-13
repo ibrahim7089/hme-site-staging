@@ -49,7 +49,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <html lang="en" className={`${display.variable} ${body.variable} ${mono.variable}`}>
-      <body className="pb-[76px] md:pb-0">
+      <body className="pb-[calc(76px+env(safe-area-inset-bottom))] md:pb-0">
         <Header />
         <script
           type="application/ld+json"

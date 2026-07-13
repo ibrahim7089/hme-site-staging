@@ -3,7 +3,9 @@ import VideoHero from "@/components/VideoHero";
 import HeroSection from "@/components/HeroSection";
 import ServiceCards from "@/components/ServiceCards";
 import ReachUsBand from "@/components/ReachUsBand";
-import NewsletterBand from "@/components/NewsletterBand";
+import WhyChooseHME from "@/components/WhyChooseHME";
+import BranchLocatorPreview from "@/components/BranchLocatorPreview";
+import FAQSection from "@/components/FAQSection";
 
 export const metadata: Metadata = {
   title: "HME | Currency Exchange & International Money Transfer Malaysia",
@@ -17,8 +19,10 @@ export default function HomePage() {
       <VideoHero />
       <HeroSection />
       <ServiceCards />
+      <WhyChooseHME />
+      <BranchLocatorPreview limit={3} />
+      <FAQSection limit={4} />
       <ReachUsBand />
-      <NewsletterBand />
     </>
   );
 }

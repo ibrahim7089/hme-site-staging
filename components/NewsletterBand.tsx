@@ -1,21 +1,23 @@
-"use client";
+import Link from "next/link";
+import { MessageCircle } from "lucide-react";
+import { site } from "@/lib/site";
 
 export default function NewsletterBand() {
   return (
     <section className="bg-[radial-gradient(900px_400px_at_50%_-20%,#E8F0FC_0%,#F4F7FB_60%)] py-16">
       <div className="wrap text-center">
-        <h2 className="mb-6 font-display text-[22px] font-extrabold text-navy sm:text-2xl">
-          Share your email for rate alerts and updates
+        <h2 className="font-display text-[22px] font-extrabold text-navy sm:text-2xl">
+          Need the latest rate or availability?
         </h2>
-        <form className="mx-auto flex max-w-md flex-col gap-3 sm:flex-row" onSubmit={(e) => e.preventDefault()}>
-          <input
-            type="email"
-            required
-            placeholder="Type your email address"
-            className="flex-1 rounded-xl border border-line bg-white px-4 py-3 text-sm outline-none focus-visible:border-brand-blue"
-          />
-          <button type="submit" className="btn-primary">Submit</button>
-        </form>
+        <p className="mx-auto mt-3 max-w-xl text-sm text-slate2">
+          Contact an HME branch directly and confirm the details before your transaction.
+        </p>
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <a href={site.whatsapp} target="_blank" rel="noreferrer" className="btn-red">
+            <MessageCircle className="h-4 w-4" /> Ask on WhatsApp
+          </a>
+          <Link href="/locate-us" className="btn-primary">Find a Branch</Link>
+        </div>
       </div>
     </section>
   );
