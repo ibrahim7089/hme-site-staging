@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { FaFacebookF, FaInstagram, FaTiktok, FaLinkedinIn } from "react-icons/fa6";
 import { site, legalLinks } from "@/lib/site";
-import Logo from "./Logo";
 
 const socialLinks = [
   { label: "Facebook", icon: FaFacebookF, href: site.social.facebook },
@@ -12,22 +11,9 @@ const socialLinks = [
 
 export default function Footer() {
   return (
-    <footer className="bg-navy-ink pt-12 text-[#B9C8E0]">
+    <footer className="bg-navy-ink text-[#B9C8E0]">
       <div className="wrap">
-        <div className="max-w-xl pb-10">
-          <Logo size="md" dark />
-          <p className="my-4 max-w-md text-[13px] leading-relaxed">
-            {site.legalName} &mdash; currency exchange, international money transfer and currency
-            booking through one trusted Malaysian MSB network.
-          </p>
-          <div className="max-w-md rounded-xl border border-white/10 bg-white/5 p-4 text-[11.5px] leading-relaxed">
-            <b className="mb-1 block text-xs text-[#D7E3F6]">Licensed Money Services Business</b>
-            Company Reg. No. {site.regNo} &middot; MSB Licence No. {site.msbNo}<br />
-            {site.licenceLine}
-          </div>
-        </div>
-
-        <nav aria-label="Legal and policy links" className="flex flex-wrap gap-y-2 border-t border-white/10 py-5 text-[12.5px]">
+        <nav aria-label="Legal and policy links" className="flex flex-wrap gap-y-2 py-6 text-[12.5px]">
           {legalLinks.map((link, index) => (
             <span key={link.href} className="flex items-center">
               <Link href={link.href} className="hover:text-white">{link.label}</Link>
