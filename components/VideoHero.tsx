@@ -54,18 +54,17 @@ export default function VideoHero() {
 
       <div className="wrap relative z-10 flex min-h-[100svh] items-start pb-[43vh] pt-[116px] sm:pb-[46vh] md:items-center md:pb-12 md:pt-[96px]">
         <div className="hero-copy max-w-[650px] md:w-[54%] lg:w-[55%]">
-
           <h1 className="max-w-[12ch] text-[clamp(42px,7vw,82px)] font-extrabold leading-[0.98] tracking-[-0.055em]">
             Money moves. Trust stays.
           </h1>
           <p className="mt-6 max-w-[590px] text-[16px] leading-relaxed text-white/72 sm:text-[18px]">
-            Exchange currency, send money overseas and book foreign notes through one
-            trusted Malaysian network with more than 50 locations nationwide.
+            Exchange foreign currency and send money overseas through HME’s nationwide
+            network of 50+ locations.
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">
             <a href="#services" className="btn-red">
-              Explore Services
+              View Our Services
               <ArrowRight className="h-4 w-4" />
             </a>
             <Link href="/locate-us" className="btn-ghost backdrop-blur">
@@ -74,11 +73,6 @@ export default function VideoHero() {
             </Link>
           </div>
 
-          <div className="mt-7 flex flex-wrap gap-x-6 gap-y-2 text-xs font-semibold text-white/62 sm:text-sm">
-            <span>Currency exchange</span>
-            <span>International transfer</span>
-            <span>Currency booking</span>
-          </div>
         </div>
       </div>
 
