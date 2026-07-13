@@ -20,6 +20,7 @@ const securityHeaders = [
       "font-src 'self' data:",
       "img-src 'self' data: blob:",
       "connect-src 'self'",
+      "frame-src https://www.google.com https://maps.google.com",
       "frame-ancestors 'none'",             // belt-and-suspenders alongside X-Frame-Options
       "base-uri 'self'",
       "form-action 'self'",
