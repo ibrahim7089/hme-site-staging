@@ -55,8 +55,20 @@
 }
 
 .hero-orbit {
-  animation: orbit-turn 80s linear infinite;
+  --orbit-start: -22vw;
+  --orbit-end: 4vw;
+  animation:
+    orbit-sweep 22s ease-in-out infinite alternate,
+    orbit-turn 80s linear infinite;
   transform-origin: center;
+  will-change: translate, rotate;
+}
+
+@media (max-width: 767px) {
+  .hero-orbit {
+    --orbit-start: -12vw;
+    --orbit-end: 8vw;
+  }
 }
 
 .service-bento-card {
@@ -84,6 +96,11 @@
 
 @keyframes hero-person-in {
   from { opacity: 0; transform: translateY(32px) scale(0.985); }
+}
+
+@keyframes orbit-sweep {
+  from { translate: var(--orbit-start) 0; }
+  to { translate: var(--orbit-end) 0; }
 }
 
 @keyframes orbit-turn {
