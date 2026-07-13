@@ -47,7 +47,7 @@ export default function LocateUsPage() {
       />
       <PageHero eyebrow="Locate Us" title="Find your nearest HME branch"
         lead="Branches across Malaysia for currency exchange, money transfer and currency booking collection — search by state, city or service."
-        image="/images/branches-counter.png" />
+        image="/images/branches-counter.webp" />
       <BranchLocatorPreview />
     </>
   );

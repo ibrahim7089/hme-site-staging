@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, ChevronDown, MapPin } from "lucide-react";
-import heroPerson from "@/public/images/hero-person.png";
+import heroPerson from "@/public/images/hero-person.webp";
 
 export default function VideoHero() {
   return (

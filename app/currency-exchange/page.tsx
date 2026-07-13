@@ -16,7 +16,7 @@ export default function CurrencyExchangePage() {
       <PageHero eyebrow="Currency Exchange"
         title="Buy and sell foreign currency with confidence"
         lead="Major and selected currencies are handled across HME's branch network, with indicative published rates when available, proper receipts and counter support."
-        image="/images/currency-exchange-counter.png" />
+        image="/images/currency-exchange-counter.webp" />
       <RateWidget />
       <section className="bg-cloud py-16 md:py-20">
         <div className="wrap grid gap-6 md:grid-cols-2 md:items-start">

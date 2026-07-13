@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import SectionHeading from "@/components/SectionHeading";
 import { site } from "@/lib/site";
-import agentHandshake from "@/public/images/agent-handshake.png";
+import agentHandshake from "@/public/images/agent-handshake.webp";
 
 export const metadata: Metadata = {
   title: "Be Our Agent | Partner with HME Money Services",

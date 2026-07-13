@@ -18,7 +18,7 @@ export default function MoneyTransferPage() {
       <PageHero eyebrow="International Money Transfer"
         title="Send money home, the trusted way"
         lead="HME Remit moves your money overseas with transparent rates, secure verification and support at every HME branch — built for foreign workers, families and businesses."
-        image="/images/Moneytransfer-Counter.png" />
+        image="/images/moneytransfer-counter.webp" />
       <section className="py-20">
         <div className="wrap grid gap-6 md:grid-cols-2 md:items-start">
           <RemittanceSteps />

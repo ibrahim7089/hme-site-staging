@@ -10,10 +10,10 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import SectionHeading from "./SectionHeading";
-import currencyCounter from "@/public/images/currency-exchange-counter.png";
-import transferCounter from "@/public/images/Moneytransfer-Counter.png";
-import branchesCounter from "@/public/images/branches-counter.png";
-import agentHandshake from "@/public/images/agent-handshake.png";
+import currencyCounter from "@/public/images/currency-exchange-counter.webp";
+import transferCounter from "@/public/images/moneytransfer-counter.webp";
+import branchesCounter from "@/public/images/branches-counter.webp";
+import agentHandshake from "@/public/images/agent-handshake.webp";
 
 type ServiceCardProps = {
   icon: LucideIcon;
