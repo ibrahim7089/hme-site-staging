@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, ChevronDown, MapPin, ShieldCheck } from "lucide-react";
+import { ArrowRight, ChevronDown, MapPin } from "lucide-react";
 import heroPerson from "@/public/images/hero-person.png";
 
 export default function VideoHero() {
@@ -54,14 +54,7 @@ export default function VideoHero() {
 
       <div className="wrap relative z-10 flex min-h-[100svh] items-start pb-[43vh] pt-[116px] sm:pb-[46vh] md:items-center md:pb-12 md:pt-[96px]">
         <div className="hero-copy max-w-[650px] md:w-[54%] lg:w-[55%]">
-          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3.5 py-2 text-xs font-semibold text-white/80 backdrop-blur">
-            <ShieldCheck className="h-4 w-4 text-[#8EC1FF]" />
-            Licensed Malaysian Money Services Business
-          </div>
 
-          <p className="mb-3 font-display text-lg font-medium text-white/68 sm:text-xl">
-            This is HME.
-          </p>
           <h1 className="max-w-[12ch] text-[clamp(42px,7vw,82px)] font-extrabold leading-[0.98] tracking-[-0.055em]">
             Money moves. Trust stays.
           </h1>
