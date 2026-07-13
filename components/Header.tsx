@@ -12,17 +12,17 @@ export default function Header() {
   const [openMobileMenu, setOpenMobileMenu] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
 
+  const closeMenus = () => {
+    setOpen(false);
+    setOpenMobileMenu(null);
+  };
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-
-  useEffect(() => {
-    setOpen(false);
-    setOpenMobileMenu(null);
-  }, [pathname]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -34,6 +34,14 @@ export default function Header() {
 
   const isActive = (href: string) =>
     pathname === href || (href !== "/" && pathname.startsWith(`${href}/`));
+
+  const contextualCta = pathname.startsWith("/rates")
+    ? { href: "/locate-us", label: "Find a Branch" }
+    : pathname.startsWith("/locate-us")
+      ? { href: "/contact", label: "Contact HME" }
+      : pathname.startsWith("/money-transfer") || pathname.startsWith("/currency-booking")
+        ? { href: "/locate-us", label: "Find a Branch" }
+        : { href: "/rates", label: "Check Rates" };
 
   const desktopLinkClass = (active: boolean) => {
     if (scrolled) {
@@ -53,7 +61,7 @@ export default function Header() {
         : "border-b border-white/10 bg-transparent"
     }`}>
       <div className="wrap flex h-[72px] items-center gap-4">
-        <Link href="/" aria-label="HME home" className="flex flex-none items-center">
+        <Link onClick={closeMenus} href="/" aria-label="HME home" className="flex flex-none items-center">
           <Logo size="sm" dark={!scrolled} />
         </Link>
 
@@ -74,7 +82,7 @@ export default function Header() {
                 </button>
                 <div className="invisible absolute left-0 top-full z-20 min-w-[220px] translate-y-1 rounded-xl border border-line bg-white p-2 opacity-0 shadow-deep transition group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
                   {item.children.map((child) => (
-                    <Link
+                    <Link onClick={closeMenus}
                       key={child.href}
                       href={child.href}
                       className={`block rounded-lg px-3 py-2.5 text-[13.5px] font-medium transition ${
@@ -89,7 +97,7 @@ export default function Header() {
                 </div>
               </div>
             ) : (
-              <Link key={item.href} href={item.href}
+              <Link onClick={closeMenus} key={item.href} href={item.href}
                 className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${desktopLinkClass(active)}`}>
                 {item.label}
               </Link>
@@ -98,8 +106,8 @@ export default function Header() {
         </nav>
 
         <div className="ml-auto flex flex-none items-center gap-2.5">
-          <Link href="/rates" className="btn-primary hidden !px-4 !py-2.5 !text-[13.5px] sm:inline-flex">
-            Check Rates
+          <Link onClick={closeMenus} href={contextualCta.href} className="btn-primary hidden !px-4 !py-2.5 !text-[13.5px] sm:inline-flex">
+            {contextualCta.label}
           </Link>
           <button
             type="button"
@@ -138,7 +146,7 @@ export default function Header() {
                   {openMobileMenu === item.label && (
                     <div className="ml-3 flex flex-col border-l border-line pl-3">
                       {item.children.map((child) => (
-                        <Link key={child.href} href={child.href}
+                        <Link onClick={closeMenus} key={child.href} href={child.href}
                           className={`rounded-lg px-3 py-2.5 text-sm font-medium ${
                             isActive(child.href) ? "text-brand-blue" : "text-slate2 hover:bg-brand-bluesoft hover:text-navy"
                           }`}>
@@ -149,7 +157,7 @@ export default function Header() {
                   )}
                 </div>
               ) : (
-                <Link key={item.href} href={item.href}
+                <Link onClick={closeMenus} key={item.href} href={item.href}
                   className={`rounded-lg px-3 py-3 text-[15px] font-semibold ${
                     active ? "bg-brand-bluesoft text-brand-blue" : "text-slate2 hover:bg-brand-bluesoft hover:text-navy"
                   }`}>

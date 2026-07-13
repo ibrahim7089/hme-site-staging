@@ -5,6 +5,8 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import MobileStickyCTA from "@/components/MobileStickyCTA";
 import { site } from "@/lib/site";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const display = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["500", "600", "700", "800"], variable: "--font-display" });
 const body = Inter({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-body" });
@@ -30,6 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "FinancialService",
+    "@id": site.domain + "/#organization",
     name: site.legalName,
     alternateName: site.brand,
     url: site.domain,
@@ -58,6 +61,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <main>{children}</main>
         <Footer />
         <MobileStickyCTA />
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

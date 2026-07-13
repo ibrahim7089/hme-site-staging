@@ -29,7 +29,16 @@ export default function RatesTabs() {
   const [active, setActive] = useState<Tab>("fx");
 
   useEffect(() => {
-    if (window.location.hash === "#remittance") setActive("remittance");
+    const syncHash = () => {
+      if (window.location.hash === "#remittance") setActive("remittance");
+    };
+    const timeout = window.setTimeout(syncHash, 0);
+    window.addEventListener("hashchange", syncHash);
+
+    return () => {
+      window.clearTimeout(timeout);
+      window.removeEventListener("hashchange", syncHash);
+    };
   }, []);
 
   return (

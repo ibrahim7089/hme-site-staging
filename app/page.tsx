@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import VideoHero from "@/components/VideoHero";
-import HeroSection from "@/components/HeroSection";
 import ServiceCards from "@/components/ServiceCards";
 import ReachUsBand from "@/components/ReachUsBand";
 import WhyChooseHME from "@/components/WhyChooseHME";
@@ -17,7 +16,6 @@ export default function HomePage() {
   return (
     <>
       <VideoHero />
-      <HeroSection />
       <ServiceCards />
       <WhyChooseHME />
       <BranchLocatorPreview limit={3} />

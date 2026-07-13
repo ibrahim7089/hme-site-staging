@@ -1,32 +1,32 @@
-import Link from "next/link";
 import Image from "next/image";
-import { ChevronDown } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, ChevronDown, MapPin, ShieldCheck } from "lucide-react";
 import heroPerson from "@/public/images/hero-person.png";
 
 export default function VideoHero() {
   return (
-    <section className="relative min-h-[660px] overflow-hidden bg-navy-deep md:min-h-[720px]">
+    <section className="hero-stage relative isolate min-h-[100svh] overflow-hidden bg-navy-deep text-white">
+      <div className="hero-grid absolute inset-0 opacity-40" aria-hidden="true" />
+      <div
+        className="absolute inset-0 bg-[radial-gradient(circle_at_72%_44%,rgba(49,128,232,0.28),transparent_38%),linear-gradient(115deg,#071E44_0%,#0B2E63_54%,#071E44_100%)]"
+        aria-hidden="true"
+      />
 
-      {/* Darker overlay for deeper navy feel */}
-      <div className="absolute inset-0 bg-navy-deep/40" />
-
-      {/* Decorative globe circle — centered behind person */}
       <svg
         aria-hidden="true"
-        className="absolute right-[5%] top-1/2 -translate-y-1/2 h-[85%] w-auto opacity-35"
+        className="hero-orbit absolute -right-[28%] bottom-[3%] h-[58%] w-auto opacity-45 sm:-right-[8%] sm:h-[70%] md:right-[2%] md:top-1/2 md:h-[80%] md:-translate-y-1/2 lg:right-[5%] lg:h-[88%]"
         viewBox="0 0 600 600"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
         <circle cx="300" cy="300" r="298" stroke="#4A90D9" strokeWidth="1.5" />
-        <circle cx="300" cy="300" r="220" stroke="#4A90D9" strokeWidth="1" strokeDasharray="4 6" />
-        <circle cx="300" cy="300" r="140" stroke="#4A90D9" strokeWidth="1" strokeDasharray="4 6" />
-        <ellipse cx="300" cy="300" rx="298" ry="120" stroke="#4A90D9" strokeWidth="1" />
+        <circle cx="300" cy="300" r="220" stroke="#4A90D9" strokeWidth="1" strokeDasharray="4 7" />
+        <circle cx="300" cy="300" r="140" stroke="#4A90D9" strokeWidth="1" strokeDasharray="4 7" />
+        <ellipse cx="300" cy="300" rx="298" ry="120" stroke="#4A90D9" />
         <ellipse cx="300" cy="300" rx="298" ry="200" stroke="#4A90D9" strokeWidth="0.8" />
         <line x1="2" y1="300" x2="598" y2="300" stroke="#4A90D9" strokeWidth="0.8" />
         <line x1="300" y1="2" x2="300" y2="598" stroke="#4A90D9" strokeWidth="0.8" />
-        {/* Dots */}
-        {[0,30,60,90,120,150,180,210,240,270,300,330].map((angle) => {
+        {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map((angle) => {
           const rad = (angle * Math.PI) / 180;
           return (
             <circle
@@ -38,50 +38,64 @@ export default function VideoHero() {
             />
           );
         })}
-        {/* Glow centre */}
-        <circle cx="300" cy="300" r="60" fill="#1a3a6b" />
-        <circle cx="300" cy="300" r="8" fill="#4A90D9" opacity="0.8" />
+        <circle cx="300" cy="300" r="60" fill="#1A3A6B" />
+        <circle cx="300" cy="300" r="8" fill="#7EB7F5" />
       </svg>
 
-      {/* Radial glow behind person */}
-      <div className="absolute right-[5%] top-0 h-full w-[55%] bg-[radial-gradient(ellipse_at_center,_rgba(74,144,217,0.18)_0%,_transparent_65%)]" />
-
-      {/* Person cutout — shifted left from edge */}
       <Image
         src={heroPerson}
         alt=""
         aria-hidden="true"
         priority
         quality={82}
-        sizes="(max-width: 767px) 55vw, (max-width: 1279px) 48vw, 42vw"
-        className="absolute bottom-0 right-0 h-[52%] w-auto object-contain object-bottom md:h-[95%] md:max-h-[760px] md:right-[8%] lg:right-[12%] xl:right-[14%]"
+        sizes="(max-width: 767px) 88vw, (max-width: 1279px) 52vw, 46vw"
+        className="hero-person absolute bottom-0 right-[-12%] z-[1] h-[45%] w-auto max-w-none object-contain object-bottom sm:right-[2%] sm:h-[50%] md:right-[2%] md:h-[79%] lg:right-[8%] lg:h-[88%] xl:right-[11%] xl:h-[91%]"
       />
 
-      {/* Text — top on mobile, centered on desktop */}
-      <div className="wrap relative flex min-h-[660px] flex-col justify-start pt-[118px] text-white md:min-h-[720px] md:justify-center md:pt-[72px]">
-        <div className="max-w-lg">
-          <p className="mb-3 font-display text-lg font-light sm:text-xl opacity-80">This is HME.</p>
-          <h1 className="text-[clamp(36px,5.5vw,64px)] font-extrabold leading-[1.08]">
-            Trusted in every exchange.
-          </h1>
-          <p className="mt-5 text-[16px] text-white/70 sm:text-[18px] leading-relaxed">
-            Currency exchange, international money transfer and currency booking —
-            one licensed Malaysian MSB network, 50+ locations nationwide.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/rates" className="btn-red">Check Today&rsquo;s Rates</Link>
-            <Link href="/locate-us" className="btn-ghost backdrop-blur">Find a Branch</Link>
+      <div className="wrap relative z-10 flex min-h-[100svh] items-start pb-[43vh] pt-[116px] sm:pb-[46vh] md:items-center md:pb-12 md:pt-[96px]">
+        <div className="hero-copy max-w-[650px] md:w-[54%] lg:w-[55%]">
+          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3.5 py-2 text-xs font-semibold text-white/80 backdrop-blur">
+            <ShieldCheck className="h-4 w-4 text-[#8EC1FF]" />
+            Licensed Malaysian Money Services Business
           </div>
-          <div className="mt-7 flex flex-wrap gap-x-5 gap-y-2 text-xs font-semibold text-white/65">
-            <span>Licensed Malaysian MSB</span>
-            <span>50+ locations nationwide</span>
+
+          <p className="mb-3 font-display text-lg font-medium text-white/68 sm:text-xl">
+            This is HME.
+          </p>
+          <h1 className="max-w-[12ch] text-[clamp(42px,7vw,82px)] font-extrabold leading-[0.98] tracking-[-0.055em]">
+            Money moves. Trust stays.
+          </h1>
+          <p className="mt-6 max-w-[590px] text-[16px] leading-relaxed text-white/72 sm:text-[18px]">
+            Exchange currency, send money overseas and book foreign notes through one
+            trusted Malaysian network with more than 50 locations nationwide.
+          </p>
+
+          <div className="mt-8 flex flex-wrap gap-3">
+            <a href="#services" className="btn-red">
+              Explore Services
+              <ArrowRight className="h-4 w-4" />
+            </a>
+            <Link href="/locate-us" className="btn-ghost backdrop-blur">
+              <MapPin className="h-4 w-4" />
+              Find a Branch
+            </Link>
+          </div>
+
+          <div className="mt-7 flex flex-wrap gap-x-6 gap-y-2 text-xs font-semibold text-white/62 sm:text-sm">
+            <span>Currency exchange</span>
+            <span>International transfer</span>
+            <span>Currency booking</span>
           </div>
         </div>
       </div>
 
-      <a href="#services" aria-label="Scroll down"
-        className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/50 transition hover:text-white">
-        <ChevronDown className="h-8 w-8 animate-bounce" />
+      <a
+        href="#services"
+        aria-label="Explore HME services"
+        className="absolute bottom-5 left-1/2 z-20 hidden -translate-x-1/2 items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-white/55 transition hover:text-white md:flex"
+      >
+        Scroll
+        <ChevronDown className="h-5 w-5 animate-bounce" />
       </a>
     </section>
   );

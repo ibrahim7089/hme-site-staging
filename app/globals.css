@@ -25,3 +25,92 @@
   .btn-outline { @apply btn border-[1.5px] border-line bg-white text-navy hover:border-brand-blue hover:text-brand-blue; }
   .btn-ghost { @apply btn border-[1.5px] border-white/35 text-white hover:border-white hover:bg-white/10; }
 }
+
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root) {
+  animation: 180ms ease-out both page-fade-out;
+}
+
+::view-transition-new(root) {
+  animation: 260ms ease-out both page-fade-in;
+}
+
+.hero-grid {
+  background-image:
+    linear-gradient(rgba(126, 183, 245, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(126, 183, 245, 0.06) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: linear-gradient(to right, transparent, black 45%, black);
+}
+
+.hero-copy {
+  animation: hero-copy-in 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.hero-person {
+  animation: hero-person-in 900ms 120ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.hero-orbit {
+  animation: orbit-turn 80s linear infinite;
+  transform-origin: center;
+}
+
+.service-bento-card {
+  container-type: inline-size;
+}
+
+@container (min-width: 30rem) {
+  .service-card-body h3 {
+    font-size: 1.875rem;
+    line-height: 1.15;
+  }
+}
+
+@supports (animation-timeline: view()) {
+  .scroll-reveal {
+    animation: section-reveal linear both;
+    animation-timeline: view();
+    animation-range: entry 8% cover 28%;
+  }
+}
+
+@keyframes hero-copy-in {
+  from { opacity: 0; transform: translateY(24px); }
+}
+
+@keyframes hero-person-in {
+  from { opacity: 0; transform: translateY(32px) scale(0.985); }
+}
+
+@keyframes orbit-turn {
+  to { rotate: 360deg; }
+}
+
+@keyframes section-reveal {
+  from { opacity: 0.62; transform: translateY(28px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes page-fade-out {
+  to { opacity: 0; transform: translateY(-4px); }
+}
+
+@keyframes page-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .hero-copy,
+  .hero-person,
+  .hero-orbit,
+  .scroll-reveal,
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
+  }
+}
