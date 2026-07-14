@@ -1,15 +1,16 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import PageHero from "@/components/PageHero";
-import { getPublishedPromotions } from "@/lib/cms";
+import type { Metadata } from 'next'
+import Image from 'next/image'
+import Link from 'next/link'
+import PageHero from '@/components/PageHero'
+import { getPublishedPromotions } from '@/lib/cms'
 
 export const metadata: Metadata = {
-  title: "Promotions | HME",
-  description: "Current offers on foreign currency exchange, international money transfer and currency booking with HME.",
-};
+  title: 'Promotions | HME',
+  description: 'Current offers on foreign currency exchange, international money transfer and currency booking with HME.',
+}
 
 export default async function PromotionsPage() {
-  const promotions = await getPublishedPromotions();
+  const promotions = await getPublishedPromotions()
 
   return (
     <>
@@ -19,18 +20,31 @@ export default async function PromotionsPage() {
         {promotions.length > 0 ? (
           <div className="wrap grid gap-4 md:grid-cols-3">
             {promotions.map((promotion) => (
-              <article key={promotion.slug} className="flex flex-col rounded-card border border-line bg-white p-6 transition hover:shadow-soft">
-                <span className="eyebrow">Current offer</span>
-                <h3 className="mt-2 text-lg font-bold text-navy">{promotion.title}</h3>
-                <p className="mt-3 flex-1 text-sm text-slate2">{promotion.summary}</p>
-                {promotion.endDate && (
-                  <p className="mt-4 text-xs font-semibold text-slate2">Ends {promotion.endDate}</p>
+              <article key={promotion.slug} className="overflow-hidden rounded-card border border-line bg-white transition hover:-translate-y-0.5 hover:shadow-soft">
+                {promotion.image && (
+                  <div className="relative aspect-[16/9] overflow-hidden bg-cloud">
+                    <Image
+                      src={promotion.image}
+                      alt={promotion.title}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                      className="object-cover"
+                    />
+                  </div>
                 )}
-                {promotion.ctaHref && promotion.ctaLabel && (
-                  <Link href={promotion.ctaHref} className="mt-5 text-sm font-bold text-brand-blue">
-                    {promotion.ctaLabel} →
-                  </Link>
-                )}
+                <div className="flex h-full flex-col p-6">
+                  <span className="eyebrow">Current offer</span>
+                  <h2 className="mt-2 text-lg font-bold text-navy">{promotion.title}</h2>
+                  <p className="mt-3 flex-1 text-sm text-slate2">{promotion.summary}</p>
+                  {promotion.endDate && (
+                    <p className="mt-4 text-xs font-semibold text-slate2">Ends {promotion.endDate}</p>
+                  )}
+                  {promotion.ctaHref && promotion.ctaLabel && (
+                    <Link href={promotion.ctaHref} className="mt-5 text-sm font-bold text-brand-blue">
+                      {promotion.ctaLabel} →
+                    </Link>
+                  )}
+                </div>
               </article>
             ))}
           </div>
@@ -46,5 +60,5 @@ export default async function PromotionsPage() {
         <p className="wrap mt-8 text-xs text-slate2">Promotions are subject to published terms and conditions and may change after their stated end date.</p>
       </section>
     </>
-  );
+  )
 }

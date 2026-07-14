@@ -469,6 +469,7 @@ export async function getCmsPublishedSnapshot() {
     rates: null,
     promotions: null,
     branches: null,
+    news: null,
   }
   const versions: Record<string, unknown> = {}
   let publishedAt: string | null = null

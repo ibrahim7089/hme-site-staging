@@ -18,7 +18,7 @@ const securityHeaders = [
       "script-src 'self' 'unsafe-inline'",  // Next.js requires unsafe-inline for hydration scripts
       "style-src 'self' 'unsafe-inline'",   // Tailwind inline styles require this
       "font-src 'self' data:",
-      "img-src 'self' data: blob:",
+      "img-src 'self' data: blob: https://*.public.blob.vercel-storage.com",
       "connect-src 'self' https://vitals.vercel-insights.com",
       "frame-src https://www.google.com https://maps.google.com",
       "frame-ancestors 'none'",             // belt-and-suspenders alongside X-Frame-Options
@@ -36,6 +36,7 @@ const nextConfig = {
     imageSizes: [32, 48, 64, 96, 128, 256, 384],
     qualities: [70, 75, 82],
     minimumCacheTTL: 2592000,
+    remotePatterns: [{ protocol: "https", hostname: "*.public.blob.vercel-storage.com" }],
   },
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];

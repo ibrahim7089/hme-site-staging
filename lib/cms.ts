@@ -20,6 +20,19 @@ export type PublishedPromotion = {
   active: boolean
 }
 
+
+export type PublishedNewsArticle = {
+  slug: string
+  title: string
+  summary: string
+  body: string
+  publishedDate: string
+  image?: string
+  imageAlt?: string
+  author?: string
+  active: boolean
+}
+
 type CmsSnapshot = Awaited<ReturnType<typeof getCmsPublishedSnapshot>>
 
 const getSnapshot = unstable_cache(
@@ -139,6 +152,40 @@ function validPromotions(value: unknown): PublishedPromotion[] | null {
   return promotions
 }
 
+
+function validNews(value: unknown): PublishedNewsArticle[] | null {
+  if (!value || typeof value !== 'object') return null
+  const rows = (value as { articles?: unknown }).articles
+  if (!Array.isArray(rows) || rows.length > 200) return null
+
+  const articles: PublishedNewsArticle[] = []
+  for (const row of rows) {
+    if (!row || typeof row !== 'object') return null
+    const source = row as Record<string, unknown>
+    const slug = text(source.slug, 100)
+    const title = text(source.title, 180)
+    const summary = text(source.summary, 500)
+    const body = text(source.body, 20000)
+    const publishedDate = text(source.publishedDate, 10)
+    const image = text(source.image, 1000) || undefined
+    if (!slug || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) || !title || !summary || !body ||
+      !publishedDate || !/^\d{4}-\d{2}-\d{2}$/.test(publishedDate)) return null
+    if (source.active === false) continue
+    articles.push({
+      slug,
+      title,
+      summary,
+      body,
+      publishedDate,
+      image,
+      imageAlt: text(source.imageAlt, 180) || undefined,
+      author: text(source.author, 100) || 'HME',
+      active: true,
+    })
+  }
+  return articles.sort((a, b) => b.publishedDate.localeCompare(a.publishedDate))
+}
+
 export async function getPublishedRates() {
   const snapshot = await getSnapshot()
   const payload = snapshot?.content?.rates
@@ -160,6 +207,11 @@ export async function getPublishedBranches() {
 export async function getPublishedPromotions() {
   const snapshot = await getSnapshot()
   return validPromotions(snapshot?.content?.promotions) || []
+}
+
+export async function getPublishedNews() {
+  const snapshot = await getSnapshot()
+  return validNews(snapshot?.content?.news)
 }
 
 export { CMS_TAG }

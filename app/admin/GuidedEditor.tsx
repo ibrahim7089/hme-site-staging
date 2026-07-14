@@ -1,6 +1,8 @@
 'use client'
 
-import { BadgePercent, Banknote, Building2, MapPin, Plus, Trash2 } from 'lucide-react'
+import { useState } from 'react'
+import Image from 'next/image'
+import { BadgePercent, Banknote, Building2, LoaderCircle, MapPin, Newspaper, Plus, Trash2, UploadCloud } from 'lucide-react'
 import type { CmsContentType } from '@/lib/cms-validation'
 import styles from './admin.module.css'
 
@@ -31,6 +33,63 @@ function slugify(value: string) {
 
 function SectionTitle({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
   return <div className={styles.formIntro}><span>{icon}</span><div><h3>{title}</h3><p>{description}</p></div></div>
+}
+
+
+function ImageUploadField({
+  value,
+  alt,
+  disabled,
+  onChange,
+}: {
+  value: string
+  alt: string
+  disabled: boolean
+  onChange: (url: string) => void
+}) {
+  const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState('')
+
+  async function upload(file?: File) {
+    if (!file) return
+    if (file.size > 4 * 1024 * 1024) {
+      setError('Image must be smaller than 4 MB.')
+      return
+    }
+    setUploading(true)
+    setError('')
+    try {
+      const form = new FormData()
+      form.append('image', file)
+      const response = await fetch('/api/admin/uploads', { method: 'POST', body: form })
+      const result = await response.json().catch(() => ({}))
+      if (response.status === 401) {
+        window.location.assign('/admin/login')
+        return
+      }
+      if (!response.ok) throw new Error(result.error || 'Upload failed')
+      onChange(String(result.url))
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Upload failed')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  return <div className={styles.imageUpload}>
+    {value ? <div className={styles.uploadedPreview}>
+      <Image src={value} alt={alt || 'Uploaded content image'} fill sizes="600px" className={styles.uploadedImage} />
+      {!disabled && <button type="button" onClick={() => onChange('')}>Remove image</button>}
+    </div> : <div className={styles.imagePlaceholder}><UploadCloud size={25} /><span>No image selected</span></div>}
+    <div className={styles.uploadActions}>
+      <label className={styles.uploadButton}>{uploading ? <LoaderCircle size={17} className={styles.spinner} /> : <UploadCloud size={17} />}
+        {uploading ? 'Uploading…' : value ? 'Replace image' : 'Upload image'}
+        <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" disabled={disabled || uploading} onChange={(event) => { void upload(event.target.files?.[0]); event.target.value = '' }} />
+      </label>
+      <small>JPG, PNG, WebP or AVIF. Maximum 4 MB. Landscape images work best.</small>
+    </div>
+    {error && <p className={styles.uploadError}>{error}</p>}
+  </div>
 }
 
 function RatesEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
@@ -84,7 +143,7 @@ function PromotionsEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) 
         <label>End date<input type="date" value={text(row.endDate)} onChange={(event) => update(index, 'endDate', event.target.value || undefined)} disabled={disabled} /></label>
         <label>Button text<input value={text(row.ctaLabel)} onChange={(event) => update(index, 'ctaLabel', event.target.value)} placeholder="Learn more" disabled={disabled} /></label>
         <label>Button link<input value={text(row.ctaHref)} onChange={(event) => update(index, 'ctaHref', event.target.value)} placeholder="/contact" disabled={disabled} /></label>
-        <label className={styles.spanTwo}>Image URL (optional)<input value={text(row.image)} onChange={(event) => update(index, 'image', event.target.value)} placeholder="https://..." disabled={disabled} /></label>
+        <div className={styles.spanTwo}><label>Promotion image</label><ImageUploadField value={text(row.image)} alt={text(row.title)} disabled={disabled} onChange={(url) => update(index, 'image', url)} /></div>
         <label className={styles.spanTwo}>URL name <input value={text(row.slug)} onChange={(event) => update(index, 'slug', slugify(event.target.value))} placeholder="send-money-and-save" disabled={disabled} /><small>Automatically generated from the title. Lowercase letters and dashes only.</small></label>
       </div>
     </section>)}</div>
@@ -93,8 +152,39 @@ function PromotionsEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) 
   </div>
 }
 
+
+function NewsEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
+  const root = record(payload)
+  const rows = Array.isArray(root.articles) ? root.articles.map(record) : []
+  const commit = (next: Entry[]) => onChange({ ...root, articles: next })
+  const update = (index: number, key: string, value: unknown) => commit(rows.map((row, rowIndex) => rowIndex === index ? { ...row, [key]: value } : row))
+  const updateTitle = (index: number, value: string) => commit(rows.map((row, rowIndex) => rowIndex === index ? { ...row, title: value, slug: slugify(value), imageAlt: text(row.imageAlt) || value } : row))
+  const add = () => commit([...rows, { slug: 'new-article', title: '', summary: '', body: '', publishedDate: new Date().toISOString().slice(0, 10), image: '', imageAlt: '', author: 'HME', active: true }])
+  const remove = (index: number) => commit(rows.filter((_, rowIndex) => rowIndex !== index))
+
+  return <div className={styles.guidedEditor}>
+    <SectionTitle icon={<Newspaper size={20} />} title="Publish company news" description="Create announcements, branch updates and company stories with a photo." />
+    <div className={styles.cardList}>{rows.map((row, index) => <section className={styles.formCard} key={index}>
+      <div className={styles.formCardHead}><div><span>News article {index + 1}</span><strong>{text(row.title) || 'Untitled article'}</strong></div><label className={styles.switchLabel}><input type="checkbox" checked={checked(row.active)} onChange={(event) => update(index, 'active', event.target.checked)} disabled={disabled} /> Visible</label><button className={styles.iconDanger} type="button" title="Remove article" onClick={() => remove(index)} disabled={disabled}><Trash2 size={17} /></button></div>
+      <div className={styles.formGrid}>
+        <label className={styles.spanTwo}>Headline<input value={text(row.title)} onChange={(event) => updateTitle(index, event.target.value)} placeholder="HME opens a new branch" maxLength={180} disabled={disabled} /></label>
+        <label>News date<input type="date" value={text(row.publishedDate)} onChange={(event) => update(index, 'publishedDate', event.target.value)} disabled={disabled} /></label>
+        <label>Author<input value={text(row.author)} onChange={(event) => update(index, 'author', event.target.value)} placeholder="HME" maxLength={100} disabled={disabled} /></label>
+        <label className={styles.spanTwo}>Short summary<textarea value={text(row.summary)} onChange={(event) => update(index, 'summary', event.target.value)} placeholder="A short introduction shown on the News card." maxLength={500} disabled={disabled} /></label>
+        <label className={styles.spanTwo}>Full article<textarea className={styles.articleBody} value={text(row.body)} onChange={(event) => update(index, 'body', event.target.value)} placeholder="Write the full announcement here. Use blank lines between paragraphs." maxLength={20000} disabled={disabled} /></label>
+        <div className={styles.spanTwo}><label>Article image</label><ImageUploadField value={text(row.image)} alt={text(row.imageAlt) || text(row.title)} disabled={disabled} onChange={(url) => update(index, 'image', url)} /></div>
+        {text(row.image) && <label className={styles.spanTwo}>Image description (for accessibility)<input value={text(row.imageAlt)} onChange={(event) => update(index, 'imageAlt', event.target.value)} placeholder="Describe what is shown in the image" maxLength={180} disabled={disabled} /></label>}
+        <label className={styles.spanTwo}>URL name<input value={text(row.slug)} onChange={(event) => update(index, 'slug', slugify(event.target.value))} disabled={disabled} /><small>Created automatically from the headline.</small></label>
+      </div>
+    </section>)}</div>
+    {rows.length === 0 && <div className={styles.blankState}>No news article added yet.</div>}
+    <button className={styles.addRowButton} type="button" onClick={add} disabled={disabled}><Plus size={17} /> Add news article</button>
+  </div>
+}
+
 function BranchesEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
   const root = record(payload)
+
   const rows = Array.isArray(root.branches) ? root.branches.map(record) : []
   const commit = (next: Entry[]) => onChange({ ...root, branches: next })
   const update = (index: number, key: string, value: unknown) => commit(rows.map((row, rowIndex) => rowIndex === index ? { ...row, [key]: value } : row))
@@ -124,6 +214,7 @@ function BranchesEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
 export function GuidedEditor(props: Props) {
   if (props.type === 'rates') return <RatesEditor {...props} />
   if (props.type === 'promotions') return <PromotionsEditor {...props} />
+  if (props.type === 'news') return <NewsEditor {...props} />
   return <BranchesEditor {...props} />
 }
 
@@ -141,8 +232,16 @@ export function ContentPreview({ type, payload }: { type: CmsContentType; payloa
   if (type === 'promotions') {
     const rows = Array.isArray(root.promotions) ? root.promotions.map(record).filter((row) => checked(row.active)) : []
     return <div className={styles.previewSurface}><div className={styles.previewHeader}><BadgePercent size={21} /><div><span>Customer preview</span><h3>Latest promotions</h3></div></div>
-      <div className={styles.promoPreviewGrid}>{rows.map((row, index) => <article key={index}><div className={styles.previewImage}>{text(row.image) ? 'Promotion image' : 'HME Promotion'}</div><small>{text(row.startDate)}{text(row.endDate) ? ` – ${text(row.endDate)}` : ''}</small><h4>{text(row.title) || 'Promotion title'}</h4><p>{text(row.summary) || 'Promotion description will appear here.'}</p>{text(row.ctaLabel) && <span className={styles.previewCta}>{text(row.ctaLabel)}</span>}</article>)}</div>
+      <div className={styles.promoPreviewGrid}>{rows.map((row, index) => <article key={index}>{text(row.image) ? <div className={styles.newsPreviewImage}><Image src={text(row.image)} alt={text(row.title)} fill sizes="400px" /></div> : <div className={styles.previewImage}>HME Promotion</div>}<small>{text(row.startDate)}{text(row.endDate) ? ` – ${text(row.endDate)}` : ''}</small><h4>{text(row.title) || 'Promotion title'}</h4><p>{text(row.summary) || 'Promotion description will appear here.'}</p>{text(row.ctaLabel) && <span className={styles.previewCta}>{text(row.ctaLabel)}</span>}</article>)}</div>
       {rows.length === 0 && <div className={styles.blankState}>No active promotion to preview.</div>}
+    </div>
+  }
+
+  if (type === 'news') {
+    const rows = Array.isArray(root.articles) ? root.articles.map(record).filter((row) => checked(row.active)) : []
+    return <div className={styles.previewSurface}><div className={styles.previewHeader}><Newspaper size={21} /><div><span>Customer preview</span><h3>HME News</h3></div></div>
+      <div className={styles.newsPreviewGrid}>{rows.map((row, index) => <article key={index}>{text(row.image) ? <div className={styles.newsPreviewImage}><Image src={text(row.image)} alt={text(row.imageAlt) || text(row.title)} fill sizes="400px" /></div> : <div className={styles.previewImage}>HME News</div>}<small>{text(row.publishedDate)} · {text(row.author) || 'HME'}</small><h4>{text(row.title) || 'News headline'}</h4><p>{text(row.summary) || 'News summary will appear here.'}</p><span className={styles.previewCta}>Read full update</span></article>)}</div>
+      {rows.length === 0 && <div className={styles.blankState}>Add a visible news article to see the preview.</div>}
     </div>
   }
 

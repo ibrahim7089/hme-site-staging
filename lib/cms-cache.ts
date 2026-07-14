@@ -9,6 +9,7 @@ const pathsByType: Record<CmsContentType, string[]> = {
   rates: ['/', '/rates', '/currency-exchange', '/money-transfer-rates'],
   promotions: ['/promotions'],
   branches: ['/', '/locate-us', '/currency-exchange'],
+  news: ['/media/news'],
 }
 
 export function invalidateCmsContent(contentType: CmsContentType) {

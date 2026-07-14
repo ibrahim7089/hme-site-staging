@@ -30,6 +30,7 @@ const labels: Record<CmsContentType, string> = {
   rates: 'Exchange rates',
   promotions: 'Promotions',
   branches: 'Branches',
+  news: 'News',
 }
 const templates: Record<CmsContentType, unknown> = {
   rates: {
@@ -40,6 +41,7 @@ const templates: Record<CmsContentType, unknown> = {
     disclaimer: 'Rates are indicative and subject to availability at the branch.',
   },
   promotions: { promotions: [{ slug: 'sample-promotion', title: 'Promotion title', summary: 'Brief promotion description.', active: true, image: '', ctaLabel: 'Learn more', ctaHref: '/contact' }] },
+  news: { articles: [{ slug: 'new-hme-update', title: 'HME company update', summary: 'A short summary of the announcement.', body: 'Write the full announcement here.', publishedDate: new Date().toISOString().slice(0, 10), image: '', imageAlt: '', author: 'HME', active: true }] },
   branches: { branches: [{ name: 'Branch name', state: 'Kedah', address: 'Full branch address', phone: '+60', whatsapp: '', hours: 'Mon–Sun', services: ['Currency Exchange', 'Money Transfer'], mapsUrl: '', latitude: null, longitude: null, active: true }] },
 }
 const statuses = ['DRAFT', 'REJECTED', 'PENDING', 'APPROVED', 'PUBLISHED', 'ARCHIVED']
@@ -198,7 +200,7 @@ export default function AdminDashboard({ user, permissions }: { user: CmsUser; p
       </section> : <>
         <section className={styles.beginnerGuide}>
           <div className={styles.guideTitle}><CircleHelp size={21} /><div><strong>Updating the website is just three steps</strong><span>You never need to touch code. Advanced tools are kept in a separate tab.</span></div></div>
-          <ol><li><b>1</b><span><strong>Fill in the form</strong><small>Choose rates, promotions or branches.</small></span></li><li><b>2</b><span><strong>Check the preview</strong><small>See how customers will read it.</small></span></li><li><b>3</b><span><strong>Save and submit</strong><small>A different checker approves it.</small></span></li></ol>
+          <ol><li><b>1</b><span><strong>Fill in the form</strong><small>Choose rates, promotions, branches or news.</small></span></li><li><b>2</b><span><strong>Check the preview</strong><small>See how customers will read it.</small></span></li><li><b>3</b><span><strong>Save and submit</strong><small>A different checker approves it.</small></span></li></ol>
         </section>
 
         <div className={styles.contentTabs}>{(Object.keys(labels) as CmsContentType[]).map((entry) => <button key={entry} className={type === entry ? styles.tabActive : ''} onClick={() => setType(entry)}>{labels[entry]}</button>)}</div>

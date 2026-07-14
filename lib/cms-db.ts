@@ -64,7 +64,7 @@ const schemaStatements = [
   )`,
   `CREATE TABLE IF NOT EXISTS cms_items (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    content_type TEXT NOT NULL CHECK(content_type IN ('rates','promotions','branches')),
+    content_type TEXT NOT NULL CHECK(content_type IN ('rates','promotions','branches','news')),
     content_key TEXT NOT NULL DEFAULT 'primary',
     version INTEGER NOT NULL,
     status TEXT NOT NULL DEFAULT 'DRAFT'
@@ -132,6 +132,42 @@ const schemaStatements = [
     END`,
 ]
 
+
+async function migrateCmsItemsForNews(db: Client) {
+  const existing = await db.execute(
+    "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'cms_items' LIMIT 1",
+  )
+  const tableSql = String(existing.rows[0]?.sql || '')
+  if (!tableSql || tableSql.includes("'news'")) return
+
+  const desired = schemaStatements.find((statement) =>
+    statement.startsWith('CREATE TABLE IF NOT EXISTS cms_items'),
+  )
+  if (!desired) throw new Error('CMS items schema is missing')
+
+  const temporaryTable = 'cms_items_news_migration'
+  const createTemporary = desired.replace(
+    'CREATE TABLE IF NOT EXISTS cms_items',
+    `CREATE TABLE ${temporaryTable}`,
+  )
+  const tx = await db.transaction('write')
+  try {
+    await tx.execute(`DROP TABLE IF EXISTS ${temporaryTable}`)
+    await tx.execute(createTemporary)
+    await tx.execute(`INSERT INTO ${temporaryTable} SELECT * FROM cms_items`)
+    await tx.execute('DROP TABLE cms_items')
+    await tx.execute(`ALTER TABLE ${temporaryTable} RENAME TO cms_items`)
+    await tx.execute('CREATE INDEX IF NOT EXISTS idx_cms_items_queue ON cms_items(status, scheduled_for, updated_at DESC)')
+    await tx.execute('CREATE INDEX IF NOT EXISTS idx_cms_items_content ON cms_items(content_type, content_key, version DESC)')
+    await tx.commit()
+  } catch (error) {
+    if (!tx.closed) await tx.rollback()
+    throw error
+  } finally {
+    tx.close()
+  }
+}
+
 async function seedFirstAdmin(db: Client) {
   const existing = await db.execute('SELECT COUNT(*) AS total FROM cms_users')
   const total = Number(existing.rows[0]?.total || 0)
@@ -160,6 +196,7 @@ export async function ensureCmsSchema() {
       for (const statement of schemaStatements) {
         await db.execute(statement)
       }
+      await migrateCmsItemsForNews(db)
       await seedFirstAdmin(db)
     })().catch((error) => {
       globalThis.hmeCmsSchemaPromise = undefined
