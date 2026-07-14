@@ -1,26 +1,54 @@
-# HME Website — Next.js + Tailwind
+# HME Website
 
-Redesign of hmeremit.com.my for Hasani Munawarah Exchange Sdn Bhd.
+Public HME website and integrated publishing CMS built with Next.js 16.
 
-## Run
+## Local development
+
 ```bash
 npm install
-npm run dev   # http://localhost:3000
+npm run dev
 ```
 
-## Structure
-- `app/` — App Router pages (14 pages, each with SEO metadata)
-- `components/` — TopTrustBar, Header, HeroSection (signature rate board),
-  RateWidget, ServiceCards, WhyChooseHME, RemittanceSteps, CurrencyExchangeSteps,
-  BranchLocatorPreview, AgentCTA, ComplianceTrustSection, FAQSection, Footer,
-  MobileStickyCTA, PageHero, SectionHeading, StepsCard
-- `lib/` — site config, rates data, branches data
+Open [http://localhost:3000](http://localhost:3000). The CMS is available at
+[http://localhost:3000/admin](http://localhost:3000/admin).
 
-## Go-live checklist
-1. Replace placeholder rates in `lib/rates.ts` with a live feed (API route or CMS).
-2. Fill real branch data in `lib/branches.ts` + embed Google Maps in BranchLocatorPreview.
-3. Fill licence/registration numbers and HQ address in `lib/site.ts`.
-4. Wire forms (contact, agent, booking) to an API route or form service.
-5. Replace emoji flags with SVG flag icons (e.g. `country-flag-icons` package) for consistency across devices.
-6. Add real photography (branches, counters, staff) for About/Career.
-7. Add sitemap.xml + robots.txt via `app/sitemap.ts` and `app/robots.ts`.
+For local development only, if CMS environment variables are omitted, the app uses
+`data/hme-cms.db` with:
+
+- Email: `admin@hme.local`
+- Password: `ChangeMe123!`
+
+Change these before using shared or production environments.
+
+## Production CMS setup
+
+Create a Turso/libSQL database, then configure the following environment variables
+in Vercel:
+
+- `TURSO_DATABASE_URL`
+- `TURSO_AUTH_TOKEN`
+- `CMS_AUTH_SECRET` (minimum 32 characters)
+- `CMS_ADMIN_EMAIL`
+- `CMS_ADMIN_PASSWORD` (minimum 12 characters)
+- `CMS_ADMIN_NAME` (optional)
+
+Redeploy after adding them. On the first CMS request, the schema and initial Admin
+account are created automatically.
+
+## Publishing workflow
+
+1. Website Editor or Admin creates and submits a draft.
+2. A different Website Checker or Admin approves or rejects it.
+3. Approved content is published immediately or at the scheduled time.
+4. Publishing invalidates the relevant Next.js cache and public route.
+5. Every action is written to an immutable audit log.
+
+Public pages never read draft or pending content. Supported content types are
+exchange rates, promotions and branches.
+
+## Quality checks
+
+```bash
+npm run lint
+npm run build
+```

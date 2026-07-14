@@ -7,6 +7,8 @@ import { site } from "@/lib/site";
 
 export default function MobileStickyCTA() {
   const pathname = usePathname();
+  if (pathname.startsWith("/admin")) return null;
+
   const items = [
     { icon: LineChart, label: "Rates", href: "/rates" },
     { icon: Globe, label: "Send Money", href: "/money-transfer" },

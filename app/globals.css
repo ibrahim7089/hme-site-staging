@@ -131,3 +131,6 @@
     animation: none !important;
   }
 }
+
+body:has(.admin-root) > footer { display: none; }
+body:has(.admin-root) { padding-bottom: 0 !important; }

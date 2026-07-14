@@ -1,7 +1,12 @@
 import 'server-only'
+
+import { unstable_cache } from 'next/cache'
 import type { Branch } from './branches'
 import type { Rate } from './rates'
 import { branches as localBranches } from './branches'
+import { CMS_TAG } from './cms-cache'
+import { isCmsConfigured } from './cms-db'
+import { getCmsPublishedSnapshot } from './cms-service'
 
 export type PublishedPromotion = {
   slug: string
@@ -15,53 +20,21 @@ export type PublishedPromotion = {
   active: boolean
 }
 
-type CmsSnapshot = {
-  content?: {
-    rates?: unknown
-    promotions?: unknown
-    branches?: unknown
-  }
-  meta?: {
-    publishedAt?: string | null
-    versions?: Record<string, { version?: number; checksum?: string; publishedAt?: string }>
-  }
-}
+type CmsSnapshot = Awaited<ReturnType<typeof getCmsPublishedSnapshot>>
 
-const CMS_TAG = 'hme-published-content'
-const CMS_REVALIDATE_SECONDS = 300
-
-function endpoint() {
-  const configured = process.env.HME_CMS_API_URL?.trim()
-  if (!configured) return null
-  if (/\/api\/public\/content\/?$/.test(configured)) return configured
-  return `${configured.replace(/\/$/, '')}/api/public/content`
-}
-
-async function getSnapshot(): Promise<CmsSnapshot | null> {
-  const url = endpoint()
-  if (!url) return null
-
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 5000)
-  try {
-    const response = await fetch(url, {
-      headers: { accept: 'application/json' },
-      signal: controller.signal,
-      cache: 'force-cache',
-      next: {
-        revalidate: CMS_REVALIDATE_SECONDS,
-        tags: [CMS_TAG],
-      },
-    })
-    if (!response.ok) return null
-    const data: unknown = await response.json()
-    return data && typeof data === 'object' ? data as CmsSnapshot : null
-  } catch {
-    return null
-  } finally {
-    clearTimeout(timeout)
-  }
-}
+const getSnapshot = unstable_cache(
+  async (): Promise<CmsSnapshot | null> => {
+    if (!isCmsConfigured()) return null
+    try {
+      return await getCmsPublishedSnapshot()
+    } catch (error) {
+      console.error('[cms-snapshot]', error)
+      return null
+    }
+  },
+  ['hme-cms-published-snapshot-v1'],
+  { revalidate: 300, tags: [CMS_TAG] },
+)
 
 function text(value: unknown, max = 500) {
   return typeof value === 'string' && value.trim() && value.length <= max
@@ -118,8 +91,6 @@ function validBranches(value: unknown): Branch[] | null {
       : null
     if (!name || !state || !address || !hours || !services) return null
 
-    const mapsUrl = text(source.mapsUrl, 500) ||
-      `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`
     branches.push({
       name,
       state,
@@ -128,7 +99,8 @@ function validBranches(value: unknown): Branch[] | null {
       services,
       phone: text(source.phone, 40) || '',
       whatsapp: text(source.whatsapp, 200) || '',
-      mapsUrl,
+      mapsUrl: text(source.mapsUrl, 500) ||
+        `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`,
     })
   }
   return branches
@@ -170,12 +142,13 @@ function validPromotions(value: unknown): PublishedPromotion[] | null {
 export async function getPublishedRates() {
   const snapshot = await getSnapshot()
   const payload = snapshot?.content?.rates
-  const rates = validRates(payload) || []
   const source = payload && typeof payload === 'object' ? payload as Record<string, unknown> : {}
   return {
-    rates,
+    rates: validRates(payload) || [],
     disclaimer: text(source.disclaimer, 500),
-    effectiveAt: text(source.effectiveAt, 50) || snapshot?.meta?.versions?.rates?.publishedAt || null,
+    effectiveAt: text(source.effectiveAt, 50) ||
+      (snapshot?.meta.versions.rates as { publishedAt?: string } | undefined)?.publishedAt ||
+      null,
   }
 }
 
