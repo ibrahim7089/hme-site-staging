@@ -13,7 +13,13 @@ export async function POST(request: Request) {
   const requestId = cmsRequestId(request)
   try {
     assertCmsOrigin(request)
-    const parsed = schema.safeParse(await request.json())
+    let body: unknown
+    try {
+      body = await request.json()
+    } catch {
+      return cmsJson({ error: 'Request body must be valid JSON', code: 'INVALID_JSON' }, 400, requestId)
+    }
+    const parsed = schema.safeParse(body)
     if (!parsed.success) {
       return cmsJson({ error: 'Valid email and password are required', code: 'VALIDATION_ERROR' }, 400, requestId)
     }
