@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { BadgePercent, Banknote, Building2, LoaderCircle, MapPin, Newspaper, Plus, Trash2, UploadCloud } from 'lucide-react'
+import { BadgePercent, Banknote, BookOpenText, BriefcaseBusiness, Building2, Contact, LoaderCircle, MapPin, Newspaper, Plus, SendHorizontal, Trash2, UploadCloud } from 'lucide-react'
 import type { CmsContentType } from '@/lib/cms-validation'
 import styles from './admin.module.css'
 
@@ -28,7 +28,7 @@ function checked(value: unknown) {
 }
 
 function slugify(value: string) {
-  return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 100) || 'new-promotion'
+  return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 100) || 'new-item'
 }
 
 function SectionTitle({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
@@ -123,6 +123,39 @@ function RatesEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
   </div>
 }
 
+
+function TransferRatesEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
+  const root = record(payload)
+  const rows = Array.isArray(root.rates) ? root.rates.map(record) : []
+  const commit = (next: Entry[]) => onChange({ ...root, rates: next })
+  const update = (index: number, key: string, value: unknown) => commit(rows.map((row, rowIndex) => rowIndex === index ? { ...row, [key]: value } : row))
+  const remove = (index: number) => commit(rows.filter((_, rowIndex) => rowIndex !== index))
+  const add = () => commit([...rows, { countryCode: '', country: '', currency: '', rate: '', fee: '', active: true }])
+
+  return <div className={styles.guidedEditor}>
+    <SectionTitle icon={<SendHorizontal size={20} />} title="Enter money transfer rates" description="Use one row for each destination and payout currency. Fees can be left empty." />
+    <div className={styles.rateTableWrap}>
+      <table className={styles.formTable}>
+        <thead><tr><th>Destination</th><th>Country code</th><th>Currency</th><th>Rate / MYR</th><th>Fee (MYR)</th><th>Visible</th><th><span className="sr-only">Remove</span></th></tr></thead>
+        <tbody>{rows.map((row, index) => <tr key={index}>
+          <td><input aria-label={'Destination row ' + (index + 1)} value={text(row.country)} onChange={(event) => update(index, 'country', event.target.value)} placeholder="Indonesia" disabled={disabled} /></td>
+          <td><input aria-label={'Country code row ' + (index + 1)} value={text(row.countryCode)} onChange={(event) => update(index, 'countryCode', event.target.value.toUpperCase().slice(0, 2))} placeholder="ID" maxLength={2} disabled={disabled} /></td>
+          <td><input aria-label={'Currency row ' + (index + 1)} value={text(row.currency)} onChange={(event) => update(index, 'currency', event.target.value.toUpperCase().slice(0, 3))} placeholder="IDR" maxLength={3} disabled={disabled} /></td>
+          <td><input aria-label={'Transfer rate row ' + (index + 1)} value={text(row.rate)} onChange={(event) => update(index, 'rate', event.target.value)} placeholder="3500.00" inputMode="decimal" disabled={disabled} /></td>
+          <td><input aria-label={'Transfer fee row ' + (index + 1)} value={text(row.fee)} onChange={(event) => update(index, 'fee', event.target.value)} placeholder="0.00" inputMode="decimal" disabled={disabled} /></td>
+          <td><input aria-label={'Visible row ' + (index + 1)} type="checkbox" checked={checked(row.active)} onChange={(event) => update(index, 'active', event.target.checked)} disabled={disabled} /></td>
+          <td><button className={styles.iconDanger} type="button" title="Remove destination" onClick={() => remove(index)} disabled={disabled || rows.length === 1}><Trash2 size={17} /></button></td>
+        </tr>)}</tbody>
+      </table>
+    </div>
+    <button className={styles.addRowButton} type="button" onClick={add} disabled={disabled}><Plus size={17} /> Add destination</button>
+    <label className={styles.fullField}>Rate notice shown to customers
+      <textarea value={text(root.disclaimer)} onChange={(event) => onChange({ ...root, disclaimer: event.target.value })} placeholder="Rates and fees are indicative. Confirm the final amount with your branch." maxLength={500} disabled={disabled} />
+      <small>Maximum 500 characters.</small>
+    </label>
+  </div>
+}
+
 function PromotionsEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
   const root = record(payload)
   const rows = Array.isArray(root.promotions) ? root.promotions.map(record) : []
@@ -182,6 +215,101 @@ function NewsEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
   </div>
 }
 
+
+function BlogEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
+  const root = record(payload)
+  const rows = Array.isArray(root.posts) ? root.posts.map(record) : []
+  const commit = (next: Entry[]) => onChange({ ...root, posts: next })
+  const update = (index: number, key: string, value: unknown) => commit(rows.map((row, rowIndex) => rowIndex === index ? { ...row, [key]: value } : row))
+  const updateTitle = (index: number, value: string) => commit(rows.map((row, rowIndex) => rowIndex === index ? { ...row, title: value, slug: slugify(value), imageAlt: text(row.imageAlt) || value } : row))
+  const add = () => commit([...rows, { slug: 'new-guide', title: '', summary: '', body: '', publishedDate: new Date().toISOString().slice(0, 10), image: '', imageAlt: '', author: 'HME', category: 'Guides', active: true }])
+  const remove = (index: number) => commit(rows.filter((_, rowIndex) => rowIndex !== index))
+
+  return <div className={styles.guidedEditor}>
+    <SectionTitle icon={<BookOpenText size={20} />} title="Publish helpful blog posts" description="Create guides and educational content with a cover image, author and category." />
+    <div className={styles.cardList}>{rows.map((row, index) => <section className={styles.formCard} key={index}>
+      <div className={styles.formCardHead}><div><span>Blog post {index + 1}</span><strong>{text(row.title) || 'Untitled post'}</strong></div><label className={styles.switchLabel}><input type="checkbox" checked={checked(row.active)} onChange={(event) => update(index, 'active', event.target.checked)} disabled={disabled} /> Visible</label><button className={styles.iconDanger} type="button" title="Remove post" onClick={() => remove(index)} disabled={disabled}><Trash2 size={17} /></button></div>
+      <div className={styles.formGrid}>
+        <label className={styles.spanTwo}>Post title<input value={text(row.title)} onChange={(event) => updateTitle(index, event.target.value)} placeholder="5 things to check before exchanging currency" maxLength={180} disabled={disabled} /></label>
+        <label>Publish date<input type="date" value={text(row.publishedDate)} onChange={(event) => update(index, 'publishedDate', event.target.value)} disabled={disabled} /></label>
+        <label>Category<input value={text(row.category)} onChange={(event) => update(index, 'category', event.target.value)} placeholder="Travel tips" maxLength={80} disabled={disabled} /></label>
+        <label>Author<input value={text(row.author)} onChange={(event) => update(index, 'author', event.target.value)} placeholder="HME" maxLength={100} disabled={disabled} /></label>
+        <label className={styles.spanTwo}>Short summary<textarea value={text(row.summary)} onChange={(event) => update(index, 'summary', event.target.value)} placeholder="A short introduction shown on the Blog card." maxLength={500} disabled={disabled} /></label>
+        <label className={styles.spanTwo}>Full post<textarea className={styles.articleBody} value={text(row.body)} onChange={(event) => update(index, 'body', event.target.value)} placeholder="Write the full guide here. Use blank lines between paragraphs." maxLength={20000} disabled={disabled} /></label>
+        <div className={styles.spanTwo}><label>Cover image</label><ImageUploadField value={text(row.image)} alt={text(row.imageAlt) || text(row.title)} disabled={disabled} onChange={(url) => update(index, 'image', url)} /></div>
+        {text(row.image) && <label className={styles.spanTwo}>Image description<input value={text(row.imageAlt)} onChange={(event) => update(index, 'imageAlt', event.target.value)} placeholder="Describe what is shown in the image" maxLength={180} disabled={disabled} /></label>}
+        <label className={styles.spanTwo}>URL name<input value={text(row.slug)} onChange={(event) => update(index, 'slug', slugify(event.target.value))} disabled={disabled} /><small>Created automatically from the post title.</small></label>
+      </div>
+    </section>)}</div>
+    {rows.length === 0 && <div className={styles.blankState}>No blog post added yet.</div>}
+    <button className={styles.addRowButton} type="button" onClick={add} disabled={disabled}><Plus size={17} /> Add blog post</button>
+  </div>
+}
+
+function CareersEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
+  const root = record(payload)
+  const rows = Array.isArray(root.jobs) ? root.jobs.map(record) : []
+  const commitRoot = (key: string, value: unknown) => onChange({ ...root, [key]: value })
+  const commit = (next: Entry[]) => onChange({ ...root, jobs: next })
+  const update = (index: number, key: string, value: unknown) => commit(rows.map((row, rowIndex) => rowIndex === index ? { ...row, [key]: value } : row))
+  const updateTitle = (index: number, value: string) => commit(rows.map((row, rowIndex) => rowIndex === index ? { ...row, title: value, slug: slugify(value) } : row))
+  const add = () => commit([...rows, { slug: 'new-vacancy', title: '', location: '', employmentType: 'Full-time', summary: '', description: '', applyEmail: text(root.generalApplicationsEmail), applyUrl: '', active: true }])
+  const remove = (index: number) => commit(rows.filter((_, rowIndex) => rowIndex !== index))
+
+  return <div className={styles.guidedEditor}>
+    <SectionTitle icon={<BriefcaseBusiness size={20} />} title="Manage careers and vacancies" description="Update the careers introduction, hero image and available roles." />
+    <section className={styles.formCard}>
+      <div className={styles.formCardHead}><div><span>Careers page</span><strong>Page introduction</strong></div></div>
+      <div className={styles.formGrid}>
+        <label className={styles.spanTwo}>Introductory message<textarea value={text(root.intro)} onChange={(event) => commitRoot('intro', event.target.value)} maxLength={500} disabled={disabled} /></label>
+        <label className={styles.spanTwo}>General applications email<input type="email" value={text(root.generalApplicationsEmail)} onChange={(event) => commitRoot('generalApplicationsEmail', event.target.value)} placeholder="careers@example.com" disabled={disabled} /></label>
+        <div className={styles.spanTwo}><label>Careers hero image</label><ImageUploadField value={text(root.heroImage)} alt={text(root.heroImageAlt) || 'HME careers'} disabled={disabled} onChange={(url) => commitRoot('heroImage', url)} /></div>
+        {text(root.heroImage) && <label className={styles.spanTwo}>Image description<input value={text(root.heroImageAlt)} onChange={(event) => commitRoot('heroImageAlt', event.target.value)} maxLength={180} disabled={disabled} /></label>}
+      </div>
+    </section>
+    <div className={styles.cardList}>{rows.map((row, index) => <section className={styles.formCard} key={index}>
+      <div className={styles.formCardHead}><div><span>Vacancy {index + 1}</span><strong>{text(row.title) || 'Untitled role'}</strong></div><label className={styles.switchLabel}><input type="checkbox" checked={checked(row.active)} onChange={(event) => update(index, 'active', event.target.checked)} disabled={disabled} /> Open</label><button className={styles.iconDanger} type="button" title="Remove vacancy" onClick={() => remove(index)} disabled={disabled}><Trash2 size={17} /></button></div>
+      <div className={styles.formGrid}>
+        <label className={styles.spanTwo}>Job title<input value={text(row.title)} onChange={(event) => updateTitle(index, event.target.value)} placeholder="Branch Customer Service Officer" maxLength={160} disabled={disabled} /></label>
+        <label>Location<input value={text(row.location)} onChange={(event) => update(index, 'location', event.target.value)} placeholder="Head Office" maxLength={120} disabled={disabled} /></label>
+        <label>Employment type<input value={text(row.employmentType)} onChange={(event) => update(index, 'employmentType', event.target.value)} placeholder="Full-time" maxLength={80} disabled={disabled} /></label>
+        <label>Closing date <span>(optional)</span><input type="date" value={text(row.closingDate)} onChange={(event) => update(index, 'closingDate', event.target.value || undefined)} disabled={disabled} /></label>
+        <label>Application email<input type="email" value={text(row.applyEmail)} onChange={(event) => update(index, 'applyEmail', event.target.value || undefined)} placeholder="careers@example.com" disabled={disabled} /></label>
+        <label className={styles.spanTwo}>Short role summary<textarea value={text(row.summary)} onChange={(event) => update(index, 'summary', event.target.value)} maxLength={500} disabled={disabled} /></label>
+        <label className={styles.spanTwo}>Responsibilities and requirements<textarea className={styles.articleBody} value={text(row.description)} onChange={(event) => update(index, 'description', event.target.value)} maxLength={20000} disabled={disabled} /></label>
+        <label className={styles.spanTwo}>Application link <span>(optional)</span><input value={text(row.applyUrl)} onChange={(event) => update(index, 'applyUrl', event.target.value)} placeholder="https://... or /contact" disabled={disabled} /></label>
+        <label className={styles.spanTwo}>URL name<input value={text(row.slug)} onChange={(event) => update(index, 'slug', slugify(event.target.value))} disabled={disabled} /></label>
+      </div>
+    </section>)}</div>
+    {rows.length === 0 && <div className={styles.blankState}>No active vacancy. General applications will still be shown.</div>}
+    <button className={styles.addRowButton} type="button" onClick={add} disabled={disabled}><Plus size={17} /> Add vacancy</button>
+  </div>
+}
+
+function ContactEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
+  const root = record(payload)
+  const update = (key: string, value: unknown) => onChange({ ...root, [key]: value })
+
+  return <div className={styles.guidedEditor}>
+    <SectionTitle icon={<Contact size={20} />} title="Update contact details" description="These details appear on the public Contact page. Check phone numbers and links carefully." />
+    <section className={styles.formCard}>
+      <div className={styles.formGrid}>
+        <label className={styles.spanTwo}>Page headline<input value={text(root.headline)} onChange={(event) => update('headline', event.target.value)} maxLength={120} disabled={disabled} /></label>
+        <label className={styles.spanTwo}>Page introduction<textarea value={text(root.lead)} onChange={(event) => update('lead', event.target.value)} maxLength={500} disabled={disabled} /></label>
+        <label>Phone number<input value={text(root.phone)} onChange={(event) => update('phone', event.target.value)} placeholder="+604..." disabled={disabled} /></label>
+        <label>Email address<input type="email" value={text(root.email)} onChange={(event) => update('email', event.target.value)} disabled={disabled} /></label>
+        <label className={styles.spanTwo}>WhatsApp HTTPS link<input value={text(root.whatsappUrl)} onChange={(event) => update('whatsappUrl', event.target.value)} placeholder="https://wa.me/..." disabled={disabled} /></label>
+        <label className={styles.spanTwo}>Address line 1<input value={text(root.addressLine1)} onChange={(event) => update('addressLine1', event.target.value)} maxLength={200} disabled={disabled} /></label>
+        <label className={styles.spanTwo}>Address line 2<input value={text(root.addressLine2)} onChange={(event) => update('addressLine2', event.target.value)} maxLength={200} disabled={disabled} /></label>
+        <label className={styles.spanTwo}>Google Maps HTTPS link <span>(optional)</span><input value={text(root.mapsUrl)} onChange={(event) => update('mapsUrl', event.target.value)} placeholder="https://maps.google.com/..." disabled={disabled} /></label>
+        <label className={styles.spanTwo}>Support panel heading<input value={text(root.supportHeading)} onChange={(event) => update('supportHeading', event.target.value)} maxLength={140} disabled={disabled} /></label>
+        <label className={styles.spanTwo}>Support safety message<textarea value={text(root.supportNote)} onChange={(event) => update('supportNote', event.target.value)} maxLength={700} disabled={disabled} /></label>
+        <label className={styles.spanTwo}>Topics we can help with<input value={Array.isArray(root.services) ? root.services.map(text).join(', ') : ''} onChange={(event) => update('services', event.target.value.split(',').map((item) => item.trim()).filter(Boolean))} placeholder="Rates, Money transfer, Currency booking" disabled={disabled} /><small>Separate each topic with a comma.</small></label>
+      </div>
+    </section>
+  </div>
+}
+
 function BranchesEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
   const root = record(payload)
 
@@ -213,9 +341,13 @@ function BranchesEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
 
 export function GuidedEditor(props: Props) {
   if (props.type === 'rates') return <RatesEditor {...props} />
+  if (props.type === 'transfer-rates') return <TransferRatesEditor {...props} />
   if (props.type === 'promotions') return <PromotionsEditor {...props} />
+  if (props.type === 'branches') return <BranchesEditor {...props} />
   if (props.type === 'news') return <NewsEditor {...props} />
-  return <BranchesEditor {...props} />
+  if (props.type === 'blog') return <BlogEditor {...props} />
+  if (props.type === 'careers') return <CareersEditor {...props} />
+  return <ContactEditor {...props} />
 }
 
 export function ContentPreview({ type, payload }: { type: CmsContentType; payload: unknown }) {
@@ -225,6 +357,15 @@ export function ContentPreview({ type, payload }: { type: CmsContentType; payloa
     const rows = Array.isArray(root.rates) ? root.rates.map(record) : []
     return <div className={styles.previewSurface}><div className={styles.previewHeader}><Banknote size={21} /><div><span>Customer preview</span><h3>Today&apos;s exchange rates</h3></div></div>
       {rows.length ? <table className={styles.previewTable}><thead><tr><th>Currency</th><th>We buy</th><th>We sell</th></tr></thead><tbody>{rows.map((row, index) => <tr key={index}><td><strong>{text(row.code) || '—'}</strong><span>{text(row.name)}</span></td><td>{text(row.buy) || '—'}</td><td>{text(row.sell) || '—'}</td></tr>)}</tbody></table> : <div className={styles.blankState}>Add a currency to see the preview.</div>}
+      {text(root.disclaimer) && <p className={styles.previewNote}>{text(root.disclaimer)}</p>}
+    </div>
+  }
+
+
+  if (type === 'transfer-rates') {
+    const rows = Array.isArray(root.rates) ? root.rates.map(record).filter((row) => checked(row.active)) : []
+    return <div className={styles.previewSurface}><div className={styles.previewHeader}><SendHorizontal size={21} /><div><span>Customer preview</span><h3>Money transfer rates</h3></div></div>
+      {rows.length ? <table className={styles.previewTable}><thead><tr><th>Destination</th><th>Currency</th><th>Rate / MYR</th><th>Fee</th></tr></thead><tbody>{rows.map((row, index) => <tr key={index}><td><strong>{text(row.country) || '-'}</strong><span>{text(row.countryCode)}</span></td><td>{text(row.currency) || '-'}</td><td>{text(row.rate) || '-'}</td><td>{text(row.fee) || 'Confirm with branch'}</td></tr>)}</tbody></table> : <div className={styles.blankState}>Add a visible destination to see the preview.</div>}
       {text(root.disclaimer) && <p className={styles.previewNote}>{text(root.disclaimer)}</p>}
     </div>
   }
@@ -242,6 +383,32 @@ export function ContentPreview({ type, payload }: { type: CmsContentType; payloa
     return <div className={styles.previewSurface}><div className={styles.previewHeader}><Newspaper size={21} /><div><span>Customer preview</span><h3>HME News</h3></div></div>
       <div className={styles.newsPreviewGrid}>{rows.map((row, index) => <article key={index}>{text(row.image) ? <div className={styles.newsPreviewImage}><Image src={text(row.image)} alt={text(row.imageAlt) || text(row.title)} fill sizes="400px" /></div> : <div className={styles.previewImage}>HME News</div>}<small>{text(row.publishedDate)} · {text(row.author) || 'HME'}</small><h4>{text(row.title) || 'News headline'}</h4><p>{text(row.summary) || 'News summary will appear here.'}</p><span className={styles.previewCta}>Read full update</span></article>)}</div>
       {rows.length === 0 && <div className={styles.blankState}>Add a visible news article to see the preview.</div>}
+    </div>
+  }
+
+
+  if (type === 'blog') {
+    const rows = Array.isArray(root.posts) ? root.posts.map(record).filter((row) => checked(row.active)) : []
+    return <div className={styles.previewSurface}><div className={styles.previewHeader}><BookOpenText size={21} /><div><span>Customer preview</span><h3>HME Blog</h3></div></div>
+      <div className={styles.newsPreviewGrid}>{rows.map((row, index) => <article key={index}>{text(row.image) ? <div className={styles.newsPreviewImage}><Image src={text(row.image)} alt={text(row.imageAlt) || text(row.title)} fill sizes="400px" /></div> : <div className={styles.previewImage}>HME Guide</div>}<small>{text(row.category) || 'Guide'} / {text(row.publishedDate)}</small><h4>{text(row.title) || 'Blog title'}</h4><p>{text(row.summary) || 'Blog summary will appear here.'}</p><span className={styles.previewCta}>Read guide</span></article>)}</div>
+      {rows.length === 0 && <div className={styles.blankState}>Add a visible blog post to see the preview.</div>}
+    </div>
+  }
+
+  if (type === 'careers') {
+    const rows = Array.isArray(root.jobs) ? root.jobs.map(record).filter((row) => checked(row.active)) : []
+    return <div className={styles.previewSurface}><div className={styles.previewHeader}><BriefcaseBusiness size={21} /><div><span>Customer preview</span><h3>Careers at HME</h3></div></div>
+      {text(root.heroImage) && <div className={styles.careerPreviewHero}><Image src={text(root.heroImage)} alt={text(root.heroImageAlt) || 'HME careers'} fill sizes="800px" /></div>}
+      <p className={styles.previewNote}>{text(root.intro)}</p>
+      <div className={styles.branchPreviewGrid}>{rows.map((row, index) => <article key={index}><span className={styles.previewPin}><BriefcaseBusiness size={18} /></span><div><small>{text(row.location)} / {text(row.employmentType)}</small><h4>{text(row.title) || 'Job title'}</h4><p>{text(row.summary) || 'Role summary will appear here.'}</p><span className={styles.previewCta}>Apply now</span></div></article>)}</div>
+      {rows.length === 0 && <div className={styles.blankState}>No open vacancy. General applications will be shown.</div>}
+    </div>
+  }
+
+  if (type === 'contact') {
+    const services = Array.isArray(root.services) ? root.services.map(text) : []
+    return <div className={styles.previewSurface}><div className={styles.previewHeader}><Contact size={21} /><div><span>Customer preview</span><h3>{text(root.headline) || 'Contact HME'}</h3></div></div>
+      <div className={styles.contactPreview}><p>{text(root.lead)}</p><div><strong>{text(root.phone)}</strong><span>{text(root.email)}</span><span>{text(root.addressLine1)}</span><span>{text(root.addressLine2)}</span></div><h4>{text(root.supportHeading)}</h4><p>{text(root.supportNote)}</p><div className={styles.contactPreviewTopics}>{services.map((service, index) => <em key={index}>{service}</em>)}</div></div>
     </div>
   }
 

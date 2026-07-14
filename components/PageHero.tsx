@@ -1,25 +1,29 @@
 import Image from "next/image";
 
 export default function PageHero({
-  eyebrow, title, lead, image, noOverlay, objectPosition = "center",
+  eyebrow, title, lead, image, imageAlt = "", noOverlay, objectPosition = "center",
 }: {
   eyebrow?: string;
   title?: string;
   lead?: string;
   image?: string;
+  imageAlt?: string;
   noOverlay?: boolean;
   objectPosition?: string;
 }) {
-  const ownedImage = image?.startsWith("/") ? image : null;
+  const trustedImage = image && (
+    image.startsWith("/") ||
+    /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//i.test(image)
+  ) ? image : null;
 
   return (
     <section className="relative min-h-[360px] overflow-hidden bg-[radial-gradient(900px_460px_at_82%_-20%,#1A5EB7_0%,#0B2E63_48%,#071E44_100%)] text-white md:min-h-[440px]">
-      {ownedImage && (
+      {trustedImage && (
         <>
           <Image
-            src={ownedImage}
-            alt=""
-            aria-hidden="true"
+            src={trustedImage}
+            alt={imageAlt}
+            aria-hidden={imageAlt ? undefined : true}
             fill
             sizes="100vw"
             className="object-cover"
@@ -29,7 +33,7 @@ export default function PageHero({
         </>
       )}
 
-      {!ownedImage && (
+      {!trustedImage && (
         <>
           <div className="absolute -right-24 -top-32 h-96 w-96 rounded-full border border-white/10" />
           <div className="absolute right-12 top-10 h-64 w-64 rounded-full border border-white/10" />

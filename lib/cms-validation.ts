@@ -2,10 +2,31 @@ import 'server-only'
 
 import { z } from 'zod'
 
-const positiveRate = z.union([z.string(), z.number()])
+const decimalText = z.union([z.string(), z.number()])
   .transform((value) => String(value).trim())
+
+const positiveRate = decimalText
   .refine((value) => /^\d+(\.\d{1,8})?$/.test(value), 'Use a positive decimal with up to 8 decimal places')
   .refine((value) => Number(value) > 0, 'Published rates must be greater than zero')
+
+const optionalAmount = decimalText
+  .refine((value) => value === '' || /^\d+(\.\d{1,8})?$/.test(value), 'Use a non-negative decimal with up to 8 decimal places')
+
+const cmsImage = z.string().trim().max(1000).refine((value) =>
+  value === '' ||
+  value.startsWith('/images/') ||
+  /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//i.test(value),
+'Use an image uploaded through the CMS')
+
+const safeLink = z.string().trim().max(500).refine((value) =>
+  value === '' || value.startsWith('/') || /^https:\/\//i.test(value),
+'Use an internal path or HTTPS link')
+
+const httpsLink = z.string().trim().max(500).refine((value) =>
+  value === '' || /^https:\/\//i.test(value),
+'Use a secure HTTPS link')
+
+const slug = z.string().trim().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(100)
 
 const rate = z.object({
   code: z.string().trim().regex(/^[A-Z]{3}$/),
@@ -23,32 +44,45 @@ const rates = z.object({
   const seen = new Set<string>()
   value.rates.forEach((entry, index) => {
     if (seen.has(entry.code)) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['rates', index, 'code'],
-        message: 'Currency codes must be unique',
-      })
+      ctx.addIssue({ code: 'custom', path: ['rates', index, 'code'], message: 'Currency codes must be unique' })
     }
     seen.add(entry.code)
   })
 })
 
+const transferRate = z.object({
+  countryCode: z.string().trim().regex(/^[A-Z]{2}$/),
+  country: z.string().trim().min(1).max(100),
+  currency: z.string().trim().regex(/^[A-Z]{3}$/),
+  rate: positiveRate,
+  fee: optionalAmount.optional().default(''),
+  active: z.boolean().optional().default(true),
+}).strict()
 
-const cmsImage = z.string().trim().max(1000).refine((value) =>
-  value === '' ||
-  value.startsWith('/images/') ||
-  /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//i.test(value),
-'Use an image uploaded through the CMS')
+const transferRates = z.object({
+  rates: z.array(transferRate).min(1).max(250),
+  disclaimer: z.string().trim().max(500).optional().default(''),
+  effectiveAt: z.string().datetime({ offset: true }).optional(),
+}).strict().superRefine((value, ctx) => {
+  const seen = new Set<string>()
+  value.rates.forEach((entry, index) => {
+    const key = `${entry.countryCode}:${entry.currency}`
+    if (seen.has(key)) {
+      ctx.addIssue({ code: 'custom', path: ['rates', index, 'currency'], message: 'Destination and currency combinations must be unique' })
+    }
+    seen.add(key)
+  })
+})
 
 const promotion = z.object({
-  slug: z.string().trim().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(100),
+  slug,
   title: z.string().trim().min(1).max(140),
   summary: z.string().trim().min(1).max(500),
   startDate: z.string().date().optional(),
   endDate: z.string().date().optional(),
   image: cmsImage.optional().default(''),
   ctaLabel: z.string().trim().max(80).optional().default(''),
-  ctaHref: z.string().trim().max(500).optional().default(''),
+  ctaHref: safeLink.optional().default(''),
   active: z.boolean().optional().default(true),
 }).strict().superRefine((value, ctx) => {
   if (value.startDate && value.endDate && value.endDate < value.startDate) {
@@ -65,10 +99,10 @@ const branch = z.object({
   state: z.string().trim().min(1).max(80),
   address: z.string().trim().min(1).max(500),
   phone: z.string().trim().max(40).optional().default(''),
-  whatsapp: z.string().trim().max(200).optional().default(''),
+  whatsapp: httpsLink.optional().default(''),
   hours: z.string().trim().min(1).max(200),
   services: z.array(z.string().trim().min(1).max(80)).max(20),
-  mapsUrl: z.string().trim().max(500).optional().default(''),
+  mapsUrl: httpsLink.optional().default(''),
   latitude: z.number().min(-90).max(90).nullable().optional(),
   longitude: z.number().min(-180).max(180).nullable().optional(),
   active: z.boolean().optional().default(true),
@@ -76,11 +110,7 @@ const branch = z.object({
   const hasLatitude = typeof value.latitude === 'number'
   const hasLongitude = typeof value.longitude === 'number'
   if (hasLatitude !== hasLongitude) {
-    ctx.addIssue({
-      code: 'custom',
-      path: [hasLatitude ? 'longitude' : 'latitude'],
-      message: 'Latitude and longitude must be supplied together',
-    })
+    ctx.addIssue({ code: 'custom', path: [hasLatitude ? 'longitude' : 'latitude'], message: 'Latitude and longitude must be supplied together' })
   }
 })
 
@@ -88,9 +118,8 @@ const branches = z.object({
   branches: z.array(branch).max(500),
 }).strict()
 
-
-const newsArticle = z.object({
-  slug: z.string().trim().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(100),
+const article = z.object({
+  slug,
   title: z.string().trim().min(1).max(180),
   summary: z.string().trim().min(1).max(500),
   body: z.string().trim().min(1).max(20000),
@@ -98,14 +127,67 @@ const newsArticle = z.object({
   image: cmsImage.optional().default(''),
   imageAlt: z.string().trim().max(180).optional().default(''),
   author: z.string().trim().max(100).optional().default('HME'),
+  category: z.string().trim().max(80).optional().default(''),
   active: z.boolean().optional().default(true),
 }).strict()
 
 const news = z.object({
-  articles: z.array(newsArticle).max(200),
+  articles: z.array(article.omit({ category: true })).max(200),
 }).strict()
 
-const schemas = { rates, promotions, branches, news }
+const blog = z.object({
+  posts: z.array(article).max(200),
+}).strict()
+
+const careerJob = z.object({
+  slug,
+  title: z.string().trim().min(1).max(160),
+  location: z.string().trim().min(1).max(120),
+  employmentType: z.string().trim().min(1).max(80),
+  summary: z.string().trim().min(1).max(500),
+  description: z.string().trim().min(1).max(20000),
+  closingDate: z.string().date().optional(),
+  applyEmail: z.string().trim().email().max(254).optional(),
+  applyUrl: safeLink.optional().default(''),
+  active: z.boolean().optional().default(true),
+}).strict().superRefine((value, ctx) => {
+  if (!value.applyEmail && !value.applyUrl) {
+    ctx.addIssue({ code: 'custom', path: ['applyEmail'], message: 'Add an application email or application link' })
+  }
+})
+
+const careers = z.object({
+  heroImage: cmsImage.optional().default(''),
+  heroImageAlt: z.string().trim().max(180).optional().default(''),
+  intro: z.string().trim().min(1).max(500),
+  generalApplicationsEmail: z.string().trim().email().max(254),
+  jobs: z.array(careerJob).max(100),
+}).strict()
+
+const contact = z.object({
+  headline: z.string().trim().min(1).max(120),
+  lead: z.string().trim().min(1).max(500),
+  phone: z.string().trim().min(3).max(40),
+  whatsappUrl: httpsLink,
+  email: z.string().trim().email().max(254),
+  addressLine1: z.string().trim().min(1).max(200),
+  addressLine2: z.string().trim().min(1).max(200),
+  mapsUrl: httpsLink.optional().default(''),
+  supportHeading: z.string().trim().min(1).max(140),
+  supportNote: z.string().trim().min(1).max(700),
+  services: z.array(z.string().trim().min(1).max(120)).min(1).max(12),
+}).strict()
+
+const schemas = {
+  rates,
+  'transfer-rates': transferRates,
+  promotions,
+  branches,
+  news,
+  blog,
+  careers,
+  contact,
+}
 export type CmsContentType = keyof typeof schemas
 
 export function normalizeContentType(value: unknown): CmsContentType | null {

@@ -11,7 +11,7 @@ export async function parseCmsDraftRequest(request: Request, forced?: {
   const contentKey = String(forced?.contentKey || body.content_key || 'primary').trim().toLowerCase()
   const errors: Array<{ path: string; message: string }> = []
 
-  if (!contentType) errors.push({ path: 'content_type', message: 'Use rates, promotions, or branches' })
+  if (!contentType) errors.push({ path: 'content_type', message: 'Choose a supported website content section' })
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(contentKey) || contentKey.length > 80) {
     errors.push({ path: 'content_key', message: 'Use a lowercase URL-safe key' })
   }

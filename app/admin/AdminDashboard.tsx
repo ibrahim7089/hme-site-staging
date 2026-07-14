@@ -28,21 +28,47 @@ type EditorMode = 'guided' | 'preview' | 'advanced'
 
 const labels: Record<CmsContentType, string> = {
   rates: 'Exchange rates',
+  'transfer-rates': 'Transfer rates',
   promotions: 'Promotions',
   branches: 'Branches',
   news: 'News',
+  blog: 'Blog',
+  careers: 'Careers',
+  contact: 'Contact details',
 }
 const templates: Record<CmsContentType, unknown> = {
   rates: {
-    rates: [
-      { code: 'USD', name: 'US Dollar', country: 'US', buy: '4.1000', sell: '4.3000' },
-      { code: 'SGD', name: 'Singapore Dollar', country: 'SG', buy: '3.1500', sell: '3.2800' },
-    ],
+    rates: [{ code: 'USD', name: 'US Dollar', country: 'US', buy: '', sell: '' }],
     disclaimer: 'Rates are indicative and subject to availability at the branch.',
   },
+  'transfer-rates': {
+    rates: [{ countryCode: 'ID', country: 'Indonesia', currency: 'IDR', rate: '', fee: '', active: true }],
+    disclaimer: 'Rates and fees are indicative. Confirm the final amount with your selected branch.',
+  },
   promotions: { promotions: [{ slug: 'sample-promotion', title: 'Promotion title', summary: 'Brief promotion description.', active: true, image: '', ctaLabel: 'Learn more', ctaHref: '/contact' }] },
+  branches: { branches: [{ name: 'Branch name', state: 'Kedah', address: 'Full branch address', phone: '+60', whatsapp: '', hours: 'Mon-Sun', services: ['Currency Exchange', 'Money Transfer'], mapsUrl: '', latitude: null, longitude: null, active: true }] },
   news: { articles: [{ slug: 'new-hme-update', title: 'HME company update', summary: 'A short summary of the announcement.', body: 'Write the full announcement here.', publishedDate: new Date().toISOString().slice(0, 10), image: '', imageAlt: '', author: 'HME', active: true }] },
-  branches: { branches: [{ name: 'Branch name', state: 'Kedah', address: 'Full branch address', phone: '+60', whatsapp: '', hours: 'Mon–Sun', services: ['Currency Exchange', 'Money Transfer'], mapsUrl: '', latitude: null, longitude: null, active: true }] },
+  blog: { posts: [{ slug: 'new-guide', title: 'Helpful customer guide', summary: 'A short introduction to this guide.', body: 'Write the full guide here.', publishedDate: new Date().toISOString().slice(0, 10), image: '', imageAlt: '', author: 'HME', category: 'Guides', active: true }] },
+  careers: {
+    heroImage: '',
+    heroImageAlt: '',
+    intro: 'Join a team where compliance, technology and customer service come together.',
+    generalApplicationsEmail: 'careers@hmeremit.com.my',
+    jobs: [{ slug: 'new-vacancy', title: 'Job title', location: 'Head Office', employmentType: 'Full-time', summary: 'A short overview of the role.', description: 'Describe the responsibilities and requirements.', applyEmail: 'careers@hmeremit.com.my', applyUrl: '', active: true }],
+  },
+  contact: {
+    headline: "We're here to help",
+    lead: 'Questions about rates, a transaction, booking or partnership? Choose the channel that works best for you.',
+    phone: '+604 421 3811',
+    whatsappUrl: 'https://wa.me/6044213811',
+    email: 'info@hmeremit.com.my',
+    addressLine1: 'No. 25C, Bangunan Ban Bee, Jalan Kampung Baru',
+    addressLine2: '08000 Sungai Petani, Kedah',
+    mapsUrl: '',
+    supportHeading: 'Talk directly to the right team',
+    supportNote: 'Tell us what you need and include any relevant transaction reference. Never send passwords, PINs or full card details.',
+    services: ['Latest rates and availability', 'Money transfer support', 'Currency booking', 'Business or agent inquiry'],
+  },
 }
 const statuses = ['DRAFT', 'REJECTED', 'PENDING', 'APPROVED', 'PUBLISHED', 'ARCHIVED']
 
@@ -200,7 +226,7 @@ export default function AdminDashboard({ user, permissions }: { user: CmsUser; p
       </section> : <>
         <section className={styles.beginnerGuide}>
           <div className={styles.guideTitle}><CircleHelp size={21} /><div><strong>Updating the website is just three steps</strong><span>You never need to touch code. Advanced tools are kept in a separate tab.</span></div></div>
-          <ol><li><b>1</b><span><strong>Fill in the form</strong><small>Choose rates, promotions, branches or news.</small></span></li><li><b>2</b><span><strong>Check the preview</strong><small>See how customers will read it.</small></span></li><li><b>3</b><span><strong>Save and submit</strong><small>A different checker approves it.</small></span></li></ol>
+          <ol><li><b>1</b><span><strong>Fill in the form</strong><small>Choose the website section you want to update.</small></span></li><li><b>2</b><span><strong>Check the preview</strong><small>See how customers will read it.</small></span></li><li><b>3</b><span><strong>Save and submit</strong><small>A different checker approves it.</small></span></li></ol>
         </section>
 
         <div className={styles.contentTabs}>{(Object.keys(labels) as CmsContentType[]).map((entry) => <button key={entry} className={type === entry ? styles.tabActive : ''} onClick={() => setType(entry)}>{labels[entry]}</button>)}</div>

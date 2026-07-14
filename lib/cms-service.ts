@@ -467,9 +467,13 @@ export async function getCmsPublishedSnapshot() {
   )
   const content: Record<CmsContentType, unknown | null> = {
     rates: null,
+    'transfer-rates': null,
     promotions: null,
     branches: null,
     news: null,
+    blog: null,
+    careers: null,
+    contact: null,
   }
   const versions: Record<string, unknown> = {}
   let publishedAt: string | null = null

@@ -64,7 +64,7 @@ const schemaStatements = [
   )`,
   `CREATE TABLE IF NOT EXISTS cms_items (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    content_type TEXT NOT NULL CHECK(content_type IN ('rates','promotions','branches','news')),
+    content_type TEXT NOT NULL CHECK(content_type IN ('rates','transfer-rates','promotions','branches','news','blog','careers','contact')),
     content_key TEXT NOT NULL DEFAULT 'primary',
     version INTEGER NOT NULL,
     status TEXT NOT NULL DEFAULT 'DRAFT'
@@ -133,32 +133,65 @@ const schemaStatements = [
 ]
 
 
-async function migrateCmsItemsForNews(db: Client) {
+async function migrateCmsItemsContentTypes(db: Client) {
   const existing = await db.execute(
     "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'cms_items' LIMIT 1",
   )
   const tableSql = String(existing.rows[0]?.sql || '')
-  if (!tableSql || tableSql.includes("'news'")) return
+  const requiredTypes = ['rates', 'transfer-rates', 'promotions', 'branches', 'news', 'blog', 'careers', 'contact']
+  if (!tableSql || requiredTypes.every((type) => tableSql.includes(`'${type}'`))) return
 
   const desired = schemaStatements.find((statement) =>
     statement.startsWith('CREATE TABLE IF NOT EXISTS cms_items'),
   )
-  if (!desired) throw new Error('CMS items schema is missing')
-
-  const temporaryTable = 'cms_items_news_migration'
-  const createTemporary = desired.replace(
-    'CREATE TABLE IF NOT EXISTS cms_items',
-    `CREATE TABLE ${temporaryTable}`,
+  const desiredPublished = schemaStatements.find((statement) =>
+    statement.startsWith('CREATE TABLE IF NOT EXISTS cms_published'),
   )
+  const desiredEvents = schemaStatements.find((statement) =>
+    statement.startsWith('CREATE TABLE IF NOT EXISTS cms_events'),
+  )
+  if (!desired || !desiredPublished || !desiredEvents) throw new Error('CMS schema is incomplete')
+
+  const temporaryTable = 'cms_items_content_type_migration'
+  const publishedBackup = 'cms_published_content_type_migration'
+  const eventsBackup = 'cms_events_content_type_migration'
+  const createTemporary = desired
+    .replace('CREATE TABLE IF NOT EXISTS cms_items', `CREATE TABLE ${temporaryTable}`)
+    .replaceAll('REFERENCES cms_items(id)', `REFERENCES ${temporaryTable}(id)`)
   const tx = await db.transaction('write')
   try {
     await tx.execute(`DROP TABLE IF EXISTS ${temporaryTable}`)
+    await tx.execute(`DROP TABLE IF EXISTS ${publishedBackup}`)
+    await tx.execute(`DROP TABLE IF EXISTS ${eventsBackup}`)
     await tx.execute(createTemporary)
     await tx.execute(`INSERT INTO ${temporaryTable} SELECT * FROM cms_items`)
+    await tx.execute(`CREATE TABLE ${publishedBackup} AS SELECT * FROM cms_published`)
+    await tx.execute(`CREATE TABLE ${eventsBackup} AS SELECT * FROM cms_events`)
+    await tx.execute('DROP TRIGGER IF EXISTS cms_events_immutable_update')
+    await tx.execute('DROP TRIGGER IF EXISTS cms_events_immutable_delete')
+    await tx.execute('DROP TABLE cms_events')
+    await tx.execute('DROP TABLE cms_published')
     await tx.execute('DROP TABLE cms_items')
     await tx.execute(`ALTER TABLE ${temporaryTable} RENAME TO cms_items`)
+    await tx.execute(desiredPublished)
+    await tx.execute(desiredEvents)
+    await tx.execute(`INSERT INTO cms_published SELECT * FROM ${publishedBackup}`)
+    await tx.execute(`INSERT INTO cms_events SELECT * FROM ${eventsBackup}`)
+    await tx.execute(`DROP TABLE ${publishedBackup}`)
+    await tx.execute(`DROP TABLE ${eventsBackup}`)
     await tx.execute('CREATE INDEX IF NOT EXISTS idx_cms_items_queue ON cms_items(status, scheduled_for, updated_at DESC)')
     await tx.execute('CREATE INDEX IF NOT EXISTS idx_cms_items_content ON cms_items(content_type, content_key, version DESC)')
+    await tx.execute('CREATE INDEX IF NOT EXISTS idx_cms_events_item ON cms_events(item_id, created_at DESC)')
+    await tx.execute(`CREATE TRIGGER cms_events_immutable_update
+      BEFORE UPDATE ON cms_events
+      BEGIN
+        SELECT RAISE(ABORT, 'CMS events are immutable');
+      END`)
+    await tx.execute(`CREATE TRIGGER cms_events_immutable_delete
+      BEFORE DELETE ON cms_events
+      BEGIN
+        SELECT RAISE(ABORT, 'CMS events are immutable');
+      END`)
     await tx.commit()
   } catch (error) {
     if (!tx.closed) await tx.rollback()
@@ -196,7 +229,7 @@ export async function ensureCmsSchema() {
       for (const statement of schemaStatements) {
         await db.execute(statement)
       }
-      await migrateCmsItemsForNews(db)
+      await migrateCmsItemsContentTypes(db)
       await seedFirstAdmin(db)
     })().catch((error) => {
       globalThis.hmeCmsSchemaPromise = undefined
