@@ -163,6 +163,20 @@ export default function AdminDashboard({ user, permissions }: { user: CmsUser; p
       setError(caught instanceof SyntaxError ? 'The Advanced JSON has an error. Check commas and quotation marks, or return to the Guided form.' : caught instanceof Error ? caught.message : 'Save failed')
     } finally { setBusy(false) }
   }
+  async function directPublish() {
+    if (user.role !== 'Admin') return
+    if (!window.confirm('Save these changes and publish them to the website now? This skips checker approval.')) return
+    setBusy(true); setError('')
+    try {
+      const payload = JSON.parse(editor)
+      const body = JSON.stringify({ content_type: type, content_key: 'primary', payload, change_note: note, scheduled_for: null })
+      const item = await api(selected ? `/api/admin/publishing/${selected.id}` : '/api/admin/publishing', { method: selected ? 'PUT' : 'POST', body })
+      const result = await api(`/api/admin/publishing/${item.id}/direct-publish`, { method: 'POST' })
+      setSelected(result.item); setSchedule(''); flash('Saved and published to the website'); await load()
+    } catch (caught) {
+      setError(caught instanceof SyntaxError ? 'The Advanced JSON has an error. Correct it before publishing.' : caught instanceof Error ? caught.message : 'Direct publishing failed')
+    } finally { setBusy(false) }
+  }
   async function act(action: string) {
     if (!selected) return
     let body: string | undefined
@@ -214,7 +228,7 @@ export default function AdminDashboard({ user, permissions }: { user: CmsUser; p
     </aside>
 
     <main className={styles.main}>
-      <header className={styles.topbar}><div><p className={styles.kicker}>HME website manager</p><h1>{section === 'publishing' ? 'Update website content' : 'Users & roles'}</h1></div><div className={styles.secure}><ShieldCheck size={18} /> Approval protection is on</div></header>
+      <header className={styles.topbar}><div><p className={styles.kicker}>HME website manager</p><h1>{section === 'publishing' ? 'Update website content' : 'Users & roles'}</h1></div><div className={styles.secure}><ShieldCheck size={18} /> Role-based publishing is on</div></header>
       {notice && <div className={styles.success}><Check size={18} /> {notice}</div>}
       {error && <div className={styles.error} role="alert"><X size={18} /><span>{error}</span></div>}
 
@@ -228,7 +242,7 @@ export default function AdminDashboard({ user, permissions }: { user: CmsUser; p
       </section> : <>
         <section className={styles.beginnerGuide}>
           <div className={styles.guideTitle}><CircleHelp size={21} /><div><strong>Updating the website is just three steps</strong><span>You never need to touch code. Advanced tools are kept in a separate tab.</span></div></div>
-          <ol><li><b>1</b><span><strong>Fill in the form</strong><small>Choose the website section you want to update.</small></span></li><li><b>2</b><span><strong>Check the preview</strong><small>See how customers will read it.</small></span></li><li><b>3</b><span><strong>Save and submit</strong><small>A different checker approves it.</small></span></li></ol>
+          <ol><li><b>1</b><span><strong>Fill in the form</strong><small>Choose the website section you want to update.</small></span></li><li><b>2</b><span><strong>Check the preview</strong><small>See how customers will read it.</small></span></li><li><b>3</b><span><strong>Publish</strong><small>Admins can publish now; editors send for approval.</small></span></li></ol>
         </section>
 
         <div className={styles.contentTabs}>{(Object.keys(labels) as CmsContentType[]).map((entry) => <button key={entry} className={type === entry ? styles.tabActive : ''} onClick={() => setType(entry)}>{labels[entry]}</button>)}</div>
@@ -261,6 +275,7 @@ export default function AdminDashboard({ user, permissions }: { user: CmsUser; p
 
             <div className={styles.actions}>
               {editable && <button className={styles.primaryButton} onClick={save} disabled={busy}>{selected ? 'Save draft changes' : 'Save as draft'}</button>}
+              {editable && user.role === 'Admin' && <button className={styles.approveButton} onClick={directPublish} disabled={busy}><Check size={17} /> Save & publish now</button>}
               {selected?.status === 'DRAFT' && selected.created_by_user_id === user.id && can('publishing.submit') && <button onClick={() => act('submit')} disabled={busy}><Send size={17} /> Send for approval</button>}
               {selected?.status === 'PENDING' && can('publishing.approve') && <><button className={styles.approveButton} onClick={() => act('approve')} disabled={busy}><Check size={17} /> Approve content</button><button className={styles.rejectButton} onClick={() => act('reject')} disabled={busy}><X size={17} /> Request changes</button></>}
               {selected?.status === 'APPROVED' && can('publishing.publish') && <button className={styles.approveButton} onClick={() => act('publish')} disabled={busy}><Check size={17} /> {selected.scheduled_for ? 'Confirm scheduled publishing' : 'Publish to website'}</button>}

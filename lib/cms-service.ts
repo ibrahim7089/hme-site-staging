@@ -354,16 +354,27 @@ export async function publishCmsItem(
   user: CmsUser | null,
   requestId = '',
   allowFuture = false,
+  direct = false,
 ) {
   const db = await ensureCmsSchema()
   const tx = await db.transaction('write')
   try {
     const current = await itemWith(tx, id)
     if (!current) throw new CmsWorkflowError(404, 'NOT_FOUND', 'Publishing item not found')
-    if (current.status !== 'APPROVED' || !current.reviewed_by_user_id) {
+    if (direct) {
+      if (!user || user.role !== 'Admin') {
+        throw new CmsWorkflowError(403, 'ADMIN_DIRECT_PUBLISH_ONLY', 'Only an administrator can publish without approval')
+      }
+      if (!['DRAFT', 'REJECTED'].includes(String(current.status))) {
+        throw new CmsWorkflowError(409, 'INVALID_STATE', 'Only a draft or rejected item can be published directly')
+      }
+      if (Number(current.created_by_user_id) !== user.id) {
+        throw new CmsWorkflowError(403, 'NOT_OWNER', 'Administrators can only directly publish their own draft')
+      }
+    } else if (current.status !== 'APPROVED' || !current.reviewed_by_user_id) {
       throw new CmsWorkflowError(409, 'INVALID_STATE', 'Item must be approved before publishing')
     }
-    if (!allowFuture && current.scheduled_for && new Date(String(current.scheduled_for)).getTime() > Date.now()) {
+    if (!direct && !allowFuture && current.scheduled_for && new Date(String(current.scheduled_for)).getTime() > Date.now()) {
       await tx.rollback()
       return { scheduled: true, item: current }
     }
@@ -385,8 +396,8 @@ export async function publishCmsItem(
 
     await tx.execute({
       sql: `UPDATE cms_items SET status = 'PUBLISHED', published_by_user_id = ?,
-        published_by_name = ?, published_at = ?, updated_at = datetime('now') WHERE id = ?`,
-      args: [user?.id || null, user?.name || 'Scheduled publisher', publishedAt, id],
+        published_by_name = ?, published_at = ?, scheduled_for = ?, updated_at = datetime('now') WHERE id = ?`,
+      args: [user?.id || null, user?.name || 'Scheduled publisher', publishedAt, direct ? null : current.scheduled_for ? String(current.scheduled_for) : null, id],
     })
     await tx.execute({
       sql: `INSERT INTO cms_published
@@ -410,13 +421,13 @@ export async function publishCmsItem(
     })
     await insertEvent(tx, {
       itemId: id,
-      action: user ? 'PUBLISHED' : 'SCHEDULED_PUBLISH',
+      action: direct ? 'DIRECT_PUBLISHED' : user ? 'PUBLISHED' : 'SCHEDULED_PUBLISH',
       actor: user,
-      fromStatus: 'APPROVED',
+      fromStatus: String(current.status),
       toStatus: 'PUBLISHED',
       oldPayload: previous ? parseJson(previous.payload) : null,
       newPayload: current.payload,
-      note: String(current.change_note || ''),
+      note: direct ? `Admin direct publish: ${String(current.change_note || '').trim() || 'No change note supplied'}` : String(current.change_note || ''),
       requestId,
     })
     const item = await itemWith(tx, id)

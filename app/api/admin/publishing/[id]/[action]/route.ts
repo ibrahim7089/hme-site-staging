@@ -46,6 +46,15 @@ export async function POST(request: Request, context: Context) {
       return cmsJson(result, result.scheduled ? 202 : 200, requestId)
     }
 
+    if (action === 'direct-publish') {
+      const user = await requireCmsPermission('publishing.publish')
+      const result = await publishCmsItem(id, user, requestId, true, true)
+      if (result.item) {
+        invalidateCmsContent(String((result.item as unknown as Record<string, unknown>).content_type) as CmsContentType)
+      }
+      return cmsJson(result, 200, requestId)
+    }
+
     if (action === 'rollback') {
       const user = await requireCmsPermission('publishing.create')
       return cmsJson(await createCmsRollbackDraft(id, user, requestId), 201, requestId)
