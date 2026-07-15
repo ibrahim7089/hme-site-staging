@@ -37,10 +37,14 @@ const rate = z.object({
 }).strict()
 
 const rates = z.object({
-  rates: z.array(rate).min(1).max(250),
+  visible: z.boolean().optional().default(true),
+  rates: z.array(rate).max(250),
   disclaimer: z.string().trim().max(500).optional().default(''),
   effectiveAt: z.string().datetime({ offset: true }).optional(),
 }).strict().superRefine((value, ctx) => {
+  if (value.visible && value.rates.length === 0) {
+    ctx.addIssue({ code: 'custom', path: ['rates'], message: 'Add at least one currency or switch online rates off' })
+  }
   const seen = new Set<string>()
   value.rates.forEach((entry, index) => {
     if (seen.has(entry.code)) {
@@ -60,10 +64,14 @@ const transferRate = z.object({
 }).strict()
 
 const transferRates = z.object({
-  rates: z.array(transferRate).min(1).max(250),
+  visible: z.boolean().optional().default(true),
+  rates: z.array(transferRate).max(250),
   disclaimer: z.string().trim().max(500).optional().default(''),
   effectiveAt: z.string().datetime({ offset: true }).optional(),
 }).strict().superRefine((value, ctx) => {
+  if (value.visible && value.rates.length === 0) {
+    ctx.addIssue({ code: 'custom', path: ['rates'], message: 'Add at least one destination or switch online rates off' })
+  }
   const seen = new Set<string>()
   value.rates.forEach((entry, index) => {
     const key = `${entry.countryCode}:${entry.currency}`

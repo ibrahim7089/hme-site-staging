@@ -102,6 +102,7 @@ function RatesEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
 
   return <div className={styles.guidedEditor}>
     <SectionTitle icon={<Banknote size={20} />} title="Enter exchange rates" description="One row for each currency. No coding or brackets needed." />
+    <label className={styles.visibilityControl}><input type="checkbox" checked={checked(root.visible)} onChange={(event) => onChange({ ...root, visible: event.target.checked })} disabled={disabled} /><span><strong>Show exchange rates online</strong><small>Switch this off and publish to show the &quot;Online rates are being updated&quot; notice.</small></span></label>
     <div className={styles.rateTableWrap}>
       <table className={styles.formTable}>
         <thead><tr><th>Currency code</th><th>Currency name</th><th>Country code</th><th>We buy</th><th>We sell</th><th><span className="sr-only">Remove</span></th></tr></thead>
@@ -111,10 +112,11 @@ function RatesEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
           <td><input aria-label={`Country code row ${index + 1}`} value={text(row.country)} onChange={(event) => update(index, 'country', event.target.value.toUpperCase().slice(0, 2))} placeholder="US" maxLength={2} disabled={disabled} /></td>
           <td><input aria-label={`Buy rate row ${index + 1}`} value={text(row.buy)} onChange={(event) => update(index, 'buy', event.target.value)} placeholder="4.1000" inputMode="decimal" disabled={disabled} /></td>
           <td><input aria-label={`Sell rate row ${index + 1}`} value={text(row.sell)} onChange={(event) => update(index, 'sell', event.target.value)} placeholder="4.3000" inputMode="decimal" disabled={disabled} /></td>
-          <td><button className={styles.iconDanger} type="button" title="Remove currency" onClick={() => remove(index)} disabled={disabled || rows.length === 1}><Trash2 size={17} /></button></td>
+          <td><button className={styles.iconDanger} type="button" title="Remove currency" onClick={() => remove(index)} disabled={disabled}><Trash2 size={17} /></button></td>
         </tr>)}</tbody>
       </table>
     </div>
+    {rows.length === 0 && <div className={styles.blankState}>No currencies saved. Keep online rates switched off before saving.</div>}
     <button className={styles.addRowButton} type="button" onClick={add} disabled={disabled}><Plus size={17} /> Add another currency</button>
     <label className={styles.fullField}>Rate notice shown to customers
       <textarea value={text(root.disclaimer)} onChange={(event) => onChange({ ...root, disclaimer: event.target.value })} placeholder="Example: Rates are indicative and subject to availability." maxLength={500} disabled={disabled} />
@@ -134,6 +136,7 @@ function TransferRatesEditor({ payload, disabled, onChange }: Omit<Props, 'type'
 
   return <div className={styles.guidedEditor}>
     <SectionTitle icon={<SendHorizontal size={20} />} title="Enter money transfer rates" description="Use one row for each destination and payout currency. Fees can be left empty." />
+    <label className={styles.visibilityControl}><input type="checkbox" checked={checked(root.visible)} onChange={(event) => onChange({ ...root, visible: event.target.checked })} disabled={disabled} /><span><strong>Show transfer rates online</strong><small>Switch this off and publish to show the &quot;Online rates are being updated&quot; notice.</small></span></label>
     <div className={styles.rateTableWrap}>
       <table className={styles.formTable}>
         <thead><tr><th>Destination</th><th>Country code</th><th>Currency</th><th>Rate / MYR</th><th>Fee (MYR)</th><th>Visible</th><th><span className="sr-only">Remove</span></th></tr></thead>
@@ -144,10 +147,11 @@ function TransferRatesEditor({ payload, disabled, onChange }: Omit<Props, 'type'
           <td><input aria-label={'Transfer rate row ' + (index + 1)} value={text(row.rate)} onChange={(event) => update(index, 'rate', event.target.value)} placeholder="3500.00" inputMode="decimal" disabled={disabled} /></td>
           <td><input aria-label={'Transfer fee row ' + (index + 1)} value={text(row.fee)} onChange={(event) => update(index, 'fee', event.target.value)} placeholder="0.00" inputMode="decimal" disabled={disabled} /></td>
           <td><input aria-label={'Visible row ' + (index + 1)} type="checkbox" checked={checked(row.active)} onChange={(event) => update(index, 'active', event.target.checked)} disabled={disabled} /></td>
-          <td><button className={styles.iconDanger} type="button" title="Remove destination" onClick={() => remove(index)} disabled={disabled || rows.length === 1}><Trash2 size={17} /></button></td>
+          <td><button className={styles.iconDanger} type="button" title="Remove destination" onClick={() => remove(index)} disabled={disabled}><Trash2 size={17} /></button></td>
         </tr>)}</tbody>
       </table>
     </div>
+    {rows.length === 0 && <div className={styles.blankState}>No destinations saved. Keep online rates switched off before saving.</div>}
     <button className={styles.addRowButton} type="button" onClick={add} disabled={disabled}><Plus size={17} /> Add destination</button>
     <label className={styles.fullField}>Rate notice shown to customers
       <textarea value={text(root.disclaimer)} onChange={(event) => onChange({ ...root, disclaimer: event.target.value })} placeholder="Rates and fees are indicative. Confirm the final amount with your branch." maxLength={500} disabled={disabled} />
@@ -356,7 +360,7 @@ export function ContentPreview({ type, payload }: { type: CmsContentType; payloa
   if (type === 'rates') {
     const rows = Array.isArray(root.rates) ? root.rates.map(record) : []
     return <div className={styles.previewSurface}><div className={styles.previewHeader}><Banknote size={21} /><div><span>Customer preview</span><h3>Today&apos;s exchange rates</h3></div></div>
-      {rows.length ? <table className={styles.previewTable}><thead><tr><th>Currency</th><th>We buy</th><th>We sell</th></tr></thead><tbody>{rows.map((row, index) => <tr key={index}><td><strong>{text(row.code) || '—'}</strong><span>{text(row.name)}</span></td><td>{text(row.buy) || '—'}</td><td>{text(row.sell) || '—'}</td></tr>)}</tbody></table> : <div className={styles.blankState}>Add a currency to see the preview.</div>}
+      {!checked(root.visible) ? <div className={styles.offlinePreview}><strong>Online rates are being updated</strong><p>For the latest available rate, contact an HME branch before you travel or send money.</p></div> : rows.length ? <table className={styles.previewTable}><thead><tr><th>Currency</th><th>We buy</th><th>We sell</th></tr></thead><tbody>{rows.map((row, index) => <tr key={index}><td><strong>{text(row.code) || '-'}</strong><span>{text(row.name)}</span></td><td>{text(row.buy) || '-'}</td><td>{text(row.sell) || '-'}</td></tr>)}</tbody></table> : <div className={styles.blankState}>Add a currency to see the preview.</div>}
       {text(root.disclaimer) && <p className={styles.previewNote}>{text(root.disclaimer)}</p>}
     </div>
   }
@@ -365,7 +369,7 @@ export function ContentPreview({ type, payload }: { type: CmsContentType; payloa
   if (type === 'transfer-rates') {
     const rows = Array.isArray(root.rates) ? root.rates.map(record).filter((row) => checked(row.active)) : []
     return <div className={styles.previewSurface}><div className={styles.previewHeader}><SendHorizontal size={21} /><div><span>Customer preview</span><h3>Money transfer rates</h3></div></div>
-      {rows.length ? <table className={styles.previewTable}><thead><tr><th>Destination</th><th>Currency</th><th>Rate / MYR</th><th>Fee</th></tr></thead><tbody>{rows.map((row, index) => <tr key={index}><td><strong>{text(row.country) || '-'}</strong><span>{text(row.countryCode)}</span></td><td>{text(row.currency) || '-'}</td><td>{text(row.rate) || '-'}</td><td>{text(row.fee) || 'Confirm with branch'}</td></tr>)}</tbody></table> : <div className={styles.blankState}>Add a visible destination to see the preview.</div>}
+      {!checked(root.visible) ? <div className={styles.offlinePreview}><strong>Online rates are being updated</strong><p>For the latest available rate, contact an HME branch before you travel or send money.</p></div> : rows.length ? <table className={styles.previewTable}><thead><tr><th>Destination</th><th>Currency</th><th>Rate / MYR</th><th>Fee</th></tr></thead><tbody>{rows.map((row, index) => <tr key={index}><td><strong>{text(row.country) || '-'}</strong><span>{text(row.countryCode)}</span></td><td>{text(row.currency) || '-'}</td><td>{text(row.rate) || '-'}</td><td>{text(row.fee) || 'Confirm with branch'}</td></tr>)}</tbody></table> : <div className={styles.blankState}>Add a visible destination to see the preview.</div>}
       {text(root.disclaimer) && <p className={styles.previewNote}>{text(root.disclaimer)}</p>}
     </div>
   }

@@ -7,6 +7,14 @@ export const runtime = 'nodejs'
 
 type Context = { params: Promise<{ contentType?: string[] }> }
 
+function publicPayload(type: string, payload: unknown) {
+  if ((type === 'rates' || type === 'transfer-rates') && payload && typeof payload === 'object') {
+    const source = payload as Record<string, unknown>
+    if (source.visible === false) return { ...source, rates: [] }
+  }
+  return payload
+}
+
 export async function GET(_request: Request, context: Context) {
   try {
     const { contentType: segments } = await context.params
@@ -22,12 +30,17 @@ export async function GET(_request: Request, context: Context) {
         return cmsJson({ error: 'No approved content has been published', code: 'NOT_PUBLISHED' }, 404)
       }
       return Response.json({
-        content: snapshot.content[type],
+        content: publicPayload(type, snapshot.content[type]),
         meta: snapshot.meta.versions[type] || {},
       }, { headers })
     }
 
-    return Response.json(snapshot, { headers })
+    return Response.json({
+      ...snapshot,
+      content: Object.fromEntries(
+        Object.entries(snapshot.content).map(([contentType, payload]) => [contentType, publicPayload(contentType, payload)]),
+      ),
+    }, { headers })
   } catch (error) {
     if (error instanceof CmsNotConfiguredError) {
       return cmsJson({ error: 'Published content is not configured', code: 'CMS_NOT_CONFIGURED' }, 503)

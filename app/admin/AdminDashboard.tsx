@@ -38,10 +38,12 @@ const labels: Record<CmsContentType, string> = {
 }
 const templates: Record<CmsContentType, unknown> = {
   rates: {
+    visible: true,
     rates: [{ code: 'USD', name: 'US Dollar', country: 'US', buy: '', sell: '' }],
     disclaimer: 'Rates are indicative and subject to availability at the branch.',
   },
   'transfer-rates': {
+    visible: true,
     rates: [{ countryCode: 'ID', country: 'Indonesia', currency: 'IDR', rate: '', fee: '', active: true }],
     disclaimer: 'Rates and fees are indicative. Confirm the final amount with your selected branch.',
   },

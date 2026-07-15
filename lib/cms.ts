@@ -351,7 +351,7 @@ export async function getPublishedRates() {
   const payload = snapshot?.content?.rates
   const source = payload && typeof payload === 'object' ? payload as Record<string, unknown> : {}
   return {
-    rates: validRates(payload) || [],
+    rates: source.visible === false ? [] : validRates(payload) || [],
     disclaimer: text(source.disclaimer, 500),
     effectiveAt: text(source.effectiveAt, 50) ||
       (snapshot?.meta.versions.rates as { publishedAt?: string } | undefined)?.publishedAt ||
@@ -364,7 +364,7 @@ export async function getPublishedTransferRates() {
   const payload = snapshot?.content?.['transfer-rates']
   const source = payload && typeof payload === 'object' ? payload as Record<string, unknown> : {}
   return {
-    rates: validTransferRates(payload) || [],
+    rates: source.visible === false ? [] : validTransferRates(payload) || [],
     disclaimer: text(source.disclaimer, 500),
     effectiveAt: text(source.effectiveAt, 50) ||
       (snapshot?.meta.versions['transfer-rates'] as { publishedAt?: string } | undefined)?.publishedAt ||
