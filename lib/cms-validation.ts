@@ -6,8 +6,9 @@ const decimalText = z.union([z.string(), z.number()])
   .transform((value) => String(value).trim())
 
 const positiveRate = decimalText
-  .refine((value) => /^\d+(\.\d{1,8})?$/.test(value), 'Use a positive decimal with up to 8 decimal places')
-  .refine((value) => Number(value) > 0, 'Published rates must be greater than zero')
+  .refine((value) => /^\d+(\.\d{1,8})?$/.test(value) && Number(value) > 0, 'Use a positive decimal greater than zero with up to 8 decimal places')
+
+const editableDecimal = decimalText.refine((value) => value.length <= 40, 'Rate value is too long')
 
 const optionalAmount = decimalText
   .refine((value) => value === '' || /^\d+(\.\d{1,8})?$/.test(value), 'Use a non-negative decimal with up to 8 decimal places')
@@ -36,21 +37,39 @@ const rate = z.object({
   sell: positiveRate,
 }).strict()
 
+const editableRate = z.object({
+  code: z.string().trim().max(3),
+  name: z.string().trim().max(80),
+  country: z.string().trim().max(2),
+  buy: editableDecimal,
+  sell: editableDecimal,
+}).strict()
+
 const rates = z.object({
   visible: z.boolean().optional().default(true),
-  rates: z.array(rate).max(250),
+  rates: z.array(editableRate).max(250),
   disclaimer: z.string().trim().max(500).optional().default(''),
   effectiveAt: z.string().datetime({ offset: true }).optional(),
 }).strict().superRefine((value, ctx) => {
+  if (!value.visible) return
   if (value.visible && value.rates.length === 0) {
     ctx.addIssue({ code: 'custom', path: ['rates'], message: 'Add at least one currency or switch online rates off' })
   }
   const seen = new Set<string>()
   value.rates.forEach((entry, index) => {
-    if (seen.has(entry.code)) {
+    const parsed = rate.safeParse(entry)
+    if (!parsed.success) {
+      parsed.error.issues.forEach((issue) => ctx.addIssue({
+        code: 'custom',
+        path: ['rates', index, ...issue.path],
+        message: issue.message,
+      }))
+      return
+    }
+    if (seen.has(parsed.data.code)) {
       ctx.addIssue({ code: 'custom', path: ['rates', index, 'code'], message: 'Currency codes must be unique' })
     }
-    seen.add(entry.code)
+    seen.add(parsed.data.code)
   })
 })
 
@@ -63,18 +82,37 @@ const transferRate = z.object({
   active: z.boolean().optional().default(true),
 }).strict()
 
+const editableTransferRate = z.object({
+  countryCode: z.string().trim().max(2),
+  country: z.string().trim().max(100),
+  currency: z.string().trim().max(3),
+  rate: editableDecimal,
+  fee: editableDecimal.optional().default(''),
+  active: z.boolean().optional().default(true),
+}).strict()
+
 const transferRates = z.object({
   visible: z.boolean().optional().default(true),
-  rates: z.array(transferRate).max(250),
+  rates: z.array(editableTransferRate).max(250),
   disclaimer: z.string().trim().max(500).optional().default(''),
   effectiveAt: z.string().datetime({ offset: true }).optional(),
 }).strict().superRefine((value, ctx) => {
+  if (!value.visible) return
   if (value.visible && value.rates.length === 0) {
     ctx.addIssue({ code: 'custom', path: ['rates'], message: 'Add at least one destination or switch online rates off' })
   }
   const seen = new Set<string>()
   value.rates.forEach((entry, index) => {
-    const key = `${entry.countryCode}:${entry.currency}`
+    const parsed = transferRate.safeParse(entry)
+    if (!parsed.success) {
+      parsed.error.issues.forEach((issue) => ctx.addIssue({
+        code: 'custom',
+        path: ['rates', index, ...issue.path],
+        message: issue.message,
+      }))
+      return
+    }
+    const key = `${parsed.data.countryCode}:${parsed.data.currency}`
     if (seen.has(key)) {
       ctx.addIssue({ code: 'custom', path: ['rates', index, 'currency'], message: 'Destination and currency combinations must be unique' })
     }
