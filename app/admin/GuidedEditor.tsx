@@ -261,15 +261,16 @@ function CareersEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
   const remove = (index: number) => commit(rows.filter((_, rowIndex) => rowIndex !== index))
 
   return <div className={styles.guidedEditor}>
-    <SectionTitle icon={<BriefcaseBusiness size={20} />} title="Manage careers and vacancies" description="Update the careers introduction, hero image and available roles." />
+    <SectionTitle icon={<BriefcaseBusiness size={20} />} title="Manage careers and vacancies" description={`${rows.length} ${rows.length === 1 ? 'vacancy' : 'vacancies'} currently listed. Edit the roles below or add a new one.`} />
     <section className={styles.formCard}>
       <div className={styles.formCardHead}><div><span>Careers page</span><strong>Page introduction</strong></div></div>
       <div className={styles.formGrid}>
         <label className={styles.spanTwo}>Introductory message<textarea value={text(root.intro)} onChange={(event) => commitRoot('intro', event.target.value)} maxLength={500} disabled={disabled} /></label>
         <label className={styles.spanTwo}>General applications email<input type="email" value={text(root.generalApplicationsEmail)} onChange={(event) => commitRoot('generalApplicationsEmail', event.target.value)} placeholder="careers@example.com" disabled={disabled} /></label>
-        <div className={styles.spanTwo}><label>Careers hero image</label><ImageUploadField value={text(root.heroImage)} alt={text(root.heroImageAlt) || 'HME careers'} disabled={disabled} onChange={(url) => commitRoot('heroImage', url)} /></div>
-        {text(root.heroImage) && <label className={styles.spanTwo}>Image description<input value={text(root.heroImageAlt)} onChange={(event) => commitRoot('heroImageAlt', event.target.value)} maxLength={180} disabled={disabled} /></label>}
       </div>
+    </section>
+    <section className={styles.formCard}>
+      <div className={styles.formCardHead}><div><span>Vacancies</span><strong>{rows.length} {rows.length === 1 ? 'role' : 'roles'} available to edit</strong></div></div>
     </section>
     <div className={styles.cardList}>{rows.map((row, index) => <section className={styles.formCard} key={index}>
       <div className={styles.formCardHead}><div><span>Vacancy {index + 1}</span><strong>{text(row.title) || 'Untitled role'}</strong></div><label className={styles.switchLabel}><input type="checkbox" checked={checked(row.active)} onChange={(event) => update(index, 'active', event.target.checked)} disabled={disabled} /> Open</label><button className={styles.iconDanger} type="button" title="Remove vacancy" onClick={() => remove(index)} disabled={disabled}><Trash2 size={17} /></button></div>
@@ -287,6 +288,13 @@ function CareersEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
     </section>)}</div>
     {rows.length === 0 && <div className={styles.blankState}>No active vacancy. General applications will still be shown.</div>}
     <button className={styles.addRowButton} type="button" onClick={add} disabled={disabled}><Plus size={17} /> Add vacancy</button>
+    <section className={styles.formCard}>
+      <div className={styles.formCardHead}><div><span>Page image</span><strong>Careers hero image</strong></div></div>
+      <div className={styles.formGrid}>
+        <div className={styles.spanTwo}><ImageUploadField value={text(root.heroImage)} alt={text(root.heroImageAlt) || 'HME careers'} disabled={disabled} onChange={(url) => commitRoot('heroImage', url)} /></div>
+        {text(root.heroImage) && <label className={styles.spanTwo}>Image description<input value={text(root.heroImageAlt)} onChange={(event) => commitRoot('heroImageAlt', event.target.value)} maxLength={180} disabled={disabled} /></label>}
+      </div>
+    </section>
   </div>
 }
 
