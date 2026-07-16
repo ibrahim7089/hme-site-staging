@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { BadgePercent, Banknote, BookOpenText, BriefcaseBusiness, Building2, Contact, LoaderCircle, MapPin, Newspaper, Plus, SendHorizontal, Trash2, UploadCloud } from 'lucide-react'
+import { BadgePercent, Banknote, BookOpenText, BriefcaseBusiness, Building2, Contact, Copy, Eye, LoaderCircle, MapPin, Newspaper, PencilLine, Plus, SendHorizontal, Trash2, UploadCloud } from 'lucide-react'
 import type { CmsContentType } from '@/lib/cms-validation'
 import styles from './admin.module.css'
 
@@ -33,6 +33,74 @@ function slugify(value: string) {
 
 function SectionTitle({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
   return <div className={styles.formIntro}><span>{icon}</span><div><h3>{title}</h3><p>{description}</p></div></div>
+}
+
+type ItemPanelMode = 'edit' | 'preview'
+
+function CollectionToolbar({ count, noun, plural, addLabel, disabled, onAdd, children }: {
+  count: number
+  noun: string
+  plural?: string
+  addLabel: string
+  disabled: boolean
+  onAdd: () => void
+  children?: React.ReactNode
+}) {
+  return <div className={styles.collectionToolbar}>
+    <div><strong>{count} {count === 1 ? noun : plural || `${noun}s`}</strong><span>Choose one item below to edit or preview it.</span></div>
+    {children}
+    <button type="button" className={styles.collectionAdd} onClick={onAdd} disabled={disabled}><Plus size={17} /> {addLabel}</button>
+  </div>
+}
+
+function CollectionItem({ index, kind, title, meta, summary, active, activeLabel, disabled, mode, onMode, onToggle, onDuplicate, onRemove, edit, preview }: {
+  index: number
+  kind: string
+  title: string
+  meta?: string
+  summary?: string
+  active: boolean
+  activeLabel: string
+  disabled: boolean
+  mode: ItemPanelMode | null
+  onMode: (mode: ItemPanelMode | null) => void
+  onToggle: (active: boolean) => void
+  onDuplicate: () => void
+  onRemove: () => void
+  edit: React.ReactNode
+  preview: React.ReactNode
+}) {
+  return <section className={`${styles.collectionItem} ${mode ? styles.collectionItemOpen : ''}`}>
+    <div className={styles.collectionSummary}>
+      <span className={styles.itemNumber}>{index + 1}</span>
+      <div className={styles.itemIdentity}>
+        <span>{kind}</span>
+        <strong>{title}</strong>
+        {meta && <small>{meta}</small>}
+        {summary && <p>{summary}</p>}
+      </div>
+      <div className={styles.itemControls}>
+        <label className={styles.itemVisibility}><input type="checkbox" checked={active} onChange={(event) => onToggle(event.target.checked)} disabled={disabled} /><span>{activeLabel}</span></label>
+        <button type="button" className={mode === 'edit' ? styles.itemActionActive : styles.itemAction} onClick={() => onMode(mode === 'edit' ? null : 'edit')}><PencilLine size={15} /> {mode === 'edit' ? 'Close editor' : 'Edit'}</button>
+        <button type="button" className={mode === 'preview' ? styles.itemActionActive : styles.itemAction} onClick={() => onMode(mode === 'preview' ? null : 'preview')}><Eye size={15} /> Preview</button>
+        <button type="button" className={styles.itemIconAction} title={`Duplicate ${kind.toLowerCase()}`} onClick={onDuplicate} disabled={disabled}><Copy size={15} /></button>
+        <button type="button" className={styles.itemIconDanger} title={`Delete ${kind.toLowerCase()}`} onClick={onRemove} disabled={disabled}><Trash2 size={15} /></button>
+      </div>
+    </div>
+    {mode === 'edit' && <div className={styles.collectionEditor}>{edit}</div>}
+    {mode === 'preview' && <div className={styles.collectionPreview}>{preview}</div>}
+  </section>
+}
+
+function PreviewCard({ image, imageAlt, eyebrow, title, summary, body }: { image?: string; imageAlt?: string; eyebrow?: string; title: string; summary?: string; body?: string }) {
+  return <article className={styles.inlinePreviewCard}>
+    {image ? <div className={styles.inlinePreviewImage}><Image src={image} alt={imageAlt || title} fill sizes="520px" /></div> : <div className={styles.inlinePreviewPlaceholder}>Website preview</div>}
+    <div><small>{eyebrow}</small><h4>{title}</h4>{summary && <p>{summary}</p>}{body && <div>{body}</div>}</div>
+  </article>
+}
+
+function confirmRemove(label: string) {
+  return window.confirm(`Delete “${label}” from this draft? The website will only change after you publish.`)
 }
 
 
@@ -163,17 +231,24 @@ function TransferRatesEditor({ payload, disabled, onChange }: Omit<Props, 'type'
 function PromotionsEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
   const root = record(payload)
   const rows = Array.isArray(root.promotions) ? root.promotions.map(record) : []
+  const [panel, setPanel] = useState<{ index: number; mode: ItemPanelMode } | null>(null)
   const commit = (next: Entry[]) => onChange({ ...root, promotions: next })
   const update = (index: number, key: string, value: unknown) => commit(rows.map((row, rowIndex) => rowIndex === index ? { ...row, [key]: value } : row))
   const updateTitle = (index: number, value: string) => commit(rows.map((row, rowIndex) => rowIndex === index ? { ...row, title: value, slug: slugify(value) } : row))
-  const add = () => commit([...rows, { slug: 'new-promotion', title: '', summary: '', image: '', ctaLabel: 'Learn more', ctaHref: '/contact', active: true }])
-  const remove = (index: number) => commit(rows.filter((_, rowIndex) => rowIndex !== index))
+  const add = () => { commit([...rows, { slug: `new-promotion-${rows.length + 1}`, title: '', summary: '', image: '', ctaLabel: 'Learn more', ctaHref: '/contact', active: true }]); setPanel({ index: rows.length, mode: 'edit' }) }
+  const duplicate = (index: number) => {
+    const source = rows[index]
+    const title = `${text(source.title) || 'Promotion'} copy`
+    const next = [...rows.slice(0, index + 1), { ...source, title, slug: slugify(title), active: false }, ...rows.slice(index + 1)]
+    commit(next); setPanel({ index: index + 1, mode: 'edit' })
+  }
+  const remove = (index: number) => { if (confirmRemove(text(rows[index].title) || `Promotion ${index + 1}`)) { commit(rows.filter((_, rowIndex) => rowIndex !== index)); setPanel(null) } }
 
   return <div className={styles.guidedEditor}>
     <SectionTitle icon={<BadgePercent size={20} />} title="Create promotions" description="Add the customer-facing title, dates and call-to-action. The URL name is created automatically." />
-    <div className={styles.cardList}>{rows.map((row, index) => <section className={styles.formCard} key={index}>
-      <div className={styles.formCardHead}><div><span>Promotion {index + 1}</span><strong>{text(row.title) || 'Untitled promotion'}</strong></div><label className={styles.switchLabel}><input type="checkbox" checked={checked(row.active)} onChange={(event) => update(index, 'active', event.target.checked)} disabled={disabled} /> Active</label><button className={styles.iconDanger} type="button" title="Remove promotion" onClick={() => remove(index)} disabled={disabled}><Trash2 size={17} /></button></div>
-      <div className={styles.formGrid}>
+    <CollectionToolbar count={rows.length} noun="promotion" addLabel="New promotion" disabled={disabled} onAdd={add} />
+    <div className={styles.collectionList}>{rows.map((row, index) => <CollectionItem key={`${text(row.slug)}-${index}`} index={index} kind="Promotion" title={text(row.title) || 'Untitled promotion'} meta={[text(row.startDate), text(row.endDate)].filter(Boolean).join(' to ') || 'No campaign dates'} summary={text(row.summary)} active={checked(row.active)} activeLabel={checked(row.active) ? 'Visible' : 'Hidden'} disabled={disabled} mode={panel?.index === index ? panel.mode : null} onMode={(mode) => setPanel(mode ? { index, mode } : null)} onToggle={(active) => update(index, 'active', active)} onDuplicate={() => duplicate(index)} onRemove={() => remove(index)}
+      edit={<div className={styles.formGrid}>
         <label className={styles.spanTwo}>Promotion title<input value={text(row.title)} onChange={(event) => updateTitle(index, event.target.value)} placeholder="Send money and save" maxLength={140} disabled={disabled} /></label>
         <label className={styles.spanTwo}>Short description<textarea value={text(row.summary)} onChange={(event) => update(index, 'summary', event.target.value)} placeholder="Explain the offer in one or two sentences." maxLength={500} disabled={disabled} /></label>
         <label>Start date<input type="date" value={text(row.startDate)} onChange={(event) => update(index, 'startDate', event.target.value || undefined)} disabled={disabled} /></label>
@@ -182,10 +257,10 @@ function PromotionsEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) 
         <label>Button link<input value={text(row.ctaHref)} onChange={(event) => update(index, 'ctaHref', event.target.value)} placeholder="/contact" disabled={disabled} /></label>
         <div className={styles.spanTwo}><label>Promotion image</label><ImageUploadField value={text(row.image)} alt={text(row.title)} disabled={disabled} onChange={(url) => update(index, 'image', url)} /></div>
         <label className={styles.spanTwo}>URL name <input value={text(row.slug)} onChange={(event) => update(index, 'slug', slugify(event.target.value))} placeholder="send-money-and-save" disabled={disabled} /><small>Automatically generated from the title. Lowercase letters and dashes only.</small></label>
-      </div>
-    </section>)}</div>
+      </div>}
+      preview={<PreviewCard image={text(row.image)} imageAlt={text(row.title)} eyebrow={[text(row.startDate), text(row.endDate)].filter(Boolean).join(' – ')} title={text(row.title) || 'Promotion title'} summary={text(row.summary)} />}
+    />)}</div>
     {rows.length === 0 && <div className={styles.blankState}>No promotion added yet. You can publish an empty list to hide all promotions.</div>}
-    <button className={styles.addRowButton} type="button" onClick={add} disabled={disabled}><Plus size={17} /> Add promotion</button>
   </div>
 }
 
@@ -193,17 +268,24 @@ function PromotionsEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) 
 function NewsEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
   const root = record(payload)
   const rows = Array.isArray(root.articles) ? root.articles.map(record) : []
+  const [panel, setPanel] = useState<{ index: number; mode: ItemPanelMode } | null>(null)
   const commit = (next: Entry[]) => onChange({ ...root, articles: next })
   const update = (index: number, key: string, value: unknown) => commit(rows.map((row, rowIndex) => rowIndex === index ? { ...row, [key]: value } : row))
   const updateTitle = (index: number, value: string) => commit(rows.map((row, rowIndex) => rowIndex === index ? { ...row, title: value, slug: slugify(value), imageAlt: text(row.imageAlt) || value } : row))
-  const add = () => commit([...rows, { slug: 'new-article', title: '', summary: '', body: '', publishedDate: new Date().toISOString().slice(0, 10), image: '', imageAlt: '', author: 'HME', active: true }])
-  const remove = (index: number) => commit(rows.filter((_, rowIndex) => rowIndex !== index))
+  const add = () => { commit([...rows, { slug: `new-article-${rows.length + 1}`, title: '', summary: '', body: '', publishedDate: new Date().toISOString().slice(0, 10), image: '', imageAlt: '', author: 'HME', active: true }]); setPanel({ index: rows.length, mode: 'edit' }) }
+  const duplicate = (index: number) => {
+    const source = rows[index]
+    const title = `${text(source.title) || 'News article'} copy`
+    const next = [...rows.slice(0, index + 1), { ...source, title, slug: slugify(title), active: false }, ...rows.slice(index + 1)]
+    commit(next); setPanel({ index: index + 1, mode: 'edit' })
+  }
+  const remove = (index: number) => { if (confirmRemove(text(rows[index].title) || `News article ${index + 1}`)) { commit(rows.filter((_, rowIndex) => rowIndex !== index)); setPanel(null) } }
 
   return <div className={styles.guidedEditor}>
     <SectionTitle icon={<Newspaper size={20} />} title="Publish company news" description="Create announcements, branch updates and company stories with a photo." />
-    <div className={styles.cardList}>{rows.map((row, index) => <section className={styles.formCard} key={index}>
-      <div className={styles.formCardHead}><div><span>News article {index + 1}</span><strong>{text(row.title) || 'Untitled article'}</strong></div><label className={styles.switchLabel}><input type="checkbox" checked={checked(row.active)} onChange={(event) => update(index, 'active', event.target.checked)} disabled={disabled} /> Visible</label><button className={styles.iconDanger} type="button" title="Remove article" onClick={() => remove(index)} disabled={disabled}><Trash2 size={17} /></button></div>
-      <div className={styles.formGrid}>
+    <CollectionToolbar count={rows.length} noun="article" addLabel="New article" disabled={disabled} onAdd={add} />
+    <div className={styles.collectionList}>{rows.map((row, index) => <CollectionItem key={`${text(row.slug)}-${index}`} index={index} kind="News article" title={text(row.title) || 'Untitled article'} meta={`${text(row.publishedDate) || 'No date'} · ${text(row.author) || 'HME'}`} summary={text(row.summary)} active={checked(row.active)} activeLabel={checked(row.active) ? 'Visible' : 'Hidden'} disabled={disabled} mode={panel?.index === index ? panel.mode : null} onMode={(mode) => setPanel(mode ? { index, mode } : null)} onToggle={(active) => update(index, 'active', active)} onDuplicate={() => duplicate(index)} onRemove={() => remove(index)}
+      edit={<div className={styles.formGrid}>
         <label className={styles.spanTwo}>Headline<input value={text(row.title)} onChange={(event) => updateTitle(index, event.target.value)} placeholder="HME opens a new branch" maxLength={180} disabled={disabled} /></label>
         <label>News date<input type="date" value={text(row.publishedDate)} onChange={(event) => update(index, 'publishedDate', event.target.value)} disabled={disabled} /></label>
         <label>Author<input value={text(row.author)} onChange={(event) => update(index, 'author', event.target.value)} placeholder="HME" maxLength={100} disabled={disabled} /></label>
@@ -212,10 +294,10 @@ function NewsEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
         <div className={styles.spanTwo}><label>Article image</label><ImageUploadField value={text(row.image)} alt={text(row.imageAlt) || text(row.title)} disabled={disabled} onChange={(url) => update(index, 'image', url)} /></div>
         {text(row.image) && <label className={styles.spanTwo}>Image description (for accessibility)<input value={text(row.imageAlt)} onChange={(event) => update(index, 'imageAlt', event.target.value)} placeholder="Describe what is shown in the image" maxLength={180} disabled={disabled} /></label>}
         <label className={styles.spanTwo}>URL name<input value={text(row.slug)} onChange={(event) => update(index, 'slug', slugify(event.target.value))} disabled={disabled} /><small>Created automatically from the headline.</small></label>
-      </div>
-    </section>)}</div>
+      </div>}
+      preview={<PreviewCard image={text(row.image)} imageAlt={text(row.imageAlt)} eyebrow={`${text(row.publishedDate)} · ${text(row.author) || 'HME'}`} title={text(row.title) || 'News headline'} summary={text(row.summary)} body={text(row.body)} />}
+    />)}</div>
     {rows.length === 0 && <div className={styles.blankState}>No news article added yet.</div>}
-    <button className={styles.addRowButton} type="button" onClick={add} disabled={disabled}><Plus size={17} /> Add news article</button>
   </div>
 }
 
@@ -223,17 +305,24 @@ function NewsEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
 function BlogEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
   const root = record(payload)
   const rows = Array.isArray(root.posts) ? root.posts.map(record) : []
+  const [panel, setPanel] = useState<{ index: number; mode: ItemPanelMode } | null>(null)
   const commit = (next: Entry[]) => onChange({ ...root, posts: next })
   const update = (index: number, key: string, value: unknown) => commit(rows.map((row, rowIndex) => rowIndex === index ? { ...row, [key]: value } : row))
   const updateTitle = (index: number, value: string) => commit(rows.map((row, rowIndex) => rowIndex === index ? { ...row, title: value, slug: slugify(value), imageAlt: text(row.imageAlt) || value } : row))
-  const add = () => commit([...rows, { slug: 'new-guide', title: '', summary: '', body: '', publishedDate: new Date().toISOString().slice(0, 10), image: '', imageAlt: '', author: 'HME', category: 'Guides', active: true }])
-  const remove = (index: number) => commit(rows.filter((_, rowIndex) => rowIndex !== index))
+  const add = () => { commit([...rows, { slug: `new-guide-${rows.length + 1}`, title: '', summary: '', body: '', publishedDate: new Date().toISOString().slice(0, 10), image: '', imageAlt: '', author: 'HME', category: 'Guides', active: true }]); setPanel({ index: rows.length, mode: 'edit' }) }
+  const duplicate = (index: number) => {
+    const source = rows[index]
+    const title = `${text(source.title) || 'Blog post'} copy`
+    const next = [...rows.slice(0, index + 1), { ...source, title, slug: slugify(title), active: false }, ...rows.slice(index + 1)]
+    commit(next); setPanel({ index: index + 1, mode: 'edit' })
+  }
+  const remove = (index: number) => { if (confirmRemove(text(rows[index].title) || `Blog post ${index + 1}`)) { commit(rows.filter((_, rowIndex) => rowIndex !== index)); setPanel(null) } }
 
   return <div className={styles.guidedEditor}>
     <SectionTitle icon={<BookOpenText size={20} />} title="Publish helpful blog posts" description="Create guides and educational content with a cover image, author and category." />
-    <div className={styles.cardList}>{rows.map((row, index) => <section className={styles.formCard} key={index}>
-      <div className={styles.formCardHead}><div><span>Blog post {index + 1}</span><strong>{text(row.title) || 'Untitled post'}</strong></div><label className={styles.switchLabel}><input type="checkbox" checked={checked(row.active)} onChange={(event) => update(index, 'active', event.target.checked)} disabled={disabled} /> Visible</label><button className={styles.iconDanger} type="button" title="Remove post" onClick={() => remove(index)} disabled={disabled}><Trash2 size={17} /></button></div>
-      <div className={styles.formGrid}>
+    <CollectionToolbar count={rows.length} noun="post" addLabel="New blog post" disabled={disabled} onAdd={add} />
+    <div className={styles.collectionList}>{rows.map((row, index) => <CollectionItem key={`${text(row.slug)}-${index}`} index={index} kind="Blog post" title={text(row.title) || 'Untitled post'} meta={`${text(row.category) || 'Guide'} · ${text(row.publishedDate) || 'No date'}`} summary={text(row.summary)} active={checked(row.active)} activeLabel={checked(row.active) ? 'Visible' : 'Hidden'} disabled={disabled} mode={panel?.index === index ? panel.mode : null} onMode={(mode) => setPanel(mode ? { index, mode } : null)} onToggle={(active) => update(index, 'active', active)} onDuplicate={() => duplicate(index)} onRemove={() => remove(index)}
+      edit={<div className={styles.formGrid}>
         <label className={styles.spanTwo}>Post title<input value={text(row.title)} onChange={(event) => updateTitle(index, event.target.value)} placeholder="5 things to check before exchanging currency" maxLength={180} disabled={disabled} /></label>
         <label>Publish date<input type="date" value={text(row.publishedDate)} onChange={(event) => update(index, 'publishedDate', event.target.value)} disabled={disabled} /></label>
         <label>Category<input value={text(row.category)} onChange={(event) => update(index, 'category', event.target.value)} placeholder="Travel tips" maxLength={80} disabled={disabled} /></label>
@@ -243,22 +332,29 @@ function BlogEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
         <div className={styles.spanTwo}><label>Cover image</label><ImageUploadField value={text(row.image)} alt={text(row.imageAlt) || text(row.title)} disabled={disabled} onChange={(url) => update(index, 'image', url)} /></div>
         {text(row.image) && <label className={styles.spanTwo}>Image description<input value={text(row.imageAlt)} onChange={(event) => update(index, 'imageAlt', event.target.value)} placeholder="Describe what is shown in the image" maxLength={180} disabled={disabled} /></label>}
         <label className={styles.spanTwo}>URL name<input value={text(row.slug)} onChange={(event) => update(index, 'slug', slugify(event.target.value))} disabled={disabled} /><small>Created automatically from the post title.</small></label>
-      </div>
-    </section>)}</div>
+      </div>}
+      preview={<PreviewCard image={text(row.image)} imageAlt={text(row.imageAlt)} eyebrow={`${text(row.category) || 'Guide'} · ${text(row.publishedDate)}`} title={text(row.title) || 'Blog title'} summary={text(row.summary)} body={text(row.body)} />}
+    />)}</div>
     {rows.length === 0 && <div className={styles.blankState}>No blog post added yet.</div>}
-    <button className={styles.addRowButton} type="button" onClick={add} disabled={disabled}><Plus size={17} /> Add blog post</button>
   </div>
 }
 
 function CareersEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
   const root = record(payload)
   const rows = Array.isArray(root.jobs) ? root.jobs.map(record) : []
+  const [panel, setPanel] = useState<{ index: number; mode: ItemPanelMode } | null>(null)
   const commitRoot = (key: string, value: unknown) => onChange({ ...root, [key]: value })
   const commit = (next: Entry[]) => onChange({ ...root, jobs: next })
   const update = (index: number, key: string, value: unknown) => commit(rows.map((row, rowIndex) => rowIndex === index ? { ...row, [key]: value } : row))
   const updateTitle = (index: number, value: string) => commit(rows.map((row, rowIndex) => rowIndex === index ? { ...row, title: value, slug: slugify(value) } : row))
-  const add = () => commit([...rows, { slug: 'new-vacancy', title: '', location: '', employmentType: 'Full-time', summary: '', description: '', applyEmail: text(root.generalApplicationsEmail), applyUrl: '', active: true }])
-  const remove = (index: number) => commit(rows.filter((_, rowIndex) => rowIndex !== index))
+  const add = () => { commit([...rows, { slug: `new-vacancy-${rows.length + 1}`, title: '', location: '', employmentType: 'Full-time', summary: '', description: '', applyEmail: text(root.generalApplicationsEmail), applyUrl: '', active: true }]); setPanel({ index: rows.length, mode: 'edit' }) }
+  const duplicate = (index: number) => {
+    const source = rows[index]
+    const title = `${text(source.title) || 'Vacancy'} copy`
+    const next = [...rows.slice(0, index + 1), { ...source, title, slug: slugify(title), active: false }, ...rows.slice(index + 1)]
+    commit(next); setPanel({ index: index + 1, mode: 'edit' })
+  }
+  const remove = (index: number) => { if (confirmRemove(text(rows[index].title) || `Vacancy ${index + 1}`)) { commit(rows.filter((_, rowIndex) => rowIndex !== index)); setPanel(null) } }
 
   return <div className={styles.guidedEditor}>
     <SectionTitle icon={<BriefcaseBusiness size={20} />} title="Manage careers and vacancies" description={`${rows.length} ${rows.length === 1 ? 'vacancy' : 'vacancies'} currently listed. Edit the roles below or add a new one.`} />
@@ -269,12 +365,9 @@ function CareersEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
         <label className={styles.spanTwo}>General applications email<input type="email" value={text(root.generalApplicationsEmail)} onChange={(event) => commitRoot('generalApplicationsEmail', event.target.value)} placeholder="careers@example.com" disabled={disabled} /></label>
       </div>
     </section>
-    <section className={styles.formCard}>
-      <div className={styles.formCardHead}><div><span>Vacancies</span><strong>{rows.length} {rows.length === 1 ? 'role' : 'roles'} available to edit</strong></div></div>
-    </section>
-    <div className={styles.cardList}>{rows.map((row, index) => <section className={styles.formCard} key={index}>
-      <div className={styles.formCardHead}><div><span>Vacancy {index + 1}</span><strong>{text(row.title) || 'Untitled role'}</strong></div><label className={styles.switchLabel}><input type="checkbox" checked={checked(row.active)} onChange={(event) => update(index, 'active', event.target.checked)} disabled={disabled} /> Open</label><button className={styles.iconDanger} type="button" title="Remove vacancy" onClick={() => remove(index)} disabled={disabled}><Trash2 size={17} /></button></div>
-      <div className={styles.formGrid}>
+    <CollectionToolbar count={rows.length} noun="vacancy" plural="vacancies" addLabel="New vacancy" disabled={disabled} onAdd={add} />
+    <div className={styles.collectionList}>{rows.map((row, index) => <CollectionItem key={`${text(row.slug)}-${index}`} index={index} kind="Vacancy" title={text(row.title) || 'Untitled role'} meta={`${text(row.location) || 'No location'} · ${text(row.employmentType) || 'Employment type not set'}`} summary={text(row.summary)} active={checked(row.active)} activeLabel={checked(row.active) ? 'Open' : 'Closed'} disabled={disabled} mode={panel?.index === index ? panel.mode : null} onMode={(mode) => setPanel(mode ? { index, mode } : null)} onToggle={(active) => update(index, 'active', active)} onDuplicate={() => duplicate(index)} onRemove={() => remove(index)}
+      edit={<div className={styles.formGrid}>
         <label className={styles.spanTwo}>Job title<input value={text(row.title)} onChange={(event) => updateTitle(index, event.target.value)} placeholder="Branch Customer Service Officer" maxLength={160} disabled={disabled} /></label>
         <label>Location<input value={text(row.location)} onChange={(event) => update(index, 'location', event.target.value)} placeholder="Head Office" maxLength={120} disabled={disabled} /></label>
         <label>Employment type<input value={text(row.employmentType)} onChange={(event) => update(index, 'employmentType', event.target.value)} placeholder="Full-time" maxLength={80} disabled={disabled} /></label>
@@ -284,10 +377,10 @@ function CareersEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
         <label className={styles.spanTwo}>Responsibilities and requirements<textarea className={styles.articleBody} value={text(row.description)} onChange={(event) => update(index, 'description', event.target.value)} maxLength={20000} disabled={disabled} /></label>
         <label className={styles.spanTwo}>Application link <span>(optional)</span><input value={text(row.applyUrl)} onChange={(event) => update(index, 'applyUrl', event.target.value)} placeholder="https://... or /contact" disabled={disabled} /></label>
         <label className={styles.spanTwo}>URL name<input value={text(row.slug)} onChange={(event) => update(index, 'slug', slugify(event.target.value))} disabled={disabled} /></label>
-      </div>
-    </section>)}</div>
+      </div>}
+      preview={<PreviewCard eyebrow={`${text(row.location)} · ${text(row.employmentType)}`} title={text(row.title) || 'Job title'} summary={text(row.summary)} body={text(row.description)} />}
+    />)}</div>
     {rows.length === 0 && <div className={styles.blankState}>No active vacancy. General applications will still be shown.</div>}
-    <button className={styles.addRowButton} type="button" onClick={add} disabled={disabled}><Plus size={17} /> Add vacancy</button>
     <section className={styles.formCard}>
       <div className={styles.formCardHead}><div><span>Page image</span><strong>Careers hero image</strong></div></div>
       <div className={styles.formGrid}>
@@ -324,18 +417,27 @@ function ContactEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
 
 function BranchesEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
   const root = record(payload)
-
   const rows = Array.isArray(root.branches) ? root.branches.map(record) : []
+  const [panel, setPanel] = useState<{ index: number; mode: ItemPanelMode } | null>(null)
+  const [query, setQuery] = useState('')
   const commit = (next: Entry[]) => onChange({ ...root, branches: next })
   const update = (index: number, key: string, value: unknown) => commit(rows.map((row, rowIndex) => rowIndex === index ? { ...row, [key]: value } : row))
-  const add = () => commit([...rows, { name: '', state: '', address: '', phone: '', whatsapp: '', hours: 'Mon–Sun', services: ['Currency Exchange', 'Money Transfer'], mapsUrl: '', latitude: null, longitude: null, active: true }])
-  const remove = (index: number) => commit(rows.filter((_, rowIndex) => rowIndex !== index))
+  const add = () => { commit([...rows, { name: '', state: '', address: '', phone: '', whatsapp: '', hours: 'Mon–Sun', services: ['Currency Exchange', 'Money Transfer'], mapsUrl: '', latitude: null, longitude: null, active: true }]); setQuery(''); setPanel({ index: rows.length, mode: 'edit' }) }
+  const duplicate = (index: number) => {
+    const source = rows[index]
+    const next = [...rows.slice(0, index + 1), { ...source, name: `${text(source.name) || 'Branch'} copy`, active: false }, ...rows.slice(index + 1)]
+    commit(next); setQuery(''); setPanel({ index: index + 1, mode: 'edit' })
+  }
+  const remove = (index: number) => { if (confirmRemove(text(rows[index].name) || `Branch ${index + 1}`)) { commit(rows.filter((_, rowIndex) => rowIndex !== index)); setPanel(null) } }
+  const filtered = rows.map((row, index) => ({ row, index })).filter(({ row }) => `${text(row.name)} ${text(row.state)} ${text(row.address)}`.toLowerCase().includes(query.trim().toLowerCase()))
 
   return <div className={styles.guidedEditor}>
     <SectionTitle icon={<Building2 size={20} />} title="Manage branch information" description="Add the address, opening hours and services customers can find at each branch." />
-    <div className={styles.cardList}>{rows.map((row, index) => <section className={styles.formCard} key={index}>
-      <div className={styles.formCardHead}><div><span>Branch {index + 1}</span><strong>{text(row.name) || 'Unnamed branch'}</strong></div><label className={styles.switchLabel}><input type="checkbox" checked={checked(row.active)} onChange={(event) => update(index, 'active', event.target.checked)} disabled={disabled} /> Visible</label><button className={styles.iconDanger} type="button" title="Remove branch" onClick={() => remove(index)} disabled={disabled}><Trash2 size={17} /></button></div>
-      <div className={styles.formGrid}>
+    <CollectionToolbar count={rows.length} noun="branch" plural="branches" addLabel="New branch" disabled={disabled} onAdd={add}>
+      <label className={styles.collectionSearch}><span className="sr-only">Search branches</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search branch, state or address" /></label>
+    </CollectionToolbar>
+    <div className={styles.collectionList}>{filtered.map(({ row, index }) => <CollectionItem key={`${text(row.name)}-${index}`} index={index} kind="Branch" title={text(row.name) || 'Unnamed branch'} meta={text(row.state) || 'State not set'} summary={text(row.address)} active={checked(row.active)} activeLabel={checked(row.active) ? 'Visible' : 'Hidden'} disabled={disabled} mode={panel?.index === index ? panel.mode : null} onMode={(mode) => setPanel(mode ? { index, mode } : null)} onToggle={(active) => update(index, 'active', active)} onDuplicate={() => duplicate(index)} onRemove={() => remove(index)}
+      edit={<div className={styles.formGrid}>
         <label>Branch name<input value={text(row.name)} onChange={(event) => update(index, 'name', event.target.value)} placeholder="Ampang" disabled={disabled} /></label>
         <label>State<input value={text(row.state)} onChange={(event) => update(index, 'state', event.target.value)} placeholder="Kuala Lumpur" disabled={disabled} /></label>
         <label className={styles.spanTwo}>Full address<textarea value={text(row.address)} onChange={(event) => update(index, 'address', event.target.value)} placeholder="Building, street, postcode and city" disabled={disabled} /></label>
@@ -344,10 +446,11 @@ function BranchesEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
         <label className={styles.spanTwo}>Services<input value={Array.isArray(row.services) ? row.services.map(text).join(', ') : ''} onChange={(event) => update(index, 'services', event.target.value.split(',').map((item) => item.trim()).filter(Boolean))} placeholder="Currency Exchange, Money Transfer" disabled={disabled} /><small>Separate services with commas.</small></label>
         <label>WhatsApp link<input value={text(row.whatsapp)} onChange={(event) => update(index, 'whatsapp', event.target.value)} placeholder="https://wa.me/60..." disabled={disabled} /></label>
         <label>Google Maps link<input value={text(row.mapsUrl)} onChange={(event) => update(index, 'mapsUrl', event.target.value)} placeholder="https://maps.google.com/..." disabled={disabled} /></label>
-      </div>
-    </section>)}</div>
+      </div>}
+      preview={<PreviewCard eyebrow={text(row.state)} title={text(row.name) || 'Branch name'} summary={text(row.address)} body={`${text(row.hours)}${Array.isArray(row.services) ? ` · ${row.services.map(text).join(' · ')}` : ''}`} />}
+    />)}</div>
+    {filtered.length === 0 && rows.length > 0 && <div className={styles.blankState}>No branch matches “{query}”. Try another search.</div>}
     {rows.length === 0 && <div className={styles.blankState}>No branches added yet.</div>}
-    <button className={styles.addRowButton} type="button" onClick={add} disabled={disabled}><Plus size={17} /> Add branch</button>
   </div>
 }
 

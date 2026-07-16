@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 'use client'
 
-import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import { Check, ChevronRight, CircleHelp, Code2, Eye, FileCheck2, History, LogOut, PencilLine, Plus, RefreshCw, RotateCcw, Send, ShieldCheck, Users, X } from 'lucide-react'
 import type { CmsPermission, CmsUser } from '@/lib/cms-auth'
@@ -108,6 +108,7 @@ export default function AdminDashboard({ user, permissions }: { user: CmsUser; p
   const [notice, setNotice] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const activeListRequest = useRef({ type, status })
   const can = useCallback((permission: CmsPermission) => permissions.includes(permission), [permissions])
 
   const parsedPayload = useMemo(() => {
@@ -118,10 +119,15 @@ export default function AdminDashboard({ user, permissions }: { user: CmsUser; p
   const load = useCallback(async () => {
     const query = new URLSearchParams({ content_type: type })
     if (status) query.set('status', status)
-    try { setItems(await api(`/api/admin/publishing?${query}`)); setError('') }
-    catch (caught) { setError(caught instanceof Error ? caught.message : 'Unable to load content') }
+    try {
+      const result = await api(`/api/admin/publishing?${query}`)
+      if (activeListRequest.current.type === type && activeListRequest.current.status === status) { setItems(result); setError('') }
+    } catch (caught) {
+      if (activeListRequest.current.type === type && activeListRequest.current.status === status) setError(caught instanceof Error ? caught.message : 'Unable to load content')
+    }
   }, [type, status])
 
+  useEffect(() => { activeListRequest.current = { type, status } }, [type, status])
   useEffect(() => { void load() }, [load])
   useEffect(() => {
     setSelected(null)
@@ -141,13 +147,15 @@ export default function AdminDashboard({ user, permissions }: { user: CmsUser; p
     setNotice(text)
     window.setTimeout(() => setNotice(''), 3500)
   }
-  function startNew() {
+  function startNew(source?: CmsItem) {
+    const baseline = source || items.find((item) => item.status === 'PUBLISHED')
     setSelected(null)
     setEvents([])
     setNote('')
     setSchedule('')
-    setEditor(JSON.stringify(templates[type], null, 2))
+    setEditor(JSON.stringify(baseline?.payload || templates[type], null, 2))
     setEditorMode('guided')
+    flash(baseline ? `Editable copy of Version ${baseline.version} is ready. Your live website has not changed yet.` : 'A new draft is ready.')
   }
   function updatePayload(payload: unknown) {
     setEditor(JSON.stringify(payload, null, 2))
@@ -242,25 +250,25 @@ export default function AdminDashboard({ user, permissions }: { user: CmsUser; p
       </section> : <>
         <section className={styles.beginnerGuide}>
           <div className={styles.guideTitle}><CircleHelp size={21} /><div><strong>Updating the website is just three steps</strong><span>You never need to touch code. Advanced tools are kept in a separate tab.</span></div></div>
-          <ol><li><b>1</b><span><strong>Fill in the form</strong><small>Choose the website section you want to update.</small></span></li><li><b>2</b><span><strong>Check the preview</strong><small>See how customers will read it.</small></span></li><li><b>3</b><span><strong>Publish</strong><small>Admins can publish now; editors send for approval.</small></span></li></ol>
+          <ol><li><b>1</b><span><strong>Choose one item</strong><small>Edit an existing card or add a new one.</small></span></li><li><b>2</b><span><strong>Preview it</strong><small>Check how customers will see the content.</small></span></li><li><b>3</b><span><strong>Publish changes</strong><small>Your live website changes only after this step.</small></span></li></ol>
         </section>
 
         <div className={styles.contentTabs}>{(Object.keys(labels) as CmsContentType[]).map((entry) => <button key={entry} className={type === entry ? styles.tabActive : ''} onClick={() => setType(entry)}>{labels[entry]}</button>)}</div>
         <section className={styles.workspace}>
           <div className={styles.listPanel}>
-            <div className={styles.listTitle}><strong>Saved drafts & versions</strong><small>Open an item to continue working.</small></div>
-            <div className={styles.listTools}><select value={status} onChange={(event) => setStatus(event.target.value)} aria-label="Filter saved content"><option value="">All statuses</option>{statuses.map((entry) => <option key={entry}>{entry}</option>)}</select><button title="Refresh" onClick={load}><RefreshCw size={17} /></button>{can('publishing.create') && <button className={styles.newButton} onClick={startNew}><Plus size={17} /> New draft</button>}</div>
+            <div className={styles.listTitle}><strong>Website versions</strong><small>Live content and unfinished drafts are kept here.</small></div>
+            <div className={styles.listTools}><select value={status} onChange={(event) => setStatus(event.target.value)} aria-label="Filter saved content"><option value="">All statuses</option>{statuses.map((entry) => <option key={entry}>{entry}</option>)}</select><button title="Refresh" onClick={load}><RefreshCw size={17} /></button>{can('publishing.create') && <button className={styles.newButton} onClick={() => startNew()}><PencilLine size={17} /> {items.some((item) => item.status === 'PUBLISHED') ? 'Edit live' : 'New draft'}</button>}</div>
             <div className={styles.itemList}>{items.length === 0 && <div className={styles.empty}>Nothing saved yet.<br />Use the form to create your first draft.</div>}{items.map((item) => <button key={item.id} className={selected?.id === item.id ? styles.itemActive : styles.item} onClick={() => setSelected(item)}><span><strong>Version {item.version}</strong><small>{item.created_by_name} · {date(item.updated_at)}</small></span><em className={styles[`status${item.status}`]}>{item.status}</em><ChevronRight size={17} /></button>)}</div>
           </div>
 
           <div className={styles.editorPanel}>
-            <div className={styles.editorHead}><div><p className={styles.kicker}>{labels[type]}</p><h2>{selected ? `Version ${selected.version}` : 'Create a new draft'}</h2><p>{editable ? 'Fill in the details below, then check the Preview before saving.' : 'This version is read-only.'}</p></div>{selected && <em className={styles[`status${selected.status}`]}>{selected.status}</em>}</div>
+            <div className={styles.editorHead}><div><p className={styles.kicker}>{labels[type]}</p><h2>{selected?.status === 'PUBLISHED' ? `Live website · Version ${selected.version}` : selected ? `Draft · Version ${selected.version}` : 'Edit website content'}</h2><p>{editable ? 'Choose one item below. Your live website stays unchanged until you publish.' : 'This saved version is read-only. Create an editable copy to make changes.'}</p></div><div className={styles.editorHeadActions}>{selected && <em className={styles[`status${selected.status}`]}>{selected.status === 'PUBLISHED' ? 'LIVE' : selected.status}</em>}{selected && !editable && can('publishing.create') && <button type="button" onClick={() => startNew(selected)}><PencilLine size={15} /> Edit this version</button>}</div></div>
             {selected?.rejection_reason && <div className={styles.rejection}><strong>Changes requested:</strong> {selected.rejection_reason}</div>}
 
             <div className={styles.modeTabs} role="tablist" aria-label="Editing view">
-              <button role="tab" aria-selected={editorMode === 'guided'} className={editorMode === 'guided' ? styles.modeActive : ''} onClick={() => setEditorMode('guided')}><PencilLine size={17} /><span><strong>Easy editor</strong><small>Recommended</small></span></button>
-              <button role="tab" aria-selected={editorMode === 'preview'} className={editorMode === 'preview' ? styles.modeActive : ''} onClick={() => setEditorMode('preview')}><Eye size={17} /><span><strong>Preview</strong><small>Customer view</small></span></button>
-              <button role="tab" aria-selected={editorMode === 'advanced'} className={editorMode === 'advanced' ? styles.modeActive : ''} onClick={() => setEditorMode('advanced')}><Code2 size={17} /><span><strong>Advanced</strong><small>JSON code</small></span></button>
+              <button role="tab" aria-selected={editorMode === 'guided'} className={editorMode === 'guided' ? styles.modeActive : ''} onClick={() => setEditorMode('guided')}><PencilLine size={17} /><span><strong>Edit content</strong><small>Simple form</small></span></button>
+              <button role="tab" aria-selected={editorMode === 'preview'} className={editorMode === 'preview' ? styles.modeActive : ''} onClick={() => setEditorMode('preview')}><Eye size={17} /><span><strong>Page preview</strong><small>All items</small></span></button>
+              <button role="tab" aria-selected={editorMode === 'advanced'} className={editorMode === 'advanced' ? styles.modeActive : ''} onClick={() => setEditorMode('advanced')}><Code2 size={17} /><span><strong>Developer tools</strong><small>JSON code</small></span></button>
             </div>
 
             {editorMode === 'guided' && <GuidedEditor type={type} payload={parsedPayload} disabled={!editable} onChange={updatePayload} />}
@@ -268,14 +276,14 @@ export default function AdminDashboard({ user, permissions }: { user: CmsUser; p
             {editorMode === 'preview' && parsedPayload === null && <div className={styles.advancedWarning}>The JSON contains an error. Return to Advanced and correct it before previewing.</div>}
             {editorMode === 'advanced' && <div className={styles.advancedPanel}><div className={styles.advancedWarning}><Code2 size={18} /><span><strong>For technical users only</strong><small>Most staff should use Easy editor. Incorrect punctuation can prevent saving.</small></span></div><label>Content JSON<textarea className={styles.codeEditor} value={editor} onChange={(event) => setEditor(event.target.value)} readOnly={!editable} spellCheck={false} /></label></div>}
 
-            <div className={styles.publishDetails}>
+            {editable && <div className={styles.publishDetails}>
               <div><h3>Before you save</h3><p>Add a short note so the checker understands what changed.</p></div>
               <div className={styles.twoColumns}><label>What did you change? <span>(optional)</span><input value={note} onChange={(event) => setNote(event.target.value)} readOnly={!editable} placeholder="Example: Updated USD and SGD rates" /></label><label>Publish later <span>(optional)</span><input type="datetime-local" value={schedule} onChange={(event) => setSchedule(event.target.value)} disabled={!editable} /><small>Leave empty to publish immediately after approval.</small></label></div>
-            </div>
+            </div>}
 
             <div className={styles.actions}>
-              {editable && <button className={styles.primaryButton} onClick={save} disabled={busy}>{selected ? 'Save draft changes' : 'Save as draft'}</button>}
-              {editable && user.role === 'Admin' && <button className={styles.approveButton} onClick={directPublish} disabled={busy}><Check size={17} /> Save & publish now</button>}
+              {editable && <button className={styles.primaryButton} onClick={save} disabled={busy}>{selected ? 'Save draft only' : 'Save as draft only'}</button>}
+              {editable && user.role === 'Admin' && <button className={styles.approveButton} onClick={directPublish} disabled={busy}><Check size={17} /> Publish changes now</button>}
               {selected?.status === 'DRAFT' && selected.created_by_user_id === user.id && can('publishing.submit') && <button onClick={() => act('submit')} disabled={busy}><Send size={17} /> Send for approval</button>}
               {selected?.status === 'PENDING' && can('publishing.approve') && <><button className={styles.approveButton} onClick={() => act('approve')} disabled={busy}><Check size={17} /> Approve content</button><button className={styles.rejectButton} onClick={() => act('reject')} disabled={busy}><X size={17} /> Request changes</button></>}
               {selected?.status === 'APPROVED' && can('publishing.publish') && <button className={styles.approveButton} onClick={() => act('publish')} disabled={busy}><Check size={17} /> {selected.scheduled_for ? 'Confirm scheduled publishing' : 'Publish to website'}</button>}
