@@ -296,6 +296,44 @@ export async function submitCmsItem(id: number, user: CmsUser, requestId = '') {
   }
 }
 
+export async function discardCmsDraft(id: number, user: CmsUser, requestId = '') {
+  const db = await ensureCmsSchema()
+  const tx = await db.transaction('write')
+  try {
+    const current = await itemWith(tx, id)
+    if (!current) throw new CmsWorkflowError(404, 'NOT_FOUND', 'Publishing item not found')
+    if (!['DRAFT', 'REJECTED'].includes(String(current.status))) {
+      throw new CmsWorkflowError(409, 'INVALID_STATE', 'Only draft or rejected content can be discarded')
+    }
+    if (Number(current.created_by_user_id) !== user.id && user.role !== 'Admin') {
+      throw new CmsWorkflowError(403, 'NOT_OWNER', 'Only the draft creator or an administrator can discard this draft')
+    }
+    await tx.execute({
+      sql: `UPDATE cms_items SET status = 'ARCHIVED', updated_at = datetime('now') WHERE id = ?`,
+      args: [id],
+    })
+    await insertEvent(tx, {
+      itemId: id,
+      action: 'DRAFT_DISCARDED',
+      actor: user,
+      fromStatus: String(current.status),
+      toStatus: 'ARCHIVED',
+      oldPayload: current.payload,
+      newPayload: current.payload,
+      note: `Discarded draft version ${String(current.version)}`,
+      requestId,
+    })
+    const item = await itemWith(tx, id)
+    await tx.commit()
+    return item
+  } catch (error) {
+    if (!tx.closed) await tx.rollback()
+    throw error
+  } finally {
+    tx.close()
+  }
+}
+
 export async function reviewCmsItem(input: {
   id: number
   decision: 'approve' | 'reject'

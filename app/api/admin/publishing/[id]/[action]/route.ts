@@ -3,6 +3,7 @@ import { invalidateCmsContent } from '@/lib/cms-cache'
 import { cmsError, cmsJson, cmsRequestId } from '@/lib/cms-http'
 import {
   createCmsRollbackDraft,
+  discardCmsDraft,
   publishCmsItem,
   reviewCmsItem,
   submitCmsItem,
@@ -23,6 +24,11 @@ export async function POST(request: Request, context: Context) {
     if (action === 'submit') {
       const user = await requireCmsPermission('publishing.submit')
       return cmsJson(await submitCmsItem(id, user, requestId), 200, requestId)
+    }
+
+    if (action === 'discard') {
+      const user = await requireCmsPermission('publishing.create')
+      return cmsJson(await discardCmsDraft(id, user, requestId), 200, requestId)
     }
 
     if (action === 'approve' || action === 'reject') {

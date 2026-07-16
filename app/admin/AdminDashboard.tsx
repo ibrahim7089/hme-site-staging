@@ -3,7 +3,7 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
-import { Check, ChevronRight, CircleHelp, Code2, Eye, FileCheck2, History, LogOut, PencilLine, Plus, RefreshCw, RotateCcw, Send, ShieldCheck, Users, X } from 'lucide-react'
+import { Check, ChevronRight, CircleHelp, Code2, Eye, FileCheck2, History, LogOut, PencilLine, Plus, RefreshCw, RotateCcw, Send, ShieldCheck, Trash2, Users, X } from 'lucide-react'
 import type { CmsPermission, CmsUser } from '@/lib/cms-auth'
 import type { CmsContentType } from '@/lib/cms-validation'
 import { ContentPreview, GuidedEditor } from './GuidedEditor'
@@ -96,7 +96,7 @@ async function api(url: string, init?: RequestInit) {
 export default function AdminDashboard({ user, permissions }: { user: CmsUser; permissions: CmsPermission[] }) {
   const [section, setSection] = useState<'publishing' | 'users'>('publishing')
   const [type, setType] = useState<CmsContentType>('rates')
-  const [status, setStatus] = useState('')
+  const [status, setStatus] = useState('ACTIVE')
   const [items, setItems] = useState<CmsItem[]>([])
   const [selected, setSelected] = useState<CmsItem | null>(null)
   const [events, setEvents] = useState<AuditEvent[]>([])
@@ -119,11 +119,11 @@ export default function AdminDashboard({ user, permissions }: { user: CmsUser; p
 
   const load = useCallback(async () => {
     const query = new URLSearchParams({ content_type: type })
-    if (status) query.set('status', status)
+    if (status && status !== 'ACTIVE') query.set('status', status)
     try {
       const result = await api(`/api/admin/publishing?${query}`) as CmsItem[]
       if (activeListRequest.current.type === type && activeListRequest.current.status === status) {
-        setItems(result)
+        setItems(status === 'ACTIVE' ? result.filter((item) => item.status !== 'ARCHIVED') : result)
         if (seededEditorType.current !== type) {
           const live = result.find((item) => item.status === 'PUBLISHED')
           setEditor(JSON.stringify(live?.payload || templates[type], null, 2))
@@ -205,11 +205,19 @@ export default function AdminDashboard({ user, permissions }: { user: CmsUser; p
       if (!reason) return
       body = JSON.stringify({ reason })
     }
-    const friendlyAction = action === 'submit' ? 'Send this draft for approval' : action === 'publish' ? 'Publish this content to the website' : `${action[0].toUpperCase() + action.slice(1)} version ${selected.version}`
+    const friendlyAction = action === 'submit' ? 'Send this draft for approval' : action === 'publish' ? 'Publish this content to the website' : action === 'discard' ? `Discard draft Version ${selected.version}. It will leave the active list but remain in audit history` : `${action[0].toUpperCase() + action.slice(1)} version ${selected.version}`
     if (!window.confirm(`${friendlyAction}?`)) return
     setBusy(true); setError('')
     try {
       const result = await api(`/api/admin/publishing/${selected.id}/${action}`, { method: 'POST', body })
+      if (action === 'discard') {
+        const live = items.find((item) => item.status === 'PUBLISHED')
+        setSelected(null)
+        setEditor(JSON.stringify(live?.payload || templates[type], null, 2))
+        flash(`Draft Version ${selected.version} was discarded`)
+        await load()
+        return
+      }
       setSelected(result.item || result); flash(result.scheduled ? 'Publishing has been scheduled' : action === 'submit' ? 'Draft sent to a checker' : `Completed: ${action}`); await load()
     } catch (caught) { setError(caught instanceof Error ? caught.message : 'Action failed') }
     finally { setBusy(false) }
@@ -269,7 +277,7 @@ export default function AdminDashboard({ user, permissions }: { user: CmsUser; p
         <section className={styles.workspace}>
           <div className={styles.listPanel}>
             <div className={styles.listTitle}><strong>Website versions</strong><small>Live content and unfinished drafts are kept here.</small></div>
-            <div className={styles.listTools}><select value={status} onChange={(event) => setStatus(event.target.value)} aria-label="Filter saved content"><option value="">All statuses</option>{statuses.map((entry) => <option key={entry}>{entry}</option>)}</select><button title="Refresh" onClick={load}><RefreshCw size={17} /></button>{can('publishing.create') && <button className={styles.newButton} onClick={() => startNew()}><PencilLine size={17} /> {items.some((item) => item.status === 'PUBLISHED') ? 'Edit live' : 'New draft'}</button>}</div>
+            <div className={styles.listTools}><select value={status} onChange={(event) => setStatus(event.target.value)} aria-label="Filter saved content"><option value="ACTIVE">Active versions</option><option value="">All versions</option>{statuses.map((entry) => <option key={entry} value={entry}>{entry === 'ARCHIVED' ? 'Archived history' : entry}</option>)}</select><button title="Refresh" onClick={load}><RefreshCw size={17} /></button>{status === 'ACTIVE' && can('publishing.create') && <button className={styles.newButton} onClick={() => startNew()}><PencilLine size={17} /> {items.some((item) => item.status === 'PUBLISHED') ? 'Edit live' : 'New draft'}</button>}</div>
             <div className={styles.itemList}>{items.length === 0 && <div className={styles.empty}>Nothing saved yet.<br />Use the form to create your first draft.</div>}{items.map((item) => <button key={item.id} className={selected?.id === item.id ? styles.itemActive : styles.item} onClick={() => setSelected(item)}><span><strong>Version {item.version}</strong><small>{item.created_by_name} · {date(item.updated_at)}</small></span><em className={styles[`status${item.status}`]}>{item.status}</em><ChevronRight size={17} /></button>)}</div>
           </div>
 
@@ -297,6 +305,7 @@ export default function AdminDashboard({ user, permissions }: { user: CmsUser; p
               {editable && <button className={styles.primaryButton} onClick={save} disabled={busy}>{selected ? 'Save draft only' : 'Save as draft only'}</button>}
               {editable && user.role === 'Admin' && <button className={styles.approveButton} onClick={directPublish} disabled={busy}><Check size={17} /> Publish changes now</button>}
               {selected?.status === 'DRAFT' && selected.created_by_user_id === user.id && can('publishing.submit') && <button onClick={() => act('submit')} disabled={busy}><Send size={17} /> Send for approval</button>}
+              {selected && ['DRAFT', 'REJECTED'].includes(selected.status) && (selected.created_by_user_id === user.id || user.role === 'Admin') && <button className={styles.rejectButton} onClick={() => act('discard')} disabled={busy}><Trash2 size={17} /> Discard this draft</button>}
               {selected?.status === 'PENDING' && can('publishing.approve') && <><button className={styles.approveButton} onClick={() => act('approve')} disabled={busy}><Check size={17} /> Approve content</button><button className={styles.rejectButton} onClick={() => act('reject')} disabled={busy}><X size={17} /> Request changes</button></>}
               {selected?.status === 'APPROVED' && can('publishing.publish') && <button className={styles.approveButton} onClick={() => act('publish')} disabled={busy}><Check size={17} /> {selected.scheduled_for ? 'Confirm scheduled publishing' : 'Publish to website'}</button>}
               {selected && ['PUBLISHED', 'ARCHIVED'].includes(selected.status) && can('publishing.create') && <button onClick={() => act('rollback')} disabled={busy}><RotateCcw size={17} /> Restore this version</button>}
