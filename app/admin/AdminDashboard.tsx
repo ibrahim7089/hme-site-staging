@@ -109,6 +109,7 @@ export default function AdminDashboard({ user, permissions }: { user: CmsUser; p
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const activeListRequest = useRef({ type, status })
+  const seededEditorType = useRef<CmsContentType | null>(null)
   const can = useCallback((permission: CmsPermission) => permissions.includes(permission), [permissions])
 
   const parsedPayload = useMemo(() => {
@@ -120,8 +121,16 @@ export default function AdminDashboard({ user, permissions }: { user: CmsUser; p
     const query = new URLSearchParams({ content_type: type })
     if (status) query.set('status', status)
     try {
-      const result = await api(`/api/admin/publishing?${query}`)
-      if (activeListRequest.current.type === type && activeListRequest.current.status === status) { setItems(result); setError('') }
+      const result = await api(`/api/admin/publishing?${query}`) as CmsItem[]
+      if (activeListRequest.current.type === type && activeListRequest.current.status === status) {
+        setItems(result)
+        if (seededEditorType.current !== type) {
+          const live = result.find((item) => item.status === 'PUBLISHED')
+          setEditor(JSON.stringify(live?.payload || templates[type], null, 2))
+          seededEditorType.current = type
+        }
+        setError('')
+      }
     } catch (caught) {
       if (activeListRequest.current.type === type && activeListRequest.current.status === status) setError(caught instanceof Error ? caught.message : 'Unable to load content')
     }
@@ -130,10 +139,13 @@ export default function AdminDashboard({ user, permissions }: { user: CmsUser; p
   useEffect(() => { activeListRequest.current = { type, status } }, [type, status])
   useEffect(() => { void load() }, [load])
   useEffect(() => {
+    seededEditorType.current = null
     setSelected(null)
+    setItems([])
     setEditor(JSON.stringify(templates[type], null, 2))
     setEditorMode('guided')
-  }, [type, status])
+  }, [type])
+  useEffect(() => { setSelected(null); setItems([]) }, [status])
   useEffect(() => {
     if (!selected) { setEvents([]); setNote(''); setSchedule(''); return }
     setEditor(JSON.stringify(selected.payload, null, 2))
