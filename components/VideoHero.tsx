@@ -50,7 +50,7 @@ const serviceBenefits = [
 
 export default function VideoHero() {
   return (
-    <section className="hero-stage relative isolate min-h-[800px] overflow-hidden rounded-b-[34px] bg-navy-deep text-white sm:min-h-[820px] md:min-h-[700px] md:rounded-b-[44px] xl:min-h-[720px] xl:rounded-b-[54px]">
+    <section className="hero-stage relative isolate min-h-[800px] overflow-hidden rounded-b-[34px] bg-navy-deep text-white sm:min-h-[820px] md:min-h-[max(700px,100svh)] md:rounded-b-[44px] xl:min-h-[max(720px,100svh)] xl:rounded-b-[54px]">
       <div className="hero-grid absolute inset-0 opacity-35" aria-hidden="true" />
       <div className="hero-premium-glow absolute inset-0" aria-hidden="true" />
       <div className="hero-wave hero-wave-back" aria-hidden="true" />
@@ -89,7 +89,7 @@ export default function VideoHero() {
         className="hero-person absolute bottom-0 right-[-18%] z-[4] h-[48%] w-auto max-w-none object-contain object-bottom sm:right-[-2%] sm:h-[51%] md:right-[3%] md:h-[84%] lg:right-[7%] lg:h-[89%] xl:right-[11%] xl:h-[92%]"
       />
 
-      <div className="wrap relative z-10 flex min-h-[800px] items-start pb-[400px] pt-[132px] sm:min-h-[820px] sm:pb-[420px] md:min-h-[700px] md:items-center md:pb-[148px] md:pt-[110px] xl:min-h-[720px]">
+      <div className="wrap relative z-10 flex min-h-[800px] items-start pb-[400px] pt-[132px] sm:min-h-[820px] sm:pb-[420px] md:min-h-[max(700px,100svh)] md:items-center md:pb-[148px] md:pt-[110px] xl:min-h-[max(720px,100svh)]">
         <div className="hero-copy max-w-[640px] md:w-[51%] lg:w-[50%]">
           <p className="hero-brandline mb-5 text-[10px] font-bold uppercase tracking-[0.2em] text-white/80 sm:text-[11px]">
             <span className="text-brand-red">HME</span> Hasani Munawarah Exchange
