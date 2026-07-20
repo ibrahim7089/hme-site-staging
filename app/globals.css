@@ -80,24 +80,9 @@
   border-left: 1px solid rgba(207, 227, 255, 0.28);
 }
 
-.hero-benefit-card {
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.54), rgba(255, 255, 255, 0.22));
-  box-shadow:
-    0 22px 55px rgba(7, 30, 68, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.72);
-  -webkit-backdrop-filter: blur(22px) saturate(145%);
-  backdrop-filter: blur(22px) saturate(145%);
-}
-
-.hero-benefit-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 12% 0%, rgba(255, 255, 255, 0.62), transparent 40%),
-    linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, 0.15) 50%, transparent 65%);
+.hero-benefit-title {
+  color: #fff;
+  text-shadow: 0 1px 8px rgba(7, 30, 68, 0.62);
 }
 
 .hero-copy {

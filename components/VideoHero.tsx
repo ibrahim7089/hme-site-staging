@@ -33,17 +33,14 @@ const serviceBenefits = [
   {
     icon: Globe2,
     title: "Global reach",
-    copy: "Send money to 100+ countries",
   },
   {
     icon: ShieldCheck,
     title: "Secure transfers",
-    copy: "Compliance-led protection",
   },
   {
     icon: BadgeDollarSign,
     title: "Better value",
-    copy: "Competitive, transparent rates",
   },
 ];
 
@@ -131,19 +128,13 @@ export default function VideoHero() {
         </div>
       </div>
 
-      <div className="hero-benefit-card absolute right-[2.5%] top-[152px] z-[8] hidden w-[192px] overflow-hidden rounded-2xl border border-white/55 p-4 text-navy xl:block">
-        {serviceBenefits.map(({ icon: Icon, title, copy }, index) => (
-          <div
-            key={title}
-            className={`relative z-[1] flex gap-2.5 py-3 ${index > 0 ? "border-t border-navy/10" : ""}`}
-          >
-            <span className="grid h-8 w-8 flex-none place-items-center rounded-full border border-white/55 bg-white/35 shadow-sm backdrop-blur">
+      <div className="absolute right-[3%] top-[170px] z-[8] hidden w-[170px] space-y-4 xl:block">
+        {serviceBenefits.map(({ icon: Icon, title }) => (
+          <div key={title} className="flex items-center gap-2.5">
+            <span className="grid h-8 w-8 flex-none place-items-center rounded-full border border-white/75 bg-white/90 shadow-md">
               <Icon className="h-4 w-4 text-navy" strokeWidth={2} />
             </span>
-            <span>
-              <b className="block text-[10px] font-bold capitalize">{title}</b>
-              <small className="mt-0.5 block text-[8px] leading-[1.4] text-navy/65">{copy}</small>
-            </span>
+            <b className="hero-benefit-title text-[11px] font-bold capitalize">{title}</b>
           </div>
         ))}
       </div>
