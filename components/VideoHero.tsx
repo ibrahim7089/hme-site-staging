@@ -33,7 +33,7 @@ const serviceBenefits = [
   {
     icon: Globe2,
     title: "Global reach",
-    offset: "ml-0",
+    offset: "ml-10",
   },
   {
     icon: ShieldCheck,
@@ -43,7 +43,7 @@ const serviceBenefits = [
   {
     icon: BadgeDollarSign,
     title: "Better value",
-    offset: "ml-10",
+    offset: "ml-0",
   },
 ];
 
@@ -140,10 +140,17 @@ export default function VideoHero() {
           viewBox="0 0 90 180"
           fill="none"
         >
+          <defs>
+            <linearGradient id="benefitCurve" x1="62" y1="22" x2="22" y2="158">
+              <stop stopColor="white" stopOpacity="0.15" />
+              <stop offset="0.48" stopColor="white" stopOpacity="0.62" />
+              <stop offset="1" stopColor="white" stopOpacity="0.18" />
+            </linearGradient>
+          </defs>
           <path
-            d="M22 22C24 70 39 119 62 158"
-            stroke="rgba(255,255,255,0.38)"
-            strokeWidth="1.25"
+            d="M62 22C64 66 57 101 43 126C34 142 26 153 22 158"
+            stroke="url(#benefitCurve)"
+            strokeWidth="1.4"
             strokeLinecap="round"
           />
         </svg>
