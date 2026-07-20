@@ -181,7 +181,7 @@ export default function AboutPage() {
             <div className="mt-3 h-[3px] w-10 rounded-full bg-brand-red" />
             <p className="mt-5 text-[15px] leading-relaxed text-slate2">
               From a single exchange counter to a nationwide network of over 40 service locations,
-              HME's growth story is powered by trust earned one customer at a time. We continue to
+              HME&apos;s growth story is powered by trust earned one customer at a time. We continue to
               expand into new communities, bringing competitive rates and reliable financial services
               closer to the people who need them.
             </p>
