@@ -37,32 +37,30 @@ const pillars = [
 export default function AboutPage() {
   return (
     <>
-      {/* ── 1. Hero — layered like VideoHero ── */}
+      {/* ── 1. Hero ── */}
       <section className="relative isolate min-h-[100svh] overflow-hidden bg-navy-deep text-white">
-        {/* Layer 1: dot grid texture */}
+        {/* Dot grid texture */}
         <div className="hero-grid absolute inset-0 opacity-30" aria-hidden="true" />
 
-        {/* Layer 2: radial glow + diagonal gradient */}
+        {/* Radial glow + diagonal gradient */}
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-[radial-gradient(circle_at_30%_60%,rgba(49,128,232,0.30),transparent_42%),linear-gradient(115deg,#071E44_0%,#0B2E63_54%,#071E44_100%)]"
+          className="absolute inset-0 bg-[radial-gradient(circle_at_25%_55%,rgba(49,128,232,0.32),transparent_45%),linear-gradient(120deg,#071E44_0%,#0B2E63_55%,#071E44_100%)]"
         />
 
-        {/* Layer 3: ghost rings */}
-        <div aria-hidden="true" className="absolute -right-24 -top-28 h-96 w-96 rounded-full border border-white/10" />
-        <div aria-hidden="true" className="absolute right-8 top-6 h-64 w-64 rounded-full border border-white/10" />
+        {/* Ghost rings — top-right corner */}
+        <div aria-hidden="true" className="absolute -right-20 -top-20 h-80 w-80 rounded-full border border-white/[0.08]" />
+        <div aria-hidden="true" className="absolute right-4 top-4 h-52 w-52 rounded-full border border-white/[0.08]" />
 
-        {/* Layer 4: blurred glow blob */}
-        <div aria-hidden="true" className="absolute bottom-10 left-[38%] h-40 w-40 rounded-full bg-brand-blue/20 blur-3xl" />
+        {/* Blurred glow blobs */}
+        <div aria-hidden="true" className="absolute bottom-16 left-[35%] h-48 w-48 rounded-full bg-brand-blue/20 blur-3xl" />
+        <div aria-hidden="true" className="absolute top-20 right-[42%] h-32 w-32 rounded-full bg-brand-blue/10 blur-2xl" />
 
-        {/* Layer 5: decorative orrery SVG (left side, faint) */}
+        {/* Faint orrery SVG — behind copy, left side */}
         <svg
           aria-hidden="true"
-          className="absolute left-[-6%] top-1/2 hidden h-[420px] w-[420px] -translate-y-1/2 opacity-[0.07] md:block"
-          viewBox="0 0 240 240"
-          fill="none"
-          stroke="white"
-          strokeWidth="1"
+          className="absolute left-[-8%] top-1/2 hidden h-[460px] w-[460px] -translate-y-1/2 opacity-[0.06] lg:block"
+          viewBox="0 0 240 240" fill="none" stroke="white" strokeWidth="1"
         >
           <circle cx="120" cy="120" r="116" />
           <ellipse cx="120" cy="120" rx="116" ry="45" />
@@ -70,18 +68,19 @@ export default function AboutPage() {
           <path d="M4 120h232M120 4v232" />
         </svg>
 
-        {/* Content grid */}
-        <div className="wrap relative z-10 grid min-h-[100svh] items-center gap-10 pb-0 lg:grid-cols-2 lg:items-stretch lg:gap-0">
+        {/* Content — flex row on desktop */}
+        <div className="wrap relative z-10 flex min-h-[100svh] flex-col justify-center gap-10 pb-16 pt-28 lg:flex-row lg:items-center lg:gap-14 lg:pb-0 lg:pt-0">
+
           {/* Left: copy */}
-          <div className="hero-copy flex flex-col justify-center pb-14 pt-[calc(88px+2rem)] md:pt-[calc(96px+2rem)] lg:pr-14 lg:py-24">
+          <div className="hero-copy lg:w-[46%] lg:flex-none">
             <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-brand-red">
               About Us
             </p>
-            <h1 className="text-[clamp(34px,4.5vw,56px)] font-extrabold leading-[1.08] tracking-[-0.02em]">
+            <h1 className="text-[clamp(34px,4.5vw,58px)] font-extrabold leading-[1.08] tracking-[-0.02em]">
               About Hasani<br />Munawarah Exchange
             </h1>
             <div className="mt-4 h-[3px] w-12 rounded-full bg-brand-red" />
-            <p className="mt-5 max-w-md text-[15px] leading-relaxed text-white/75">
+            <p className="mt-5 max-w-[420px] text-[15px] leading-relaxed text-white/75">
               A trusted Malaysian money services business built on decades of experience, strong
               compliance standards, and a genuine commitment to serving our communities.
             </p>
@@ -93,28 +92,45 @@ export default function AboutPage() {
                 Find a Location
               </Link>
             </div>
-          </div>
 
-          {/* Right: photo — fills full column height */}
-          <div className="relative hidden self-stretch lg:block">
-            <div className="absolute inset-0 ml-6 overflow-hidden rounded-tl-[40px] rounded-br-[40px] shadow-deep">
-              <img
-                src="/images/about-hero.jpg"
-                alt="HME branch counter"
-                className="h-full w-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-navy-deep/40" />
+            {/* Trust badges */}
+            <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-white/10 pt-6">
+              {["Licensed MSB", "Since 1980", "40+ Locations"].map((badge) => (
+                <div key={badge} className="flex items-center gap-2 text-[12.5px] text-white/60">
+                  <span className="h-1.5 w-1.5 rounded-full bg-brand-red" />
+                  {badge}
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Mobile photo */}
-          <div className="lg:hidden -mx-5 overflow-hidden">
-            <img
-              src="/images/about-hero.jpg"
-              alt="HME branch counter"
-              className="h-64 w-full object-cover object-center sm:h-80"
-            />
+          {/* Right: contained photo with frame */}
+          <div className="hero-person flex-1 lg:flex-none lg:w-[50%]">
+            <div className="relative">
+              {/* Decorative offset frame */}
+              <div className="absolute -bottom-4 -right-4 h-full w-full rounded-2xl border border-brand-red/30" aria-hidden="true" />
+              {/* Second outer ring */}
+              <div className="absolute -bottom-8 -right-8 h-full w-full rounded-3xl border border-white/10" aria-hidden="true" />
+
+              {/* Photo card */}
+              <div className="relative overflow-hidden rounded-2xl shadow-deep">
+                <img
+                  src="/images/about-hero.jpg"
+                  alt="HME LG-K08A branch counter"
+                  className="h-[300px] w-full object-cover sm:h-[380px] lg:h-[500px]"
+                />
+                {/* Bottom gradient for badge readability */}
+                <div className="absolute inset-0 bg-gradient-to-t from-navy-deep/70 via-transparent to-transparent" />
+
+                {/* Glass badge */}
+                <div className="absolute bottom-4 left-4 right-4 rounded-xl border border-white/20 bg-white/10 px-4 py-3 backdrop-blur-md">
+                  <p className="text-[10.5px] font-semibold uppercase tracking-wider text-white/60">Flagship Branch</p>
+                  <p className="mt-0.5 text-[13.5px] font-bold text-white">Hasani Munawarah Exchange · LG-K08A</p>
+                </div>
+              </div>
+            </div>
           </div>
+
         </div>
       </section>
 
