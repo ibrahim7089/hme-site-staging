@@ -33,14 +33,17 @@ const serviceBenefits = [
   {
     icon: Globe2,
     title: "Global reach",
+    offset: "ml-0",
   },
   {
     icon: ShieldCheck,
     title: "Secure transfers",
+    offset: "ml-5",
   },
   {
     icon: BadgeDollarSign,
     title: "Better value",
+    offset: "ml-10",
   },
 ];
 
@@ -126,20 +129,24 @@ export default function VideoHero() {
         </div>
       </div>
 
-      <div className="absolute right-[3%] top-[160px] z-[8] hidden w-[190px] xl:block">
-        <span
-          aria-hidden="true"
-          className="absolute bottom-5 left-5 top-5 w-px -translate-x-1/2 bg-gradient-to-b from-white/10 via-white/50 to-white/10"
-        />
-        <div className="relative space-y-5">
-          {serviceBenefits.map(({ icon: Icon, title }) => (
-            <div key={title} className="grid grid-cols-[40px_1fr] items-center gap-3.5">
-              <span className="relative z-[1] grid h-10 w-10 place-items-center rounded-full border border-white/80 bg-white/95 shadow-[0_7px_22px_rgba(7,30,68,0.18)]">
-                <Icon className="h-[18px] w-[18px] text-navy" strokeWidth={2} />
+      <div className="absolute right-[2.5%] top-[148px] z-[8] hidden w-[245px] xl:block">
+        <div className="space-y-6">
+          {serviceBenefits.map(({ icon: Icon, title, offset }, index) => (
+            <div
+              key={title}
+              className={`hero-benefit-item flex w-fit items-center gap-3.5 ${offset}`}
+            >
+              <span className="grid h-11 w-11 flex-none place-items-center rounded-full border border-white/70 bg-white/95 shadow-[0_9px_25px_rgba(7,30,68,0.2)]">
+                <Icon className="h-[19px] w-[19px] text-navy" strokeWidth={1.9} />
               </span>
-              <b className="hero-benefit-title text-[13px] font-extrabold capitalize tracking-[-0.01em]">
-                {title}
-              </b>
+              <span className="min-w-0">
+                <small className="mb-0.5 block font-display text-[9px] font-extrabold tracking-[0.2em] text-white/60">
+                  0{index + 1}
+                </small>
+                <b className="hero-benefit-title block whitespace-nowrap font-display text-[16px] font-extrabold capitalize leading-none tracking-[-0.025em]">
+                  {title}<span className="text-brand-red">.</span>
+                </b>
+              </span>
             </div>
           ))}
         </div>
