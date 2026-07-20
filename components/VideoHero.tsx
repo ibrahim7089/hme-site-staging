@@ -126,15 +126,23 @@ export default function VideoHero() {
         </div>
       </div>
 
-      <div className="absolute right-[3%] top-[170px] z-[8] hidden w-[170px] space-y-4 xl:block">
-        {serviceBenefits.map(({ icon: Icon, title }) => (
-          <div key={title} className="flex items-center gap-2.5">
-            <span className="grid h-8 w-8 flex-none place-items-center rounded-full border border-white/75 bg-white/90 shadow-md">
-              <Icon className="h-4 w-4 text-navy" strokeWidth={2} />
-            </span>
-            <b className="hero-benefit-title text-[11px] font-bold capitalize">{title}</b>
-          </div>
-        ))}
+      <div className="absolute right-[3%] top-[160px] z-[8] hidden w-[190px] xl:block">
+        <span
+          aria-hidden="true"
+          className="absolute bottom-5 left-5 top-5 w-px -translate-x-1/2 bg-gradient-to-b from-white/10 via-white/50 to-white/10"
+        />
+        <div className="relative space-y-5">
+          {serviceBenefits.map(({ icon: Icon, title }) => (
+            <div key={title} className="grid grid-cols-[40px_1fr] items-center gap-3.5">
+              <span className="relative z-[1] grid h-10 w-10 place-items-center rounded-full border border-white/80 bg-white/95 shadow-[0_7px_22px_rgba(7,30,68,0.18)]">
+                <Icon className="h-[18px] w-[18px] text-navy" strokeWidth={2} />
+              </span>
+              <b className="hero-benefit-title text-[13px] font-extrabold capitalize tracking-[-0.01em]">
+                {title}
+              </b>
+            </div>
+          ))}
+        </div>
       </div>
 
       <a
