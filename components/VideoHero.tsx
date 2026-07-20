@@ -110,13 +110,13 @@ export default function VideoHero() {
             </Link>
           </div>
 
-          <div className="mt-9 hidden grid-cols-3 md:grid">
+          <div className="mt-9 hidden w-max items-center md:flex">
             {trustPoints.map(({ icon: Icon, title, copy }, index) => (
               <div
                 key={title}
-                className={`flex items-center gap-3.5 pr-3 ${index > 0 ? "border-l border-white/25 pl-3.5" : ""}`}
+                className={`flex items-center gap-2.5 pr-2.5 ${index > 0 ? "border-l border-white/25 pl-2.5" : ""}`}
               >
-                <span className="grid h-12 w-12 flex-none place-items-center rounded-xl border border-white/35 bg-white/[0.09] shadow-[0_8px_24px_rgba(7,30,68,0.15)]">
+                <span className="grid h-[46px] w-[46px] flex-none place-items-center rounded-xl border border-white/35 bg-white/[0.09] shadow-[0_8px_24px_rgba(7,30,68,0.15)]">
                   <Icon className="h-[22px] w-[22px] text-[#C7E1FF]" strokeWidth={2} />
                 </span>
                 <span>
