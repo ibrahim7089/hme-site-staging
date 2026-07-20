@@ -46,28 +46,89 @@
   mask-image: linear-gradient(to right, transparent, black 45%, black);
 }
 
+.hero-premium-glow {
+  background:
+    radial-gradient(circle at 70% 20%, rgba(232, 241, 254, 0.92) 0, rgba(173, 201, 239, 0.55) 17%, transparent 36%),
+    radial-gradient(circle at 47% 52%, rgba(65, 133, 219, 0.4), transparent 34%),
+    linear-gradient(108deg, #061f50 0%, #0a3773 48%, #7da7dc 75%, #e9eff8 100%);
+}
+
+.hero-wave {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  border-radius: 50% 0 0 50%;
+  transform: rotate(-10deg);
+  transform-origin: center;
+}
+
+.hero-wave-back {
+  right: -22%;
+  top: 22%;
+  width: 62%;
+  height: 115%;
+  background: linear-gradient(145deg, rgba(20, 85, 190, 0.96), rgba(11, 46, 99, 0.84));
+  box-shadow: -28px -20px 70px rgba(116, 163, 226, 0.3);
+}
+
+.hero-wave-front {
+  right: -30%;
+  top: 41%;
+  width: 58%;
+  height: 110%;
+  background: linear-gradient(155deg, rgba(37, 102, 210, 0.78), rgba(7, 30, 68, 0.95) 70%);
+  border-left: 1px solid rgba(207, 227, 255, 0.28);
+}
+
+.hero-brandline {
+  position: relative;
+  padding-bottom: 12px;
+}
+
+.hero-brandline::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 34px;
+  height: 2px;
+  border-radius: 999px;
+  background: #e11931;
+}
+
 .hero-copy {
   animation: hero-copy-in 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .hero-person {
   animation: hero-person-in 900ms 120ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  filter: drop-shadow(-18px 20px 30px rgba(7, 30, 68, 0.2));
 }
 
-.hero-orbit {
-  --orbit-start: -22vw;
-  --orbit-end: 4vw;
-  animation:
-    orbit-sweep 22s ease-in-out infinite alternate,
-    orbit-turn 80s linear infinite;
-  transform-origin: center;
-  will-change: translate, rotate;
+.hero-network {
+  animation: network-drift 18s ease-in-out infinite alternate;
+  will-change: transform;
 }
 
 @media (max-width: 767px) {
-  .hero-orbit {
-    --orbit-start: -12vw;
-    --orbit-end: 8vw;
+  .hero-premium-glow {
+    background:
+      radial-gradient(circle at 80% 77%, rgba(54, 125, 220, 0.4), transparent 34%),
+      linear-gradient(155deg, #061f50 0%, #0b3977 70%, #0b2e63 100%);
+  }
+
+  .hero-wave-back {
+    right: -72%;
+    top: 56%;
+    width: 115%;
+    height: 72%;
+  }
+
+  .hero-wave-front {
+    right: -78%;
+    top: 70%;
+    width: 110%;
+    height: 65%;
   }
 }
 
@@ -98,13 +159,9 @@
   from { opacity: 0; transform: translateY(32px) scale(0.985); }
 }
 
-@keyframes orbit-sweep {
-  from { translate: var(--orbit-start) 0; }
-  to { translate: var(--orbit-end) 0; }
-}
-
-@keyframes orbit-turn {
-  to { rotate: 360deg; }
+@keyframes network-drift {
+  from { transform: translate3d(-1.5%, 0, 0); }
+  to { transform: translate3d(2.5%, 1%, 0); }
 }
 
 @keyframes section-reveal {
@@ -124,7 +181,7 @@
   html { scroll-behavior: auto; }
   .hero-copy,
   .hero-person,
-  .hero-orbit,
+  .hero-network,
   .scroll-reveal,
   ::view-transition-old(root),
   ::view-transition-new(root) {
