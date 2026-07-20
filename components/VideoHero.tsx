@@ -50,7 +50,7 @@ const serviceBenefits = [
 
 export default function VideoHero() {
   return (
-    <section className="hero-stage relative isolate min-h-[800px] overflow-hidden rounded-b-[34px] bg-navy-deep text-white sm:min-h-[820px] md:min-h-[max(700px,100svh)] md:rounded-b-[44px] xl:min-h-[max(720px,100svh)] xl:rounded-b-[54px]">
+    <section className="hero-stage relative isolate min-h-[800px] overflow-hidden bg-navy-deep text-white sm:min-h-[820px] md:min-h-[max(700px,100svh)] xl:min-h-[max(720px,100svh)]">
       <div className="hero-grid absolute inset-0 opacity-35" aria-hidden="true" />
       <div className="hero-premium-glow absolute inset-0" aria-hidden="true" />
       <div className="hero-wave hero-wave-back" aria-hidden="true" />
