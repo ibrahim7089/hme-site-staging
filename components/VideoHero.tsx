@@ -106,25 +106,23 @@ export default function VideoHero() {
               <MapPin className="h-4 w-4" />
             </Link>
           </div>
-        </div>
-      </div>
 
-      <div className="absolute bottom-8 left-1/2 z-20 hidden w-full max-w-[1180px] -translate-x-1/2 px-5 md:block">
-        <div className="grid w-[58%] max-w-[680px] grid-cols-3">
-          {trustPoints.map(({ icon: Icon, title, copy }, index) => (
-            <div
-              key={title}
-              className={`flex items-center gap-3 pr-4 ${index > 0 ? "border-l border-white/20 pl-4" : ""}`}
-            >
-              <span className="grid h-10 w-10 flex-none place-items-center rounded-xl border border-white/25 bg-white/5">
-                <Icon className="h-5 w-5 text-[#B6D7FF]" strokeWidth={1.8} />
-              </span>
-              <span>
-                <b className="block text-[12px] font-semibold capitalize text-white">{title}</b>
-                <small className="mt-0.5 block text-[9px] leading-tight text-white/58">{copy}</small>
-              </span>
-            </div>
-          ))}
+          <div className="mt-8 hidden grid-cols-3 md:grid">
+            {trustPoints.map(({ icon: Icon, title, copy }, index) => (
+              <div
+                key={title}
+                className={`flex items-center gap-3 pr-3 ${index > 0 ? "border-l border-white/20 pl-3" : ""}`}
+              >
+                <span className="grid h-9 w-9 flex-none place-items-center rounded-xl border border-white/25 bg-white/5">
+                  <Icon className="h-[18px] w-[18px] text-[#B6D7FF]" strokeWidth={1.8} />
+                </span>
+                <span>
+                  <b className="block text-[11px] font-semibold capitalize text-white">{title}</b>
+                  <small className="mt-0.5 block text-[8px] leading-tight text-white/58">{copy}</small>
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
