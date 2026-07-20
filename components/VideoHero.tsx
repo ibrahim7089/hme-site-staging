@@ -135,18 +135,18 @@ export default function VideoHero() {
         </div>
       </div>
 
-      <div className="hero-benefit-card absolute right-[2.5%] top-[152px] z-[8] hidden w-[184px] rounded-xl border border-white/70 bg-white/90 p-4 text-navy shadow-deep backdrop-blur-xl xl:block">
+      <div className="hero-benefit-card absolute right-[2.5%] top-[152px] z-[8] hidden w-[192px] overflow-hidden rounded-2xl border border-white/55 p-4 text-navy xl:block">
         {serviceBenefits.map(({ icon: Icon, title, copy }, index) => (
           <div
             key={title}
-            className={`flex gap-2.5 py-2.5 ${index > 0 ? "border-t border-[#DCE6F3]" : ""}`}
+            className={`relative z-[1] flex gap-2.5 py-3 ${index > 0 ? "border-t border-navy/10" : ""}`}
           >
-            <span className="grid h-8 w-8 flex-none place-items-center rounded-full bg-[#E8F1FF]">
+            <span className="grid h-8 w-8 flex-none place-items-center rounded-full border border-white/55 bg-white/35 shadow-sm backdrop-blur">
               <Icon className="h-4 w-4 text-navy" strokeWidth={2} />
             </span>
             <span>
               <b className="block text-[10px] font-bold capitalize">{title}</b>
-              <small className="mt-0.5 block text-[8px] leading-[1.35] text-slate2">{copy}</small>
+              <small className="mt-0.5 block text-[8px] leading-[1.4] text-navy/65">{copy}</small>
             </span>
           </div>
         ))}
