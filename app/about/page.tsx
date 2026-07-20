@@ -38,7 +38,7 @@ export default function AboutPage() {
   return (
     <>
       {/* ── 1. Hero — layered like VideoHero ── */}
-      <section className="relative isolate min-h-[620px] overflow-hidden bg-navy-deep pt-[88px] text-white md:min-h-[700px] md:pt-24">
+      <section className="relative isolate min-h-[100svh] overflow-hidden bg-navy-deep text-white">
         {/* Layer 1: dot grid texture */}
         <div className="hero-grid absolute inset-0 opacity-30" aria-hidden="true" />
 
@@ -71,9 +71,9 @@ export default function AboutPage() {
         </svg>
 
         {/* Content grid */}
-        <div className="wrap relative z-10 grid min-h-[inherit] items-center gap-10 pb-0 lg:grid-cols-2 lg:gap-0">
+        <div className="wrap relative z-10 grid min-h-[100svh] items-center gap-10 pb-0 lg:grid-cols-2 lg:items-stretch lg:gap-0">
           {/* Left: copy */}
-          <div className="hero-copy py-14 md:py-20 lg:pr-14">
+          <div className="hero-copy flex flex-col justify-center pb-14 pt-[calc(88px+2rem)] md:pt-[calc(96px+2rem)] lg:pr-14 lg:py-24">
             <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-brand-red">
               About Us
             </p>
@@ -95,15 +95,14 @@ export default function AboutPage() {
             </div>
           </div>
 
-          {/* Right: photo */}
-          <div className="hidden lg:block">
-            <div className="relative ml-6 overflow-hidden rounded-tl-[40px] rounded-br-[40px] shadow-deep">
+          {/* Right: photo — fills full column height */}
+          <div className="relative hidden self-stretch lg:block">
+            <div className="absolute inset-0 ml-6 overflow-hidden rounded-tl-[40px] rounded-br-[40px] shadow-deep">
               <img
                 src="/images/about-hero.jpg"
                 alt="HME branch counter"
-                className="h-[580px] w-full object-cover"
+                className="h-full w-full object-cover"
               />
-              {/* subtle dark-edge vignette */}
               <div className="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-navy-deep/40" />
             </div>
           </div>
