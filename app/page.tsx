@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import VideoHero from "@/components/VideoHero";
+import HMEStory from "@/components/HMEStory";
 import ServiceCards from "@/components/ServiceCards";
 import ReachUsBand from "@/components/ReachUsBand";
-import WhyChooseHME from "@/components/WhyChooseHME";
 import BranchLocatorPreview from "@/components/BranchLocatorPreview";
 import FAQSection from "@/components/FAQSection";
 
@@ -16,8 +16,8 @@ export default function HomePage() {
   return (
     <>
       <VideoHero />
+      <HMEStory />
       <ServiceCards />
-      <WhyChooseHME />
       <BranchLocatorPreview limit={3} />
       <FAQSection limit={4} />
       <ReachUsBand />
