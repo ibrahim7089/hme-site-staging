@@ -37,79 +37,108 @@ const pillars = [
 export default function AboutPage() {
   return (
     <>
-      {/* ── 1. Hero ── */}
-      <section className="bg-[#071E44] pt-[88px] pb-0 text-white md:pt-24">
-        <div className="wrap grid items-center gap-10 lg:grid-cols-2 lg:gap-0">
-          {/* left */}
-          <div className="py-14 md:py-20 lg:pr-12">
+      {/* ── 1. Hero — layered like VideoHero ── */}
+      <section className="relative isolate min-h-[620px] overflow-hidden bg-navy-deep pt-[88px] text-white md:min-h-[700px] md:pt-24">
+        {/* Layer 1: dot grid texture */}
+        <div className="hero-grid absolute inset-0 opacity-30" aria-hidden="true" />
+
+        {/* Layer 2: radial glow + diagonal gradient */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 bg-[radial-gradient(circle_at_30%_60%,rgba(49,128,232,0.30),transparent_42%),linear-gradient(115deg,#071E44_0%,#0B2E63_54%,#071E44_100%)]"
+        />
+
+        {/* Layer 3: ghost rings */}
+        <div aria-hidden="true" className="absolute -right-24 -top-28 h-96 w-96 rounded-full border border-white/10" />
+        <div aria-hidden="true" className="absolute right-8 top-6 h-64 w-64 rounded-full border border-white/10" />
+
+        {/* Layer 4: blurred glow blob */}
+        <div aria-hidden="true" className="absolute bottom-10 left-[38%] h-40 w-40 rounded-full bg-brand-blue/20 blur-3xl" />
+
+        {/* Layer 5: decorative orrery SVG (left side, faint) */}
+        <svg
+          aria-hidden="true"
+          className="absolute left-[-6%] top-1/2 hidden h-[420px] w-[420px] -translate-y-1/2 opacity-[0.07] md:block"
+          viewBox="0 0 240 240"
+          fill="none"
+          stroke="white"
+          strokeWidth="1"
+        >
+          <circle cx="120" cy="120" r="116" />
+          <ellipse cx="120" cy="120" rx="116" ry="45" />
+          <ellipse cx="120" cy="120" rx="48" ry="116" />
+          <path d="M4 120h232M120 4v232" />
+        </svg>
+
+        {/* Content grid */}
+        <div className="wrap relative z-10 grid min-h-[inherit] items-center gap-10 pb-0 lg:grid-cols-2 lg:gap-0">
+          {/* Left: copy */}
+          <div className="hero-copy py-14 md:py-20 lg:pr-14">
             <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-brand-red">
               About Us
             </p>
-            <h1 className="text-[clamp(34px,4vw,54px)] font-extrabold leading-[1.1]">
+            <h1 className="text-[clamp(34px,4.5vw,56px)] font-extrabold leading-[1.08] tracking-[-0.02em]">
               About Hasani<br />Munawarah Exchange
             </h1>
             <div className="mt-4 h-[3px] w-12 rounded-full bg-brand-red" />
-            <p className="mt-5 max-w-md text-[15px] leading-relaxed text-[#B9C8E0]">
+            <p className="mt-5 max-w-md text-[15px] leading-relaxed text-white/75">
               A trusted Malaysian money services business built on decades of experience, strong
               compliance standards, and a genuine commitment to serving our communities.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                href="/services"
-                className="inline-flex items-center gap-2 rounded-full bg-brand-red px-6 py-3 text-sm font-semibold text-white transition hover:brightness-110"
-              >
+              <Link href="/services" className="btn-red">
                 Our Services <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link
-                href="/locate-us"
-                className="inline-flex items-center gap-2 rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
-              >
+              <Link href="/locate-us" className="btn-ghost backdrop-blur">
                 Find a Location
               </Link>
             </div>
           </div>
 
-          {/* right — photo */}
-          <div className="hidden lg:block h-full min-h-[500px] overflow-hidden rounded-tl-[40px]">
-            <img
-              src="/images/about-hero.jpg"
-              alt="HME branch counter"
-              className="h-full w-full object-cover"
-            />
+          {/* Right: photo */}
+          <div className="hidden lg:block">
+            <div className="relative ml-6 overflow-hidden rounded-tl-[40px] rounded-br-[40px] shadow-deep">
+              <img
+                src="/images/about-hero.jpg"
+                alt="HME branch counter"
+                className="h-[580px] w-full object-cover"
+              />
+              {/* subtle dark-edge vignette */}
+              <div className="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-navy-deep/40" />
+            </div>
           </div>
-          {/* mobile photo */}
-          <div className="lg:hidden -mx-4 overflow-hidden">
+
+          {/* Mobile photo */}
+          <div className="lg:hidden -mx-5 overflow-hidden">
             <img
               src="/images/about-hero.jpg"
               alt="HME branch counter"
-              className="h-56 w-full object-cover object-center sm:h-72"
+              className="h-64 w-full object-cover object-center sm:h-80"
             />
           </div>
         </div>
       </section>
 
       {/* ── 2. Who We Are ── */}
-      <section className="py-20">
+      <section className="scroll-reveal bg-[#F8FAFF] py-20">
         <div className="wrap grid items-center gap-12 lg:grid-cols-2">
-          {/* photo left */}
-          <div className="overflow-hidden rounded-2xl shadow-lg">
-            <img
-              src="/images/about-who-we-are.jpg"
-              alt="HME branch exterior"
-              className="h-full w-full object-cover"
-            />
+          {/* Photo left — red accent strip + deep shadow */}
+          <div className="flex gap-0">
+            <div className="w-1 flex-none self-stretch rounded-l-full bg-brand-red" />
+            <div className="overflow-hidden rounded-r-2xl shadow-deep">
+              <img
+                src="/images/about-who-we-are.jpg"
+                alt="HME branch exterior"
+                className="h-full w-full object-cover"
+              />
+            </div>
           </div>
 
-          {/* text right */}
-          <div>
-            <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-brand-red">
-              Who We Are
-            </p>
-            <h2 className="text-[clamp(26px,3vw,38px)] font-extrabold leading-tight text-navy-deep">
-              Who We Are
-            </h2>
+          {/* Text right */}
+          <div className="scroll-reveal">
+            <span className="eyebrow">Who We Are</span>
+            <h2 className="sec-title mt-3">Who We Are</h2>
             <div className="mt-3 h-[3px] w-10 rounded-full bg-brand-red" />
-
             <p className="mt-5 text-[15px] leading-relaxed text-slate2">
               Hasani Munawarah Exchange Sdn. Bhd. is a licensed Money Services Business in Malaysia,
               providing trusted currency exchange and remittance services across our growing branch
@@ -125,7 +154,6 @@ export default function AboutPage() {
               Malaysia continue to depend on for their currency exchange and international money
               transfer needs.
             </p>
-
             <Link
               href="/services"
               className="mt-8 inline-flex items-center gap-2 rounded-full bg-navy-deep px-6 py-3 text-sm font-semibold text-white transition hover:brightness-125"
@@ -137,16 +165,12 @@ export default function AboutPage() {
       </section>
 
       {/* ── 3. Our Growth ── */}
-      <section className="bg-cloud py-20">
+      <section className="py-20">
         <div className="wrap grid items-center gap-12 lg:grid-cols-2">
-          {/* text left */}
-          <div>
-            <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-brand-red">
-              Our Growth
-            </p>
-            <h2 className="text-[clamp(26px,3vw,38px)] font-extrabold leading-tight text-navy-deep">
-              Growing Closer to<br />Our Customers
-            </h2>
+          {/* Text left */}
+          <div className="scroll-reveal">
+            <span className="eyebrow">Our Growth</span>
+            <h2 className="sec-title mt-3">Growing Closer to<br />Our Customers</h2>
             <div className="mt-3 h-[3px] w-10 rounded-full bg-brand-red" />
             <p className="mt-5 text-[15px] leading-relaxed text-slate2">
               From a single exchange counter to a nationwide network of over 40 service locations,
@@ -160,28 +184,34 @@ export default function AboutPage() {
             </p>
           </div>
 
-          {/* photo right */}
-          <div className="overflow-hidden rounded-2xl shadow-lg">
+          {/* Photo right — with gradient overlay */}
+          <div className="scroll-reveal relative overflow-hidden rounded-2xl shadow-deep">
             <img
               src="/images/about-growth.jpg"
               alt="HME branch opening celebration"
               className="h-full w-full object-cover"
             />
+            <div className="absolute inset-0 bg-gradient-to-t from-navy-deep/30 to-transparent" />
           </div>
         </div>
       </section>
 
-      {/* ── 4. Stats bar ── */}
-      <section className="border-y border-line py-12">
-        <div className="wrap grid grid-cols-2 gap-8 sm:grid-cols-4">
+      {/* ── 4. Stats bar — dark navy ── */}
+      <section className="relative overflow-hidden bg-navy-deep py-14 text-white">
+        <div className="hero-grid absolute inset-0 opacity-20" aria-hidden="true" />
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_50%,rgba(49,128,232,0.20),transparent_70%)]"
+        />
+        <div className="wrap relative z-10 grid grid-cols-2 gap-10 sm:grid-cols-4">
           {stats.map((s) => (
             <div key={s.label} className="flex flex-col items-center gap-3 text-center">
-              <div className="grid h-12 w-12 place-items-center rounded-full bg-brand-bluesoft text-brand-blue">
+              <div className="grid h-12 w-12 place-items-center rounded-full bg-white/10 text-white ring-1 ring-white/20">
                 <s.icon className="h-5 w-5" strokeWidth={2} />
               </div>
               <div>
-                <div className="text-[22px] font-extrabold text-navy-deep">{s.value}</div>
-                <div className="mt-0.5 text-[12.5px] font-medium text-slate2">{s.label}</div>
+                <div className="text-[22px] font-extrabold">{s.value}</div>
+                <div className="mt-0.5 text-[12.5px] text-white/65">{s.label}</div>
               </div>
             </div>
           ))}
@@ -189,25 +219,21 @@ export default function AboutPage() {
       </section>
 
       {/* ── 5. Mission, Vision & Values ── */}
-      <section className="py-20">
+      <section className="py-20" style={{ background: "linear-gradient(160deg,#F4F7FB 0%,#EAF0FC 100%)" }}>
         <div className="wrap">
           <div className="mx-auto mb-12 max-w-xl text-center">
-            <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-brand-red">
-              What Drives Us
-            </p>
-            <h2 className="text-[clamp(24px,3vw,36px)] font-extrabold text-navy-deep">
-              Our Mission, Vision &amp; Values
-            </h2>
+            <span className="eyebrow">What Drives Us</span>
+            <h2 className="sec-title mt-3">Our Mission, Vision &amp; Values</h2>
             <div className="mx-auto mt-3 h-[3px] w-10 rounded-full bg-brand-red" />
           </div>
 
-          <div className="grid gap-6 sm:grid-cols-3">
+          <div className="scroll-reveal grid gap-6 sm:grid-cols-3">
             {pillars.map((p) => (
               <div
                 key={p.title}
-                className="rounded-2xl border border-line bg-white p-7 shadow-sm"
+                className="rounded-2xl border-t-2 border-brand-blue bg-white p-7 shadow-soft"
               >
-                <div className="mb-4 grid h-11 w-11 place-items-center rounded-xl bg-brand-bluesoft text-brand-blue">
+                <div className="mb-4 grid h-11 w-11 place-items-center rounded-xl bg-brand-blue text-white">
                   <p.icon className="h-5 w-5" strokeWidth={2} />
                 </div>
                 <h3 className="mb-3 text-[17px] font-bold text-navy-deep">{p.title}</h3>
@@ -233,19 +259,23 @@ export default function AboutPage() {
       </section>
 
       {/* ── 6. CTA banner ── */}
-      <section className="bg-[#071E44] py-16 text-white">
-        <div className="wrap flex flex-col items-center gap-6 text-center">
+      <section className="relative overflow-hidden bg-navy-deep py-16 text-white">
+        <div className="hero-grid absolute inset-0 opacity-20" aria-hidden="true" />
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(49,128,232,0.35),transparent_60%)]"
+        />
+        <div aria-hidden="true" className="absolute -right-16 -top-20 h-72 w-72 rounded-full border border-white/10" />
+        <div aria-hidden="true" className="absolute right-10 top-6 h-44 w-44 rounded-full border border-white/10" />
+        <div className="wrap relative z-10 flex flex-col items-center gap-6 text-center">
           <h2 className="text-[clamp(22px,3vw,34px)] font-extrabold leading-tight">
             Find Your Nearest HME Location
           </h2>
-          <p className="max-w-md text-[15px] leading-relaxed text-[#B9C8E0]">
+          <p className="max-w-md text-[15px] leading-relaxed text-white/70">
             With 40+ branches across Malaysia, there&apos;s an HME near you ready to serve your
             currency exchange and money transfer needs.
           </p>
-          <Link
-            href="/locate-us"
-            className="inline-flex items-center gap-2 rounded-full bg-brand-red px-7 py-3.5 text-sm font-semibold text-white transition hover:brightness-110"
-          >
+          <Link href="/locate-us" className="btn-red">
             View All Locations <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
