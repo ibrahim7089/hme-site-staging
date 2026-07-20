@@ -1,6 +1,7 @@
 import Image, { type StaticImageData } from "next/image";
 import Link from "next/link";
 import {
+  ArrowDown,
   ArrowLeftRight,
   ArrowRight,
   Building2,
@@ -100,7 +101,7 @@ function ServiceCard({
 
 export default function ServiceCards() {
   return (
-    <section className="scroll-reveal bg-cloud py-20 md:py-28" id="services">
+    <section className="scroll-reveal bg-cloud pb-0 pt-20 md:pt-28" id="services">
       <div className="wrap">
         <SectionHeading
           eyebrow="One trusted network"
@@ -154,6 +155,26 @@ export default function ServiceCards() {
             image={agentHandshake}
             className="lg:col-span-4"
           />
+        </div>
+
+        <div className="mx-auto mt-16 flex max-w-[760px] flex-col items-center text-center md:mt-20">
+          <span
+            aria-hidden="true"
+            className="mb-5 h-12 w-px bg-gradient-to-b from-brand-red via-brand-red/60 to-transparent"
+          />
+          <p className="font-display text-[clamp(30px,4vw,48px)] font-extrabold leading-[1.08] tracking-[-0.045em] text-navy">
+            Five services.
+            <br />
+            <span className="text-brand-blue">One trusted standard.</span>
+          </p>
+          <p className="mt-5 max-w-[610px] text-[15px] leading-relaxed text-slate2 md:text-base">
+            Every HME service is supported by regulated operations, trained teams and a
+            nationwide branch network.
+          </p>
+          <span className="mt-7 inline-flex items-center gap-2 rounded-full border border-line bg-white px-4 py-2 font-display text-[11px] font-extrabold uppercase tracking-[0.16em] text-navy shadow-soft">
+            Why customers choose HME
+            <ArrowDown className="h-3.5 w-3.5 text-brand-red" strokeWidth={2.2} />
+          </span>
         </div>
       </div>
     </section>

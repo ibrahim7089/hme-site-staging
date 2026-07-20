@@ -11,8 +11,12 @@ const points = [
 
 export default function WhyChooseHME() {
   return (
-    <section className="py-20">
-      <div className="wrap grid items-center gap-12 lg:grid-cols-[1fr_1.1fr]">
+    <section className="relative overflow-hidden bg-gradient-to-b from-cloud via-white to-white pb-20 pt-12 md:pb-24 md:pt-16">
+      <div
+        aria-hidden="true"
+        className="absolute left-1/2 top-0 h-20 w-px -translate-x-1/2 bg-gradient-to-b from-brand-blue/25 to-transparent"
+      />
+      <div className="wrap relative z-[1] grid items-center gap-12 lg:grid-cols-[1fr_1.1fr]">
         <div className="rounded-card bg-gradient-to-br from-navy to-navy-deep p-8 text-white shadow-deep">
           <div className="mb-5 font-display text-[22px] font-extrabold leading-snug">
             Built like a financial institution.<br />Run for everyday customers.
