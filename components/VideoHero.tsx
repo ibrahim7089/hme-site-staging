@@ -4,7 +4,6 @@ import {
   ArrowDownToLine,
   ArrowRight,
   BadgeDollarSign,
-  Building2,
   Globe2,
   MapPin,
   ShieldCheck,
@@ -147,16 +146,6 @@ export default function VideoHero() {
             </span>
           </div>
         ))}
-      </div>
-
-      <div className="hero-branch-card absolute bottom-7 right-[25%] z-[8] hidden min-w-[245px] items-center gap-3 rounded-xl border border-white/70 border-l-[3px] border-l-brand-red bg-white/90 px-4 py-3 text-navy shadow-deep backdrop-blur-xl lg:flex">
-        <span className="grid h-10 w-10 flex-none place-items-center rounded-full bg-navy text-white">
-          <Building2 className="h-5 w-5" strokeWidth={1.8} />
-        </span>
-        <span>
-          <b className="block text-xs font-bold">Serving You Nationwide</b>
-          <small className="mt-0.5 block text-[9px] text-slate2">50+ branches across Malaysia</small>
-        </span>
       </div>
 
       <a
