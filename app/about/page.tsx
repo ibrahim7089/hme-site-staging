@@ -119,14 +119,6 @@ export default function AboutPage() {
                   alt="HME LG-K08A branch counter"
                   className="h-[300px] w-full object-cover sm:h-[380px] lg:h-[500px]"
                 />
-                {/* Bottom gradient for badge readability */}
-                <div className="absolute inset-0 bg-gradient-to-t from-navy-deep/70 via-transparent to-transparent" />
-
-                {/* Glass badge */}
-                <div className="absolute bottom-4 left-4 right-4 rounded-xl border border-white/20 bg-white/10 px-4 py-3 backdrop-blur-md">
-                  <p className="text-[10.5px] font-semibold uppercase tracking-wider text-white/60">Flagship Branch</p>
-                  <p className="mt-0.5 text-[13.5px] font-bold text-white">Hasani Munawarah Exchange · LG-K08A</p>
-                </div>
               </div>
             </div>
           </div>
