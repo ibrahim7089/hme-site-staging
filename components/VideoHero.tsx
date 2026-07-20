@@ -87,7 +87,7 @@ export default function VideoHero() {
 
       <div className="wrap relative z-10 flex min-h-[800px] items-start pb-[400px] pt-[132px] sm:min-h-[820px] sm:pb-[420px] md:min-h-[max(700px,100svh)] md:items-center md:pb-[148px] md:pt-[110px] xl:min-h-[max(720px,100svh)]">
         <div className="hero-copy max-w-[640px] md:w-[51%] lg:w-[50%]">
-          <h1 className="max-w-[9.5ch] text-[clamp(45px,6.2vw,76px)] font-extrabold leading-[0.98] tracking-[-0.055em] text-white">
+          <h1 className="max-w-[9.5ch] text-[clamp(45px,6.2vw,76px)] font-extrabold leading-[0.98] tracking-[-0.055em] text-white [word-spacing:0.06em]">
             Money moves.<br />
             Trust stays<span className="text-brand-red">.</span>
           </h1>
