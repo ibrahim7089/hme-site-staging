@@ -130,8 +130,21 @@ export default function VideoHero() {
       </div>
 
       <div className="absolute right-[2.5%] top-[148px] z-[8] hidden w-[245px] xl:block">
+        <svg
+          aria-hidden="true"
+          className="absolute left-0 top-0 h-[180px] w-[90px] overflow-visible"
+          viewBox="0 0 90 180"
+          fill="none"
+        >
+          <path
+            d="M22 22C24 70 39 119 62 158"
+            stroke="rgba(255,255,255,0.38)"
+            strokeWidth="1.25"
+            strokeLinecap="round"
+          />
+        </svg>
         <div className="space-y-6">
-          {serviceBenefits.map(({ icon: Icon, title, offset }, index) => (
+          {serviceBenefits.map(({ icon: Icon, title, offset }) => (
             <div
               key={title}
               className={`hero-benefit-item flex w-fit items-center gap-3.5 ${offset}`}
@@ -139,14 +152,9 @@ export default function VideoHero() {
               <span className="grid h-11 w-11 flex-none place-items-center rounded-full border border-white/70 bg-white/95 shadow-[0_9px_25px_rgba(7,30,68,0.2)]">
                 <Icon className="h-[19px] w-[19px] text-navy" strokeWidth={1.9} />
               </span>
-              <span className="min-w-0">
-                <small className="mb-0.5 block font-display text-[9px] font-extrabold tracking-[0.2em] text-white/60">
-                  0{index + 1}
-                </small>
-                <b className="hero-benefit-title block whitespace-nowrap font-display text-[16px] font-extrabold capitalize leading-none tracking-[-0.025em]">
-                  {title}<span className="text-brand-red">.</span>
-                </b>
-              </span>
+              <b className="hero-benefit-title block whitespace-nowrap font-display text-[18px] font-extrabold capitalize leading-none tracking-[-0.025em]">
+                {title}
+              </b>
             </div>
           ))}
         </div>
