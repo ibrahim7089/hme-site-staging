@@ -110,18 +110,22 @@ export default function VideoHero() {
             </Link>
           </div>
 
-          <div className="mt-8 hidden grid-cols-3 md:grid">
+          <div className="mt-9 hidden grid-cols-3 md:grid">
             {trustPoints.map(({ icon: Icon, title, copy }, index) => (
               <div
                 key={title}
-                className={`flex items-center gap-3 pr-3 ${index > 0 ? "border-l border-white/20 pl-3" : ""}`}
+                className={`flex items-center gap-3.5 pr-3 ${index > 0 ? "border-l border-white/25 pl-3.5" : ""}`}
               >
-                <span className="grid h-11 w-11 flex-none place-items-center rounded-xl border border-white/30 bg-white/[0.07]">
-                  <Icon className="h-5 w-5 text-[#B6D7FF]" strokeWidth={1.8} />
+                <span className="grid h-12 w-12 flex-none place-items-center rounded-xl border border-white/35 bg-white/[0.09] shadow-[0_8px_24px_rgba(7,30,68,0.15)]">
+                  <Icon className="h-[22px] w-[22px] text-[#C7E1FF]" strokeWidth={2} />
                 </span>
                 <span>
-                  <b className="block whitespace-nowrap text-xs font-semibold capitalize text-white">{title}</b>
-                  <small className="mt-1 block text-[9px] leading-tight text-white/65">{copy}</small>
+                  <b className="block whitespace-nowrap font-display text-[14px] font-extrabold capitalize tracking-[-0.02em] text-white">
+                    {title}
+                  </b>
+                  <small className="mt-1 block whitespace-nowrap text-[10px] font-semibold leading-tight text-white/75">
+                    {copy}
+                  </small>
                 </span>
               </div>
             ))}
