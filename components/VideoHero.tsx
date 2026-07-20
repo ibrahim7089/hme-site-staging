@@ -113,12 +113,12 @@ export default function VideoHero() {
                 key={title}
                 className={`flex items-center gap-3 pr-3 ${index > 0 ? "border-l border-white/20 pl-3" : ""}`}
               >
-                <span className="grid h-9 w-9 flex-none place-items-center rounded-xl border border-white/25 bg-white/5">
-                  <Icon className="h-[18px] w-[18px] text-[#B6D7FF]" strokeWidth={1.8} />
+                <span className="grid h-11 w-11 flex-none place-items-center rounded-xl border border-white/30 bg-white/[0.07]">
+                  <Icon className="h-5 w-5 text-[#B6D7FF]" strokeWidth={1.8} />
                 </span>
                 <span>
-                  <b className="block text-[11px] font-semibold capitalize text-white">{title}</b>
-                  <small className="mt-0.5 block text-[8px] leading-tight text-white/58">{copy}</small>
+                  <b className="block whitespace-nowrap text-xs font-semibold capitalize text-white">{title}</b>
+                  <small className="mt-1 block text-[9px] leading-tight text-white/65">{copy}</small>
                 </span>
               </div>
             ))}
