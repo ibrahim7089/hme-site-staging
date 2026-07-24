@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 const stats = [
-  { icon: Building2, value: "40+", label: "Service Locations" },
+  { icon: Building2, value: "50+", label: "Locations Nationwide" },
   { icon: Users, value: "Millions", label: "Customers Served" },
   { icon: ShieldCheck, value: "Licensed", label: "& Regulated MSB" },
   { icon: Star, value: "Since 1980", label: "Trusted Heritage" },
@@ -95,7 +95,7 @@ export default function AboutPage() {
 
             {/* Trust badges */}
             <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-white/10 pt-6">
-              {["Licensed MSB", "Since 1980", "40+ Locations"].map((badge) => (
+              {["Licensed MSB", "Since 1980", "50+ Locations"].map((badge) => (
                 <div key={badge} className="flex items-center gap-2 text-[12.5px] text-white/60">
                   <span className="h-1.5 w-1.5 rounded-full bg-brand-red" />
                   {badge}
@@ -180,7 +180,7 @@ export default function AboutPage() {
             <h2 className="sec-title mt-3">Growing Closer to<br />Our Customers</h2>
             <div className="mt-3 h-[3px] w-10 rounded-full bg-brand-red" />
             <p className="mt-5 text-[15px] leading-relaxed text-slate2">
-              From a single exchange counter to a nationwide network of over 40 service locations,
+              From a single exchange counter to a nationwide network of 50+ locations,
               HME&apos;s growth story is powered by trust earned one customer at a time. We continue to
               expand into new communities, bringing competitive rates and reliable financial services
               closer to the people who need them.
@@ -279,7 +279,7 @@ export default function AboutPage() {
             Find Your Nearest HME Location
           </h2>
           <p className="max-w-md text-[15px] leading-relaxed text-white/70">
-            With 40+ branches across Malaysia, there&apos;s an HME near you ready to serve your
+            With 50+ locations across Malaysia, there&apos;s an HME near you ready to serve your
             currency exchange and money transfer needs.
           </p>
           <Link href="/locate-us" className="btn-red">

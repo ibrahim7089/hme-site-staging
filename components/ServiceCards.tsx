@@ -139,7 +139,7 @@ export default function ServiceCards() {
           <ServiceCard
             icon={MapPin}
             title="Find HME nearby"
-            copy="Search more than 50 locations by state, city or available service."
+            copy="Search 50+ locations by state, city or available service."
             href="/locate-us"
             label="Branch Network"
             image={branchesCounter}
