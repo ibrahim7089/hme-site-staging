@@ -145,7 +145,7 @@ export default function HMEStory() {
               </span>{" "}
               to
               <br />
-              you<span className="text-brand-red">.</span>
+              you
             </h2>
           </div>
 
