@@ -173,7 +173,6 @@ export default function HMEStory() {
                 <Icon className="h-10 w-10 text-white" strokeWidth={1.8} />
               </span>
               <span>
-                <span className="mb-3 block h-2 w-2 rounded-full bg-brand-red shadow-[0_0_0_5px_rgba(236,18,57,0.12)]" />
                 <h3 className="font-display text-[17px] font-extrabold tracking-[-0.025em]">
                   {title}
                 </h3>
