@@ -92,7 +92,7 @@ export default function VideoHero() {
         <div className="hero-copy max-w-[640px] md:w-[51%] lg:w-[50%]">
           <h1 className="max-w-[9.5ch] text-[clamp(45px,6.2vw,76px)] font-extrabold leading-[0.98] tracking-[-0.055em] text-white [word-spacing:0.06em]">
             Money moves.<br />
-            Trust stays<span className="text-brand-red">.</span>
+            Trust stays
           </h1>
           <p className="mt-6 max-w-[535px] text-[15px] leading-relaxed text-white/80 sm:text-[17px]">
             Exchange foreign currency and send money overseas through HME&apos;s nationwide
