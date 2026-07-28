@@ -87,7 +87,7 @@ export default async function AboutPage() {
               {hero?.lead || "A trusted Malaysian money services business built on decades of experience, strong compliance standards, and a genuine commitment to serving our communities."}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/services" className="btn-red">
+              <Link href="/#services" className="btn-red">
                 Our Services <ArrowRight className="h-4 w-4" />
               </Link>
               <Link href="/locate-us" className="btn-ghost backdrop-blur">
@@ -164,7 +164,7 @@ export default async function AboutPage() {
               transfer needs.
             </p>
             <Link
-              href="/services"
+              href="#our-growth"
               className="mt-8 inline-flex items-center gap-2 rounded-full bg-navy-deep px-6 py-3 text-sm font-semibold text-white transition hover:brightness-125"
             >
               Learn More About Us <ArrowRight className="h-4 w-4" />
@@ -174,7 +174,7 @@ export default async function AboutPage() {
       </section>
 
       {/* ── 3. Our Growth ── */}
-      <section className="py-20">
+      <section className="scroll-mt-24 py-20" id="our-growth">
         <div className="wrap grid items-center gap-12 lg:grid-cols-2">
           {/* Text left */}
           <div className="scroll-reveal">
