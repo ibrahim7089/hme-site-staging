@@ -32,7 +32,22 @@ export type EnquiryRecord = {
   updated_at: string
 }
 
+export type EnquiryNotificationSettings = {
+  notificationEmail: string
+  source: 'admin' | 'server-default'
+  updatedByName: string
+  updatedAt: string | null
+  history: Array<{
+    id: number
+    oldValue: string
+    newValue: string
+    actorName: string
+    createdAt: string
+  }>
+}
+
 type Executor = Pick<Client, 'execute'> | Pick<Transaction, 'execute'>
+const enquiryNotificationEmailKey = 'enquiry_notification_email'
 
 function mapEnquiry(row: Record<string, unknown> | undefined): EnquiryRecord | null {
   if (!row) return null
@@ -210,7 +225,93 @@ async function sendEmail(input: {
   }
 }
 
+export async function getEnquiryNotificationSettings(): Promise<EnquiryNotificationSettings> {
+  const db = await ensureCmsSchema()
+  const [settingResult, historyResult] = await Promise.all([
+    db.execute({
+      sql: `SELECT setting_value, updated_by_name, updated_at
+        FROM cms_settings WHERE setting_key = ? LIMIT 1`,
+      args: [enquiryNotificationEmailKey],
+    }),
+    db.execute({
+      sql: `SELECT id, old_value, new_value, actor_name, created_at
+        FROM cms_setting_events
+        WHERE setting_key = ?
+        ORDER BY created_at DESC, id DESC
+        LIMIT 10`,
+      args: [enquiryNotificationEmailKey],
+    }),
+  ])
+  const setting = settingResult.rows[0]
+  const configuredEmail = String(setting?.setting_value || '').trim().toLowerCase()
+  return {
+    notificationEmail: configuredEmail || process.env.ENQUIRY_TO_EMAIL?.trim().toLowerCase() || site.email,
+    source: configuredEmail ? 'admin' : 'server-default',
+    updatedByName: String(setting?.updated_by_name || ''),
+    updatedAt: setting?.updated_at ? String(setting.updated_at) : null,
+    history: historyResult.rows.map((row) => ({
+      id: Number(row.id),
+      oldValue: String(row.old_value || ''),
+      newValue: String(row.new_value || ''),
+      actorName: String(row.actor_name || ''),
+      createdAt: String(row.created_at || ''),
+    })),
+  }
+}
+
+export async function updateEnquiryNotificationEmail(input: {
+  notificationEmail: string
+  user: CmsUser
+  requestId: string
+}) {
+  const db = await ensureCmsSchema()
+  const notificationEmail = input.notificationEmail.trim().toLowerCase()
+  const tx = await db.transaction('write')
+  try {
+    const existingResult = await tx.execute({
+      sql: 'SELECT setting_value FROM cms_settings WHERE setting_key = ? LIMIT 1',
+      args: [enquiryNotificationEmailKey],
+    })
+    const oldValue = String(existingResult.rows[0]?.setting_value || '')
+    if (oldValue !== notificationEmail) {
+      await tx.execute({
+        sql: `INSERT INTO cms_settings (
+          setting_key, setting_value, updated_by_user_id, updated_by_name, updated_at
+        ) VALUES (?, ?, ?, ?, datetime('now'))
+        ON CONFLICT(setting_key) DO UPDATE SET
+          setting_value = excluded.setting_value,
+          updated_by_user_id = excluded.updated_by_user_id,
+          updated_by_name = excluded.updated_by_name,
+          updated_at = datetime('now')`,
+        args: [enquiryNotificationEmailKey, notificationEmail, input.user.id, input.user.name],
+      })
+      await tx.execute({
+        sql: `INSERT INTO cms_setting_events (
+          setting_key, old_value, new_value, actor_user_id, actor_name, request_id
+        ) VALUES (?, ?, ?, ?, ?, ?)`,
+        args: [
+          enquiryNotificationEmailKey,
+          oldValue,
+          notificationEmail,
+          input.user.id,
+          input.user.name,
+          input.requestId,
+        ],
+      })
+    }
+    await tx.commit()
+  } catch (error) {
+    if (!tx.closed) await tx.rollback()
+    throw error
+  } finally {
+    tx.close()
+  }
+  return getEnquiryNotificationSettings()
+}
+
 export async function deliverEnquiryEmails(enquiry: EnquiryRecord, requestId: string) {
+  const notificationSettings = await getEnquiryNotificationSettings()
+  const notificationEmail = notificationSettings.notificationEmail
   const typeLabel = enquiryTypeLabels[enquiry.enquiry_type]
   const subjectDetail = enquiry.subject ? ` — ${enquiry.subject.replace(/[\r\n]+/g, ' ')}` : ''
   const submittedAt = new Intl.DateTimeFormat('en-MY', {
@@ -256,7 +357,7 @@ export async function deliverEnquiryEmails(enquiry: EnquiryRecord, requestId: st
     </div>`
 
   const staff = await sendEmail({
-    to: process.env.ENQUIRY_TO_EMAIL || site.email,
+    to: notificationEmail,
     replyTo: enquiry.customer_email,
     subject: `[HME Website] ${typeLabel}${subjectDetail} · ${enquiry.reference}`,
     text,
@@ -275,7 +376,7 @@ export async function deliverEnquiryEmails(enquiry: EnquiryRecord, requestId: st
 
   const acknowledgement = await sendEmail({
     to: enquiry.customer_email,
-    replyTo: process.env.ENQUIRY_TO_EMAIL || site.email,
+    replyTo: notificationEmail,
     subject: `HME received your enquiry · ${enquiry.reference}`,
     text: `Hello ${enquiry.customer_name},\n\nThank you for contacting HME. We received your ${typeLabel.toLowerCase()} and will respond using your preferred contact method.\n\nReference: ${enquiry.reference}\n\nPlease keep this reference for follow-up. Do not reply with passwords, PINs, full card details or identity document numbers.\n\nHME`,
     html: `<div style="font-family:Arial,sans-serif;max-width:620px;margin:0 auto;color:#071e44"><div style="background:#071e44;color:#fff;padding:22px 24px"><strong>HME</strong></div><div style="padding:26px;border:1px solid #e3e9f2"><h1 style="font-size:22px;margin-top:0">We received your enquiry</h1><p>Hello ${escapeHtml(enquiry.customer_name)},</p><p style="line-height:1.6">Thank you for contacting HME. We received your ${escapeHtml(typeLabel.toLowerCase())} and will respond using your preferred contact method.</p><p style="padding:14px;background:#f1f6fd;border-radius:8px"><strong>Reference:</strong> ${escapeHtml(enquiry.reference)}</p><p style="font-size:12px;color:#66758f;line-height:1.6">Please keep this reference for follow-up. Do not reply with passwords, PINs, full card details or identity document numbers.</p></div></div>`,

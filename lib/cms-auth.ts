@@ -17,6 +17,7 @@ export type CmsPermission =
   | 'publishing.publish'
   | 'enquiries.view'
   | 'enquiries.manage'
+  | 'settings.manage'
   | 'users.manage'
 
 export type CmsUser = {
@@ -36,6 +37,7 @@ const rolePermissions: Record<CmsRole, CmsPermission[]> = {
     'publishing.publish',
     'enquiries.view',
     'enquiries.manage',
+    'settings.manage',
     'users.manage',
   ],
   'Website Editor': ['publishing.view', 'publishing.create', 'publishing.submit', 'enquiries.view', 'enquiries.manage'],

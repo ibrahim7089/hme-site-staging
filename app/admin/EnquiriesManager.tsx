@@ -16,6 +16,8 @@ import {
   RefreshCw,
   Save,
   Search,
+  Settings2,
+  ShieldCheck,
   UserRound,
 } from 'lucide-react'
 import { enquiryTypeLabels, enquiryTypes, type EnquiryType } from '@/lib/enquiry'
@@ -38,6 +40,19 @@ type EnquiryResponse = {
   items: EnquiryRecord[]
   counts: Counts
   assignees: Assignee[]
+}
+type NotificationSettings = {
+  notificationEmail: string
+  source: 'admin' | 'server-default'
+  updatedByName: string
+  updatedAt: string | null
+  history: Array<{
+    id: number
+    oldValue: string
+    newValue: string
+    actorName: string
+    createdAt: string
+  }>
 }
 
 const statusLabels: Record<EnquiryStatus, string> = {
@@ -101,7 +116,7 @@ function EmailStatus({ status }: { status: EmailDeliveryStatus }) {
   </span>
 }
 
-export default function EnquiriesManager() {
+export default function EnquiriesManager({ canManageSettings }: { canManageSettings: boolean }) {
   const [items, setItems] = useState<EnquiryRecord[]>([])
   const [selected, setSelected] = useState<EnquiryRecord | null>(null)
   const [events, setEvents] = useState<EnquiryEvent[]>([])
@@ -114,6 +129,9 @@ export default function EnquiriesManager() {
   const [draftAssignee, setDraftAssignee] = useState('')
   const [note, setNote] = useState('')
   const [busy, setBusy] = useState(false)
+  const [settingsBusy, setSettingsBusy] = useState(false)
+  const [notificationSettings, setNotificationSettings] = useState<NotificationSettings | null>(null)
+  const [notificationEmail, setNotificationEmail] = useState('')
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
 
@@ -141,6 +159,16 @@ export default function EnquiriesManager() {
     const timeout = window.setTimeout(() => { void load() }, 250)
     return () => window.clearTimeout(timeout)
   }, [load])
+
+  useEffect(() => {
+    if (!canManageSettings) return
+    void adminApi('/api/admin/enquiries/settings')
+      .then((result: NotificationSettings) => {
+        setNotificationSettings(result)
+        setNotificationEmail(result.notificationEmail)
+      })
+      .catch((caught) => setError(caught instanceof Error ? caught.message : 'Unable to load notification settings'))
+  }, [canManageSettings])
 
   useEffect(() => {
     if (!selected) {
@@ -212,6 +240,25 @@ export default function EnquiriesManager() {
     }
   }
 
+  async function saveNotificationEmail(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setSettingsBusy(true)
+    try {
+      const result = await adminApi('/api/admin/enquiries/settings', {
+        method: 'PATCH',
+        body: JSON.stringify({ notificationEmail }),
+      }) as NotificationSettings
+      setNotificationSettings(result)
+      setNotificationEmail(result.notificationEmail)
+      flash('Notification email updated')
+      setError('')
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Unable to update notification email')
+    } finally {
+      setSettingsBusy(false)
+    }
+  }
+
   return <section className={styles.enquirySection}>
     <div className={styles.enquiryIntro}>
       <div><p className={styles.kicker}>Customer inbox</p><h2>Every enquiry in one place</h2><p>New submissions are saved here first. Email is used as a notification, so no enquiry is lost if delivery is delayed.</p></div>
@@ -225,6 +272,47 @@ export default function EnquiriesManager() {
 
     {notice && <div className={styles.success}><CheckCircle2 size={18} /> {notice}</div>}
     {error && <div className={styles.error} role="alert"><CircleDot size={18} /><span>{error}</span></div>}
+
+    {canManageSettings && <section className={styles.notificationSettings}>
+      <div className={styles.notificationSettingsIntro}>
+        <span className={styles.notificationSettingsIcon}><Settings2 size={20} /></span>
+        <div>
+          <p className={styles.kicker}>Admin settings</p>
+          <h3>Where should new enquiry alerts go?</h3>
+          <p>Every enquiry is still saved in this inbox. This address receives an email alert and can be changed without editing the website.</p>
+        </div>
+      </div>
+      <form onSubmit={saveNotificationEmail}>
+        <label>Notification email
+          <span>
+            <Mail size={16} />
+            <input
+              type="email"
+              value={notificationEmail}
+              onChange={(event) => setNotificationEmail(event.target.value)}
+              maxLength={254}
+              placeholder="info@hmeremit.com.my"
+              required
+            />
+          </span>
+        </label>
+        <button className={styles.primaryButton} disabled={settingsBusy || !notificationEmail.trim()}>
+          <Save size={16} /> {settingsBusy ? 'Saving...' : 'Save email'}
+        </button>
+      </form>
+      <div className={styles.notificationSettingsNote}>
+        <ShieldCheck size={17} />
+        <span><strong>DNS and email security stay protected.</strong><small>Only the alert recipient changes here. Resend credentials and DNS records remain in the secure server setup.</small></span>
+      </div>
+      {notificationSettings?.updatedAt && <div className={styles.notificationSettingsHistory}>
+        <strong>Recent changes</strong>
+        {notificationSettings.history.slice(0, 3).map((entry) => <span key={entry.id}>
+          <Mail size={13} />
+          <b>{entry.newValue}</b>
+          <small>by {entry.actorName} · {formatDate(entry.createdAt)}</small>
+        </span>)}
+      </div>}
+    </section>}
 
     <div className={styles.enquiryTools}>
       <label className={styles.enquirySearch}><Search size={17} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search name, reference, email or message" aria-label="Search enquiries" /></label>

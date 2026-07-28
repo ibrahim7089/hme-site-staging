@@ -155,6 +155,25 @@ const schemaStatements = [
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     FOREIGN KEY(enquiry_id) REFERENCES enquiries(id)
   )`,
+  `CREATE TABLE IF NOT EXISTS cms_settings (
+    setting_key TEXT PRIMARY KEY,
+    setting_value TEXT NOT NULL,
+    updated_by_user_id INTEGER DEFAULT NULL,
+    updated_by_name TEXT NOT NULL DEFAULT '',
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY(updated_by_user_id) REFERENCES cms_users(id)
+  )`,
+  `CREATE TABLE IF NOT EXISTS cms_setting_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    setting_key TEXT NOT NULL,
+    old_value TEXT NOT NULL DEFAULT '',
+    new_value TEXT NOT NULL,
+    actor_user_id INTEGER NOT NULL,
+    actor_name TEXT NOT NULL,
+    request_id TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY(actor_user_id) REFERENCES cms_users(id)
+  )`,
   'CREATE INDEX IF NOT EXISTS idx_cms_items_queue ON cms_items(status, scheduled_for, updated_at DESC)',
   'CREATE INDEX IF NOT EXISTS idx_cms_items_content ON cms_items(content_type, content_key, version DESC)',
   'CREATE INDEX IF NOT EXISTS idx_cms_events_item ON cms_events(item_id, created_at DESC)',
@@ -162,6 +181,7 @@ const schemaStatements = [
   'CREATE INDEX IF NOT EXISTS idx_enquiries_type ON enquiries(enquiry_type, created_at DESC)',
   'CREATE INDEX IF NOT EXISTS idx_enquiries_assignee ON enquiries(assigned_to_user_id, status, updated_at DESC)',
   'CREATE INDEX IF NOT EXISTS idx_enquiry_events_item ON enquiry_events(enquiry_id, created_at DESC)',
+  'CREATE INDEX IF NOT EXISTS idx_cms_setting_events_key ON cms_setting_events(setting_key, created_at DESC)',
   `CREATE TRIGGER IF NOT EXISTS cms_events_immutable_update
     BEFORE UPDATE ON cms_events
     BEGIN
@@ -181,6 +201,16 @@ const schemaStatements = [
     BEFORE DELETE ON enquiry_events
     BEGIN
       SELECT RAISE(ABORT, 'Enquiry events are immutable');
+    END`,
+  `CREATE TRIGGER IF NOT EXISTS cms_setting_events_immutable_update
+    BEFORE UPDATE ON cms_setting_events
+    BEGIN
+      SELECT RAISE(ABORT, 'CMS setting events are immutable');
+    END`,
+  `CREATE TRIGGER IF NOT EXISTS cms_setting_events_immutable_delete
+    BEFORE DELETE ON cms_setting_events
+    BEGIN
+      SELECT RAISE(ABORT, 'CMS setting events are immutable');
     END`,
 ]
 

@@ -262,7 +262,7 @@ export default function AdminDashboard({ user, permissions }: { user: CmsUser; p
       {notice && <div className={styles.success}><Check size={18} /> {notice}</div>}
       {error && <div className={styles.error} role="alert"><X size={18} /><span>{error}</span></div>}
 
-      {section === 'enquiries' ? <EnquiriesManager /> : section === 'users' ? <section className={styles.userGrid}>
+      {section === 'enquiries' ? <EnquiriesManager canManageSettings={can('settings.manage')} /> : section === 'users' ? <section className={styles.userGrid}>
         <div className={styles.panel}><div className={styles.panelHead}><p className={styles.kicker}>Access control</p><h2>Current users</h2></div>
           <div className={styles.userList}>{users.map((entry) => <div className={styles.userRow} key={entry.id}><span className={styles.avatar}>{entry.name[0].toUpperCase()}</span><span><strong>{entry.name}</strong><small>{entry.email}</small></span><b>{entry.role}</b><em>{entry.status}</em></div>)}</div>
         </div>
