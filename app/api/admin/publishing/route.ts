@@ -16,11 +16,13 @@ export async function GET(request: Request) {
     const rawType = url.searchParams.get('content_type')
     const contentType = rawType ? normalizeContentType(rawType) : null
     const rawStatus = url.searchParams.get('status')?.toUpperCase() || null
+    const rawContentKey = url.searchParams.get('content_key')?.trim().toLowerCase() || null
     if ((rawType && !contentType) || (rawStatus && !statuses.has(rawStatus))) {
       return cmsJson({ error: 'Invalid publishing filter', code: 'VALIDATION_ERROR' }, 400, requestId)
     }
     const items = await listCmsItems({
       contentType,
+      contentKey: rawContentKey,
       status: rawStatus,
       limit: Number(url.searchParams.get('limit') || 200),
     })

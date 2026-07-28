@@ -16,7 +16,7 @@ const sections = [
 export default function FeesChargesPage() {
   return (
     <>
-      <PageHero eyebrow="Compliance" title="Fees & Charges"
+      <PageHero pageKey="fees-charges" eyebrow="Compliance" title="Fees & Charges"
         lead="A clear breakdown of how pricing works across our services — no hidden charges." />
       <section className="py-20">
         <div className="wrap max-w-3xl">

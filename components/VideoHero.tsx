@@ -10,6 +10,7 @@ import {
   UsersRound,
 } from "lucide-react";
 import heroPerson from "@/public/images/hero-person.webp";
+import { getPublishedPageContent } from "@/lib/cms";
 
 const trustPoints = [
   {
@@ -47,7 +48,13 @@ const serviceBenefits = [
   },
 ];
 
-export default function VideoHero() {
+export default async function VideoHero() {
+  const managed = await getPublishedPageContent("home");
+  const hero = managed?.hero;
+  const title = hero?.title || "Money moves. Trust stays";
+  const lead = hero?.lead || "Exchange foreign currency and send money overseas through HME's nationwide network of 50+ locations.";
+  const heroImage = hero?.image || heroPerson;
+  const heroAlt = hero?.imageAlt || "HME customer ready to exchange or send money";
   return (
     <section className="hero-stage relative isolate min-h-[800px] overflow-hidden bg-navy-deep text-white sm:min-h-[820px] md:min-h-[max(700px,100svh)] xl:min-h-[max(720px,100svh)]">
       <div className="hero-grid absolute inset-0 opacity-35" aria-hidden="true" />
@@ -80,8 +87,8 @@ export default function VideoHero() {
       </svg>
 
       <Image
-        src={heroPerson}
-        alt="HME customer ready to exchange or send money"
+        src={heroImage}
+        alt={heroAlt}
         priority
         quality={82}
         sizes="(max-width: 767px) 88vw, (max-width: 1279px) 54vw, 46vw"
@@ -90,13 +97,9 @@ export default function VideoHero() {
 
       <div className="wrap relative z-10 flex min-h-[800px] items-start pb-[400px] pt-[132px] sm:min-h-[820px] sm:pb-[420px] md:min-h-[max(700px,100svh)] md:items-center md:pb-[148px] md:pt-[110px] xl:min-h-[max(720px,100svh)]">
         <div className="hero-copy max-w-[640px] md:w-[51%] lg:w-[50%]">
-          <h1 className="max-w-[9.5ch] text-[clamp(45px,6.2vw,76px)] font-extrabold leading-[0.98] tracking-[-0.055em] text-white [word-spacing:0.06em]">
-            Money moves.<br />
-            Trust stays
-          </h1>
+          <h1 className="max-w-[9.5ch] whitespace-pre-line text-[clamp(45px,6.2vw,76px)] font-extrabold leading-[0.98] tracking-[-0.055em] text-white [word-spacing:0.06em]">{title}</h1>
           <p className="mt-6 max-w-[535px] text-[15px] leading-relaxed text-white/80 sm:text-[17px]">
-            Exchange foreign currency and send money overseas through HME&apos;s nationwide
-            network of 50+ locations.
+            {lead}
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">

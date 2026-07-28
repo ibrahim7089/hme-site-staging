@@ -23,7 +23,7 @@ export default async function CareerPage() {
 
   return (
     <>
-      <PageHero eyebrow="Career" title="Grow your career in regulated financial services" lead={careers.intro} image={careers.heroImage} imageAlt={careers.heroImageAlt} />
+      <PageHero pageKey="career" eyebrow="Career" title="Grow your career in regulated financial services" lead={careers.intro} image={careers.heroImage} imageAlt={careers.heroImageAlt} />
       <section className="py-20">
         <div className="wrap">
           {careers.jobs.length > 0 ? <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

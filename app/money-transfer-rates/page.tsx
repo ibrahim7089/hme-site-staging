@@ -24,7 +24,7 @@ export default async function MoneyTransferRatesPage() {
 
   return (
     <>
-      <PageHero eyebrow="Money Transfer Rates" title="Send with clarity"
+      <PageHero pageKey="transfer-rates" eyebrow="Money Transfer Rates" title="Send with clarity"
         lead="Review published rates when available, then confirm the final rate and any applicable fee with your chosen branch." />
       <section className="py-14 md:py-20">
         <div className="wrap">

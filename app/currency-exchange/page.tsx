@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 export default function CurrencyExchangePage() {
   return (
     <>
-      <PageHero eyebrow="Currency Exchange"
+      <PageHero pageKey="currency-exchange" eyebrow="Currency Exchange"
         title="Buy and sell foreign currency with confidence"
         lead="Major and selected currencies are handled across HME's branch network, with indicative published rates when available, proper receipts and counter support."
         image="/images/currency-exchange-counter.webp" />

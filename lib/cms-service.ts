@@ -102,6 +102,7 @@ async function itemWith(executor: Executor, id: number) {
 
 export async function listCmsItems(filters: {
   contentType?: CmsContentType | null
+  contentKey?: string | null
   status?: string | null
   limit?: number
 } = {}) {
@@ -111,6 +112,10 @@ export async function listCmsItems(filters: {
   if (filters.contentType) {
     clauses.push('content_type = ?')
     args.push(filters.contentType)
+  }
+  if (filters.contentKey) {
+    clauses.push('content_key = ?')
+    args.push(filters.contentKey)
   }
   if (filters.status) {
     clauses.push('status = ?')
@@ -515,6 +520,8 @@ export async function getCmsPublishedSnapshot() {
       FROM cms_published ORDER BY content_type, content_key`,
   )
   const content: Record<CmsContentType, unknown | null> = {
+    pages: {},
+    global: null,
     rates: null,
     'transfer-rates': null,
     promotions: null,
@@ -528,10 +535,16 @@ export async function getCmsPublishedSnapshot() {
   let publishedAt: string | null = null
 
   for (const row of result.rows) {
-    if (String(row.content_key) !== 'primary') continue
     const type = String(row.content_type) as CmsContentType
-    content[type] = parseJson(row.payload)
-    versions[type] = {
+    const contentKey = String(row.content_key)
+    if (type === 'pages') {
+      ;(content.pages as Record<string, unknown>)[contentKey] = parseJson(row.payload)
+    } else if (contentKey === 'primary') {
+      content[type] = parseJson(row.payload)
+    } else {
+      continue
+    }
+    versions[type === 'pages' ? `pages:${contentKey}` : type] = {
       version: Number(row.version),
       checksum: String(row.checksum),
       publishedAt: String(row.published_at),

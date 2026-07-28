@@ -19,7 +19,7 @@ const tips = [
 export default function FraudPreventionPage() {
   return (
     <>
-      <PageHero eyebrow="Compliance" title="Fraud Prevention"
+      <PageHero pageKey="fraud-prevention" eyebrow="Compliance" title="Fraud Prevention"
         lead="Simple steps to protect yourself, and how to report anything that looks suspicious." />
       <section className="py-20">
         <div className="wrap max-w-3xl">

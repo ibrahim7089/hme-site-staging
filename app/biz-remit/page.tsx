@@ -18,7 +18,7 @@ const offers = [
 export default function BizRemitPage() {
   return (
     <>
-      <PageHero eyebrow="Biz Remit" title="Business international money transfer"
+      <PageHero pageKey="biz-remit" eyebrow="Biz Remit" title="Business international money transfer"
         lead="Reliable outward money transfer for Malaysian businesses — supplier payments, trade settlements and payroll remittance handled with speed, compliance and competitive rates."
         image="https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&w=1920&q=80" />
       <section className="py-20">

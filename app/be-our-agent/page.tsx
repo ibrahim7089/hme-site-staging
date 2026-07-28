@@ -15,6 +15,7 @@ import {
 import SectionHeading from "@/components/SectionHeading";
 import { site } from "@/lib/site";
 import agentHandshake from "@/public/images/agent-handshake.webp";
+import { getPublishedPageContent } from "@/lib/cms";
 
 export const metadata: Metadata = {
   title: "Be Our Agent | Partner with HME Money Services",
@@ -81,7 +82,9 @@ const eligibility = [
   "Good standing with no known financial crime convictions or regulatory sanctions",
 ];
 
-export default function AgentPage() {
+export default async function AgentPage() {
+  const managed = await getPublishedPageContent("be-our-agent");
+  const hero = managed?.hero;
   const message = encodeURIComponent(
     "Hi HME, I am interested in becoming an agent. Company name: [company], SSM no.: [number], Business type: [type], Proposed location: [location], Contact person: [name].",
   );
@@ -93,21 +96,21 @@ export default function AgentPage() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_78%_50%,rgba(74,144,217,0.22)_0%,transparent_52%)]" />
         <div className="absolute inset-0 bg-gradient-to-r from-navy-deep via-navy-deep/90 to-navy-deep/20" />
         <Image
-          src={agentHandshake}
-          alt=""
-          aria-hidden="true"
+          src={hero?.image || agentHandshake}
+          alt={hero?.imageAlt || ""}
+          aria-hidden={hero?.imageAlt ? undefined : true}
           priority
           sizes="(max-width: 767px) 80vw, 55vw"
           className="absolute bottom-0 right-[-18%] h-[58%] w-auto object-contain object-bottom opacity-55 sm:right-[-8%] md:right-0 md:h-[78%] md:opacity-90 lg:right-[4%]"
         />
         <div className="wrap relative py-20 text-white">
           <div className="max-w-xl">
-            <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-[#7FB2F5]">Be Our Agent</p>
+            <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-[#7FB2F5]">{hero?.eyebrow || "Be Our Agent"}</p>
             <h1 className="text-[clamp(34px,5vw,58px)] font-extrabold leading-[1.08]">
-              Grow with a trusted Malaysian MSB network
+              {hero?.title || "Grow with a trusted Malaysian MSB network"}
             </h1>
             <p className="mt-5 max-w-lg text-[16px] leading-relaxed text-[#D4E0F2]">
-              If you operate an established business in Malaysia, talk to HME about agent opportunities and the requirements for your proposed location.
+              {hero?.lead || "If you operate an established business in Malaysia, talk to HME about agent opportunities and the requirements for your proposed location."}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <a href="#apply" className="btn-red">Start an Agent Inquiry</a>

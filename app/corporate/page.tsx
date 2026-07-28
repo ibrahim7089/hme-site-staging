@@ -18,7 +18,7 @@ const offers = [
 export default function CorporatePage() {
   return (
     <>
-      <PageHero eyebrow="Biz FX" title="Business foreign currency exchange"
+      <PageHero pageKey="biz-fx" eyebrow="Biz FX" title="Business foreign currency exchange"
         lead="From SMEs to established corporates — HME supports recurring foreign currency needs with competitive rates and compliant, documented processes."
         image="https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1920&q=80" />
       <section className="py-20">

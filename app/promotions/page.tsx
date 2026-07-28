@@ -14,7 +14,7 @@ export default async function PromotionsPage() {
 
   return (
     <>
-      <PageHero eyebrow="Promotions" title="Current offers"
+      <PageHero pageKey="promotions" eyebrow="Promotions" title="Current offers"
         lead="Take advantage of published offers across exchange, money transfer and currency booking." />
       <section className="py-20">
         {promotions.length > 0 ? (

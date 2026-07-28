@@ -1,4 +1,5 @@
 import { MapPin, ShieldCheck, Target } from "lucide-react";
+import { getPublishedPageContent } from "@/lib/cms";
 
 const principles = [
   {
@@ -18,7 +19,11 @@ const principles = [
   },
 ];
 
-export default function HMEStory() {
+export default async function HMEStory() {
+  const managed = await getPublishedPageContent("home");
+  const section = managed?.sections.find((entry) => entry.id === "hme-way" && entry.visible);
+  const heading = section?.heading || "Financial services should feel clear, secure and close to you";
+  const paragraphs = (section?.body || "HME brings currency exchange, international transfers, booking and branch support into one nationwide network.\n\nWhether you are travelling, supporting family or running a business, your next step stays simple and familiar.").split(/\n\s*\n/);
   return (
     <section className="relative isolate overflow-hidden bg-[#041A42] pb-28 pt-24 text-white md:pb-36 md:pt-32">
       <div
@@ -126,38 +131,23 @@ export default function HMEStory() {
         <div className="grid gap-12 lg:grid-cols-[1.25fr_0.75fr] lg:items-end lg:gap-16">
           <div>
             <p className="mb-6 font-display text-[12px] font-extrabold uppercase tracking-[0.34em] text-white/85">
-              The <span className="text-brand-red">HME</span> way
+              {section?.eyebrow || <>The <span className="text-brand-red">HME</span> way</>}
             </p>
             <h2 className="max-w-[760px] font-display text-[clamp(42px,5.2vw,74px)] font-extrabold leading-[1.05] tracking-[-0.055em]">
-              Financial services
-              <br />
-              should feel{" "}
-              <span className="bg-gradient-to-r from-[#1263F3] to-[#32A2FF] bg-clip-text text-transparent">
-                clear,
-              </span>
-              <br />
-              <span className="bg-gradient-to-r from-[#1263F3] to-[#32A2FF] bg-clip-text text-transparent">
-                secure
-              </span>{" "}
-              and{" "}
-              <span className="bg-gradient-to-r from-[#1263F3] to-[#32A2FF] bg-clip-text text-transparent">
-                close
-              </span>{" "}
-              to
-              <br />
-              you
+              {heading.split(/(clear|secure|close)/gi).map((part, index) =>
+                /^(clear|secure|close)$/i.test(part)
+                  ? <span key={index} className="bg-gradient-to-r from-[#1263F3] to-[#32A2FF] bg-clip-text text-transparent">{part}</span>
+                  : part
+              )}
             </h2>
           </div>
 
           <div className="relative border-l-2 border-[#7BA7DD]/65 pl-8 pb-2">
             <p className="text-[18px] leading-relaxed text-white/95">
-              HME brings currency exchange, international transfers, booking and branch
-              support into one{" "}
-              <strong className="font-extrabold text-[#2F83FF]">nationwide network.</strong>
+              {paragraphs[0]}
             </p>
             <p className="mt-6 text-[15px] leading-relaxed text-white/76">
-              Whether you are travelling, supporting family or running a business, your
-              next step stays simple and familiar.
+              {paragraphs[1] || ""}
             </p>
           </div>
         </div>

@@ -2,6 +2,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Building2, Users, ShieldCheck, Star, Target, Eye, Gem, ArrowRight } from "lucide-react";
+import { getPublishedPageContent } from "@/lib/cms";
 
 export const metadata: Metadata = {
   title: "About HME | Licensed Malaysian Money Services Business",
@@ -34,7 +35,9 @@ const pillars = [
   },
 ];
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const managed = await getPublishedPageContent("about");
+  const hero = managed?.hero;
   return (
     <>
       {/* ── 1. Hero ── */}
@@ -74,15 +77,14 @@ export default function AboutPage() {
           {/* Left: copy */}
           <div className="hero-copy lg:w-[46%] lg:flex-none">
             <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-brand-red">
-              About Us
+              {hero?.eyebrow || "About Us"}
             </p>
             <h1 className="text-[clamp(34px,4.5vw,58px)] font-extrabold leading-[1.08] tracking-[-0.02em]">
-              About Hasani<br />Munawarah Exchange
+              {hero?.title || <>About Hasani<br />Munawarah Exchange</>}
             </h1>
             <div className="mt-4 h-[3px] w-12 rounded-full bg-brand-red" />
             <p className="mt-5 max-w-[420px] text-[15px] leading-relaxed text-white/75">
-              A trusted Malaysian money services business built on decades of experience, strong
-              compliance standards, and a genuine commitment to serving our communities.
+              {hero?.lead || "A trusted Malaysian money services business built on decades of experience, strong compliance standards, and a genuine commitment to serving our communities."}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href="/services" className="btn-red">
@@ -115,8 +117,8 @@ export default function AboutPage() {
               {/* Photo card */}
               <div className="relative overflow-hidden rounded-2xl shadow-deep">
                 <img
-                  src="/images/about-hero.jpg"
-                  alt="HME LG-K08A branch counter"
+                  src={hero?.image || "/images/about-hero.jpg"}
+                  alt={hero?.imageAlt || "HME LG-K08A branch counter"}
                   className="h-[300px] w-full object-cover sm:h-[380px] lg:h-[500px]"
                 />
               </div>

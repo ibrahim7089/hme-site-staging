@@ -19,7 +19,7 @@ const channels = [
 export default function CommunicationChannelsPage() {
   return (
     <>
-      <PageHero eyebrow="Compliance" title="Communication Channels"
+      <PageHero pageKey="communication-channels" eyebrow="Compliance" title="Communication Channels"
         lead="Official ways to reach HME for enquiries, feedback or to raise a complaint." />
       <section className="py-20">
         <div className="wrap max-w-3xl">

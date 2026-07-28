@@ -14,6 +14,7 @@ import currencyCounter from "@/public/images/currency-exchange-counter.webp";
 import transferCounter from "@/public/images/moneytransfer-counter.webp";
 import branchesCounter from "@/public/images/branches-counter.webp";
 import agentHandshake from "@/public/images/agent-handshake.webp";
+import { getPublishedPageContent } from "@/lib/cms";
 
 type ServiceCardProps = {
   icon: LucideIcon;
@@ -98,14 +99,16 @@ function ServiceCard({
   );
 }
 
-export default function ServiceCards() {
+export default async function ServiceCards() {
+  const managed = await getPublishedPageContent("home");
+  const section = managed?.sections.find((entry) => entry.id === "services" && entry.visible);
   return (
     <section className="scroll-reveal bg-cloud pb-20 pt-16 md:pb-28 md:pt-24" id="services">
       <div className="wrap">
         <SectionHeading
-          eyebrow="Start with your need"
-          title="Five everyday needs. One trusted HME network."
-          lead="Choose what you need today. Every service connects to the same experienced teams and nationwide branch network."
+          eyebrow={section?.eyebrow || "Start with your need"}
+          title={section?.heading || "Five everyday needs. One trusted HME network."}
+          lead={section?.body || "Choose what you need today. Every service connects to the same experienced teams and nationwide branch network."}
         />
 
         <div className="service-bento mt-11 grid gap-5 lg:grid-cols-12">

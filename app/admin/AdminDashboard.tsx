@@ -9,10 +9,13 @@ import type { CmsContentType } from '@/lib/cms-validation'
 import { ContentPreview, GuidedEditor } from './GuidedEditor'
 import EnquiriesManager from './EnquiriesManager'
 import styles from './admin.module.css'
+import { globalContentTemplate } from '@/lib/global-content'
+import { pageTemplate, websitePages } from '@/lib/page-content'
 
 type CmsItem = {
   id: number
   content_type: CmsContentType
+  content_key: string
   version: number
   status: string
   payload: unknown
@@ -28,6 +31,8 @@ type ManagedUser = { id: number; name: string; email: string; role: string; stat
 type EditorMode = 'guided' | 'preview' | 'advanced'
 
 const labels: Record<CmsContentType, string> = {
+  pages: 'Website pages',
+  global: 'Global content',
   rates: 'Exchange rates',
   'transfer-rates': 'Transfer rates',
   promotions: 'Promotions',
@@ -38,6 +43,8 @@ const labels: Record<CmsContentType, string> = {
   contact: 'Contact details',
 }
 const templates: Record<CmsContentType, unknown> = {
+  pages: pageTemplate('home'),
+  global: globalContentTemplate,
   rates: {
     visible: true,
     rates: [{ code: 'USD', name: 'US Dollar', country: 'US', buy: '', sell: '' }],
@@ -96,12 +103,13 @@ async function api(url: string, init?: RequestInit) {
 
 export default function AdminDashboard({ user, permissions }: { user: CmsUser; permissions: CmsPermission[] }) {
   const [section, setSection] = useState<'publishing' | 'enquiries' | 'users'>('publishing')
-  const [type, setType] = useState<CmsContentType>('rates')
+  const [type, setType] = useState<CmsContentType>('pages')
+  const [contentKey, setContentKey] = useState('home')
   const [status, setStatus] = useState('ACTIVE')
   const [items, setItems] = useState<CmsItem[]>([])
   const [selected, setSelected] = useState<CmsItem | null>(null)
   const [events, setEvents] = useState<AuditEvent[]>([])
-  const [editor, setEditor] = useState(JSON.stringify(templates.rates, null, 2))
+  const [editor, setEditor] = useState(JSON.stringify(pageTemplate('home'), null, 2))
   const [editorMode, setEditorMode] = useState<EditorMode>('guided')
   const [note, setNote] = useState('')
   const [schedule, setSchedule] = useState('')
@@ -109,9 +117,12 @@ export default function AdminDashboard({ user, permissions }: { user: CmsUser; p
   const [notice, setNotice] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
-  const activeListRequest = useRef({ type, status })
+  const activeListRequest = useRef({ type, status, contentKey })
   const seededEditorType = useRef<CmsContentType | null>(null)
   const can = useCallback((permission: CmsPermission) => permissions.includes(permission), [permissions])
+  const templateFor = useCallback((contentType: CmsContentType, key: string) => (
+    contentType === 'pages' ? pageTemplate(key) : templates[contentType]
+  ), [])
 
   const parsedPayload = useMemo(() => {
     try { return JSON.parse(editor) as unknown }
@@ -120,32 +131,34 @@ export default function AdminDashboard({ user, permissions }: { user: CmsUser; p
 
   const load = useCallback(async () => {
     const query = new URLSearchParams({ content_type: type })
+    query.set('content_key', contentKey)
     if (status && status !== 'ACTIVE') query.set('status', status)
     try {
       const result = await api(`/api/admin/publishing?${query}`) as CmsItem[]
-      if (activeListRequest.current.type === type && activeListRequest.current.status === status) {
+      if (activeListRequest.current.type === type && activeListRequest.current.status === status && activeListRequest.current.contentKey === contentKey) {
         setItems(status === 'ACTIVE' ? result.filter((item) => item.status !== 'ARCHIVED') : result)
         if (seededEditorType.current !== type) {
           const live = result.find((item) => item.status === 'PUBLISHED')
-          setEditor(JSON.stringify(live?.payload || templates[type], null, 2))
+          setEditor(JSON.stringify(live?.payload || templateFor(type, contentKey), null, 2))
           seededEditorType.current = type
         }
         setError('')
       }
     } catch (caught) {
-      if (activeListRequest.current.type === type && activeListRequest.current.status === status) setError(caught instanceof Error ? caught.message : 'Unable to load content')
+      if (activeListRequest.current.type === type && activeListRequest.current.status === status && activeListRequest.current.contentKey === contentKey) setError(caught instanceof Error ? caught.message : 'Unable to load content')
     }
-  }, [type, status])
+  }, [contentKey, status, templateFor, type])
 
-  useEffect(() => { activeListRequest.current = { type, status } }, [type, status])
+  useEffect(() => { activeListRequest.current = { type, status, contentKey } }, [type, status, contentKey])
   useEffect(() => { void load() }, [load])
   useEffect(() => {
     seededEditorType.current = null
     setSelected(null)
     setItems([])
-    setEditor(JSON.stringify(templates[type], null, 2))
+    const nextKey = type === 'pages' ? contentKey : 'primary'
+    setEditor(JSON.stringify(templateFor(type, nextKey), null, 2))
     setEditorMode('guided')
-  }, [type])
+  }, [contentKey, templateFor, type])
   useEffect(() => { setSelected(null); setItems([]) }, [status])
   useEffect(() => {
     if (!selected) { setEvents([]); setNote(''); setSchedule(''); return }
@@ -166,7 +179,7 @@ export default function AdminDashboard({ user, permissions }: { user: CmsUser; p
     setEvents([])
     setNote('')
     setSchedule('')
-    setEditor(JSON.stringify(baseline?.payload || templates[type], null, 2))
+    setEditor(JSON.stringify(baseline?.payload || templateFor(type, contentKey), null, 2))
     setEditorMode('guided')
     flash(baseline ? `Editable copy of Version ${baseline.version} is ready. Your live website has not changed yet.` : 'A new draft is ready.')
   }
@@ -177,7 +190,7 @@ export default function AdminDashboard({ user, permissions }: { user: CmsUser; p
     setBusy(true); setError('')
     try {
       const payload = JSON.parse(editor)
-      const body = JSON.stringify({ content_type: type, content_key: 'primary', payload, change_note: note, scheduled_for: schedule ? new Date(schedule).toISOString() : null })
+      const body = JSON.stringify({ content_type: type, content_key: contentKey, payload, change_note: note, scheduled_for: schedule ? new Date(schedule).toISOString() : null })
       const item = await api(selected ? `/api/admin/publishing/${selected.id}` : '/api/admin/publishing', { method: selected ? 'PUT' : 'POST', body })
       setSelected(item); flash(selected ? 'Your draft was updated' : 'Your draft was saved'); await load()
     } catch (caught) {
@@ -190,7 +203,7 @@ export default function AdminDashboard({ user, permissions }: { user: CmsUser; p
     setBusy(true); setError('')
     try {
       const payload = JSON.parse(editor)
-      const body = JSON.stringify({ content_type: type, content_key: 'primary', payload, change_note: note, scheduled_for: null })
+      const body = JSON.stringify({ content_type: type, content_key: contentKey, payload, change_note: note, scheduled_for: null })
       const item = await api(selected ? `/api/admin/publishing/${selected.id}` : '/api/admin/publishing', { method: selected ? 'PUT' : 'POST', body })
       const result = await api(`/api/admin/publishing/${item.id}/direct-publish`, { method: 'POST' })
       setSelected(result.item); setSchedule(''); flash('Saved and published to the website'); await load()
@@ -214,7 +227,7 @@ export default function AdminDashboard({ user, permissions }: { user: CmsUser; p
       if (action === 'discard') {
         const live = items.find((item) => item.status === 'PUBLISHED')
         setSelected(null)
-        setEditor(JSON.stringify(live?.payload || templates[type], null, 2))
+        setEditor(JSON.stringify(live?.payload || templateFor(type, contentKey), null, 2))
         flash(`Draft Version ${selected.version} was discarded`)
         await load()
         return
@@ -275,7 +288,12 @@ export default function AdminDashboard({ user, permissions }: { user: CmsUser; p
           <ol><li><b>1</b><span><strong>Choose one item</strong><small>Edit an existing card or add a new one.</small></span></li><li><b>2</b><span><strong>Preview it</strong><small>Check how customers will see the content.</small></span></li><li><b>3</b><span><strong>Publish changes</strong><small>Your live website changes only after this step.</small></span></li></ol>
         </section>
 
-        <div className={styles.contentTabs}>{(Object.keys(labels) as CmsContentType[]).map((entry) => <button key={entry} className={type === entry ? styles.tabActive : ''} onClick={() => setType(entry)}>{labels[entry]}</button>)}</div>
+        <div className={styles.contentTabs}>{(Object.keys(labels) as CmsContentType[]).map((entry) => <button key={entry} className={type === entry ? styles.tabActive : ''} onClick={() => { setType(entry); setContentKey(entry === 'pages' ? 'home' : 'primary') }}>{labels[entry]}</button>)}</div>
+        {type === 'pages' && <section className={styles.pagePicker}>
+          <div><p className={styles.kicker}>Choose a page</p><h2>Edit one page at a time</h2><span>The live page will not change until you publish.</span></div>
+          <label>Website page<select value={contentKey} onChange={(event) => setContentKey(event.target.value)}>{websitePages.map((page) => <option key={page.key} value={page.key}>{page.name} · {page.path}</option>)}</select></label>
+          <a href={websitePages.find((page) => page.key === contentKey)?.path || '/'} target="_blank" rel="noreferrer"><Eye size={16} /> View current page</a>
+        </section>}
         <section className={styles.workspace}>
           <div className={styles.listPanel}>
             <div className={styles.listTitle}><strong>Website versions</strong><small>Live content and unfinished drafts are kept here.</small></div>

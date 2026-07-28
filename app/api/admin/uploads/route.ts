@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { put } from '@vercel/blob'
+import sharp from 'sharp'
 import { assertCmsOrigin, requireCmsPermission } from '@/lib/cms-auth'
 import { cmsError, cmsJson, cmsRequestId } from '@/lib/cms-http'
 
@@ -11,6 +12,11 @@ const allowedTypes = {
   'image/png': 'png',
   'image/webp': 'webp',
   'image/avif': 'avif',
+} as const
+const slotRequirements = {
+  'page-hero': { width: 1920, height: 1080, ratio: 16 / 9 },
+  'home-hero': { width: 1200, height: 1500, ratio: 4 / 5 },
+  'page-section': { width: 1200, height: 800, ratio: 3 / 2 },
 } as const
 
 function ascii(bytes: Uint8Array, start: number, length: number) {
@@ -41,6 +47,7 @@ export async function POST(request: Request) {
 
     const form = await request.formData()
     const file = form.get('image')
+    const slot = String(form.get('slot') || '') as keyof typeof slotRequirements
     if (!(file instanceof File)) {
       return cmsJson({ error: 'Choose an image to upload', code: 'IMAGE_REQUIRED' }, 400, requestId)
     }
@@ -68,19 +75,48 @@ export async function POST(request: Request) {
       }, 415, requestId)
     }
 
+    const image = sharp(buffer, { failOn: 'error', limitInputPixels: 40_000_000 }).rotate()
+    const metadata = await image.metadata()
+    if (!metadata.width || !metadata.height) {
+      return cmsJson({ error: 'The image dimensions could not be read', code: 'INVALID_IMAGE' }, 415, requestId)
+    }
+    if (slot && slot in slotRequirements) {
+      const requirement = slotRequirements[slot]
+      const actualRatio = metadata.width / metadata.height
+      if (metadata.width < requirement.width * 0.7 || metadata.height < requirement.height * 0.7) {
+        return cmsJson({
+          error: `Image is too small for this position. Use at least ${requirement.width} × ${requirement.height} px`,
+          code: 'IMAGE_DIMENSIONS_TOO_SMALL',
+        }, 422, requestId)
+      }
+      if (Math.abs(actualRatio - requirement.ratio) / requirement.ratio > 0.18) {
+        return cmsJson({
+          error: `Image shape is unsuitable for this position. Crop it to approximately ${requirement.width} × ${requirement.height} px`,
+          code: 'IMAGE_RATIO_MISMATCH',
+        }, 422, requestId)
+      }
+    }
+    const optimized = await image
+      .resize({ width: 2400, height: 2400, fit: 'inside', withoutEnlargement: true })
+      .webp({ quality: 82, effort: 4, smartSubsample: true })
+      .toBuffer()
+
     const year = new Date().getUTCFullYear()
-    const pathname = `cms/${year}/${randomUUID()}.${allowedTypes[type]}`
-    const uploaded = await put(pathname, buffer, {
+    const pathname = `cms/${year}/${randomUUID()}.webp`
+    const uploaded = await put(pathname, optimized, {
       access: 'public',
       addRandomSuffix: false,
-      contentType: type,
+      contentType: 'image/webp',
     })
 
     return cmsJson({
       url: uploaded.url,
       pathname: uploaded.pathname,
-      size: file.size,
-      type,
+      originalSize: file.size,
+      size: optimized.byteLength,
+      width: metadata.width,
+      height: metadata.height,
+      type: 'image/webp',
     }, 201, requestId)
   } catch (error) {
     return cmsError(error, requestId)

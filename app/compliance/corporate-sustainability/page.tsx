@@ -16,7 +16,7 @@ const pillars = [
 export default function CorporateSustainabilityPage() {
   return (
     <>
-      <PageHero eyebrow="Compliance" title="Corporate Sustainability"
+      <PageHero pageKey="corporate-sustainability" eyebrow="Compliance" title="Corporate Sustainability"
         lead="As a company believing in the well-being of society and community, HME aims to contribute to sustainable development through our business operations — upholding both the letter and spirit of Malaysia's laws and policies." />
       <section className="py-20">
         <div className="wrap max-w-3xl">

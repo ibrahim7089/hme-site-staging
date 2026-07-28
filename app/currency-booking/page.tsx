@@ -25,7 +25,7 @@ export default function CurrencyBookingPage() {
 
   return (
     <>
-      <PageHero eyebrow="Currency Booking"
+      <PageHero pageKey="currency-booking" eyebrow="Currency Booking"
         title="Plan ahead. Collect with confidence."
         lead="Ask your preferred HME branch to check currency availability and arrange a collection date. The branch will confirm your request before you travel." />
       <section className="py-14 md:py-20">

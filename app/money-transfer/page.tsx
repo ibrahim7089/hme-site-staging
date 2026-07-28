@@ -25,7 +25,7 @@ const corridors = [
 export default function MoneyTransferPage() {
   return (
     <>
-      <PageHero eyebrow="International Money Transfer"
+      <PageHero pageKey="money-transfer" eyebrow="International Money Transfer"
         title="Send money home, the trusted way"
         lead="HME Remit moves your money overseas with transparent rates, secure verification and support at every HME branch — built for foreign workers, families and businesses."
         image="/images/moneytransfer-counter.webp" />

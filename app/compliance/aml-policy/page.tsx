@@ -16,7 +16,7 @@ const sections = [
 export default function AmlPolicyPage() {
   return (
     <>
-      <PageHero eyebrow="Compliance" title="AML/CFT Policy"
+      <PageHero pageKey="aml-policy" eyebrow="Compliance" title="AML/CFT Policy"
         lead="Our anti-money laundering and counter-financing of terrorism programme, applied at every branch and every transaction." />
       <section className="py-20">
         <div className="wrap max-w-3xl">

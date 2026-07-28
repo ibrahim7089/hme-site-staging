@@ -26,6 +26,7 @@ export default async function EnquiryPage({ searchParams }: EnquiryPageProps) {
   return (
     <>
       <PageHero
+        pageKey="enquiry"
         eyebrow="Online Enquiry"
         title="Tell us how we can help"
         lead="Complete one clear form and HME will direct your enquiry to the right team."

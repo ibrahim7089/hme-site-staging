@@ -7,6 +7,9 @@ import { branches as localBranches } from './branches'
 import { CMS_TAG } from './cms-cache'
 import { isCmsConfigured } from './cms-db'
 import { getCmsPublishedSnapshot } from './cms-service'
+import type { GlobalContentPayload } from './global-content'
+import { globalContentTemplate } from './global-content'
+import type { PageContentPayload } from './page-content'
 
 export type PublishedPromotion = {
   slug: string
@@ -400,6 +403,22 @@ export async function getPublishedCareers() {
 export async function getPublishedContact() {
   const snapshot = await getSnapshot()
   return validContact(snapshot?.content?.contact)
+}
+
+export async function getPublishedPageContent(pageKey: string): Promise<PageContentPayload | null> {
+  const snapshot = await getSnapshot()
+  const pages = snapshot?.content?.pages
+  if (!pages || typeof pages !== 'object' || Array.isArray(pages)) return null
+  const payload = (pages as Record<string, unknown>)[pageKey]
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return null
+  return payload as PageContentPayload
+}
+
+export async function getPublishedGlobalContent(): Promise<GlobalContentPayload> {
+  const snapshot = await getSnapshot()
+  const payload = snapshot?.content?.global
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return globalContentTemplate
+  return { ...globalContentTemplate, ...(payload as Partial<GlobalContentPayload>) }
 }
 
 export { CMS_TAG }

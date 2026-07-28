@@ -48,7 +48,7 @@ export default async function NewsPage() {
 
   return (
     <>
-      <PageHero eyebrow="Media" title="News"
+      <PageHero pageKey="news" eyebrow="Media" title="News"
         lead="Company announcements, branch updates and regulatory news from HME." />
       <section className="py-20">
         {articles.length > 0 ? (

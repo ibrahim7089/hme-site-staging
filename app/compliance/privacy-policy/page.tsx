@@ -17,7 +17,7 @@ const sections = [
 export default function PrivacyPolicyPage() {
   return (
     <>
-      <PageHero eyebrow="Compliance" title="Privacy Policy"
+      <PageHero pageKey="privacy-policy" eyebrow="Compliance" title="Privacy Policy"
         lead="How we collect, use and protect your personal data in accordance with the Personal Data Protection Act 2010 (PDPA)." />
       <section className="py-20">
         <div className="wrap max-w-3xl">

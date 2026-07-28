@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 export default function CompliancePage() {
   return (
     <>
-      <PageHero eyebrow="Compliance & Customer Protection"
+      <PageHero pageKey="compliance" eyebrow="Compliance & Customer Protection"
         title="Built on trust, compliance & customer protection"
         lead="HME operates under Malaysian Money Services Business regulation. Compliance is not a department here — it is how every transaction is done." />
       <ComplianceTrustSection />

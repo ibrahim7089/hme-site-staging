@@ -224,7 +224,55 @@ const contact = z.object({
   services: z.array(z.string().trim().min(1).max(120)).min(1).max(12),
 }).strict()
 
+const pageSection = z.object({
+  id: slug,
+  name: z.string().trim().min(1).max(120),
+  visible: z.boolean().optional().default(true),
+  eyebrow: z.string().trim().max(120).optional().default(''),
+  heading: z.string().trim().max(220).optional().default(''),
+  body: z.string().trim().max(5000).optional().default(''),
+  image: cmsImage.optional().default(''),
+  imageAlt: z.string().trim().max(180).optional().default(''),
+}).strict()
+
+const pages = z.object({
+  pageName: z.string().trim().min(1).max(120),
+  path: z.string().trim().startsWith('/').max(200),
+  hero: z.object({
+    eyebrow: z.string().trim().max(120).optional().default(''),
+    title: z.string().trim().min(1).max(220),
+    lead: z.string().trim().max(700).optional().default(''),
+    image: cmsImage.optional().default(''),
+    imageAlt: z.string().trim().max(180).optional().default(''),
+  }).strict(),
+  sections: z.array(pageSection).max(30),
+}).strict().superRefine((value, ctx) => {
+  const ids = new Set<string>()
+  value.sections.forEach((section, index) => {
+    if (ids.has(section.id)) {
+      ctx.addIssue({ code: 'custom', path: ['sections', index, 'id'], message: 'Section names must be unique' })
+    }
+    ids.add(section.id)
+    if (section.image && !section.imageAlt) {
+      ctx.addIssue({ code: 'custom', path: ['sections', index, 'imageAlt'], message: 'Describe the section image for accessibility' })
+    }
+  })
+  if (value.hero.image && !value.hero.imageAlt) {
+    ctx.addIssue({ code: 'custom', path: ['hero', 'imageAlt'], message: 'Describe the hero image for accessibility' })
+  }
+})
+
+const globalContent = z.object({
+  facebookUrl: httpsLink.optional().default(''),
+  instagramUrl: httpsLink.optional().default(''),
+  tiktokUrl: httpsLink.optional().default(''),
+  linkedinUrl: httpsLink.optional().default(''),
+  footerCopyright: z.string().trim().min(1).max(240),
+}).strict()
+
 const schemas = {
+  pages,
+  global: globalContent,
   rates,
   'transfer-rates': transferRates,
   promotions,

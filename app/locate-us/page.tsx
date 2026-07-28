@@ -46,7 +46,7 @@ export default async function LocateUsPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(branchSchema).replace(/</g, "\\u003c") }}
       />
-      <PageHero eyebrow="Locate Us" title="Find your nearest HME branch"
+      <PageHero pageKey="locate-us" eyebrow="Locate Us" title="Find your nearest HME branch"
         lead="Branches across Malaysia for currency exchange, money transfer and currency booking collection — search by state, city or service."
         image="/images/branches-counter.webp" />
       <BranchLocatorPreview branches={branches} />

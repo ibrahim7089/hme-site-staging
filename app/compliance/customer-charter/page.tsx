@@ -17,7 +17,7 @@ const commitments = [
 export default function CustomerCharterPage() {
   return (
     <>
-      <PageHero eyebrow="Compliance" title="Customer Charter"
+      <PageHero pageKey="customer-charter" eyebrow="Compliance" title="Customer Charter"
         lead="What you can expect from HME at every branch, every time." />
       <section className="py-20">
         <div className="wrap max-w-3xl">

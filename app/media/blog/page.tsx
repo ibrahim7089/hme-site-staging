@@ -24,7 +24,7 @@ export default async function BlogPage() {
 
   return (
     <>
-      <PageHero eyebrow="Media" title="Blog" lead="Guides and tips on currency exchange, money transfer and currency booking." />
+      <PageHero pageKey="blog" eyebrow="Media" title="Blog" lead="Guides and tips on currency exchange, money transfer and currency booking." />
       <section className="py-20">
         {posts.length > 0 ? <div className="wrap grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {posts.map((post) => <article key={post.slug} className="overflow-hidden rounded-card border border-line bg-white transition hover:-translate-y-0.5 hover:shadow-soft">

@@ -17,7 +17,7 @@ const sections = [
 export default function TermsPage() {
   return (
     <>
-      <PageHero eyebrow="Compliance" title="Terms and Conditions"
+      <PageHero pageKey="terms" eyebrow="Compliance" title="Terms and Conditions"
         lead="The terms governing the use of HME's currency exchange, money transfer and currency booking services." />
       <section className="py-20">
         <div className="wrap max-w-3xl">

@@ -14,6 +14,7 @@ export default async function RatesPage() {
   return (
     <>
       <PageHero
+        pageKey="rates"
         eyebrow="Rates"
         title="Rates with no guesswork"
         lead="Switch between currency exchange and money transfer. Published rates are indicative; final rates are confirmed at the branch."

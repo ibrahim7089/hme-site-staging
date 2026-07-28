@@ -2,8 +2,9 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { BadgePercent, Banknote, BookOpenText, BriefcaseBusiness, Building2, Contact, Copy, Eye, LoaderCircle, MapPin, Newspaper, PencilLine, Plus, SendHorizontal, Trash2, UploadCloud } from 'lucide-react'
+import { BadgePercent, Banknote, BookOpenText, BriefcaseBusiness, Building2, Contact, Copy, Eye, Globe2, LayoutTemplate, LoaderCircle, MapPin, Newspaper, PencilLine, Plus, SendHorizontal, Trash2, UploadCloud } from 'lucide-react'
 import type { CmsContentType } from '@/lib/cms-validation'
+import { heroImageSpec, homeHeroImageSpec, sectionImageSpec, type CmsImageSpec } from '@/lib/page-content'
 import styles from './admin.module.css'
 
 type Props = {
@@ -109,19 +110,43 @@ function ImageUploadField({
   alt,
   disabled,
   onChange,
+  spec,
 }: {
   value: string
   alt: string
   disabled: boolean
   onChange: (url: string) => void
+  spec?: CmsImageSpec
 }) {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
+  const [dimensions, setDimensions] = useState('')
 
   async function upload(file?: File) {
     if (!file) return
-    if (file.size > 4 * 1024 * 1024) {
-      setError('Image must be smaller than 4 MB.')
+    const maximum = spec?.maxBytes || 4 * 1024 * 1024
+    if (file.size > maximum) {
+      setError(`Image must be smaller than ${Math.round(maximum / 1024 / 1024)} MB for this position.`)
+      return
+    }
+    try {
+      const bitmap = await createImageBitmap(file)
+      const actualRatio = bitmap.width / bitmap.height
+      const targetRatio = spec ? spec.width / spec.height : null
+      setDimensions(`${bitmap.width} × ${bitmap.height} px`)
+      if (spec && (bitmap.width < spec.width * 0.7 || bitmap.height < spec.height * 0.7)) {
+        bitmap.close()
+        setError(`This image is too small. Use at least ${spec.width} × ${spec.height} px for sharp results.`)
+        return
+      }
+      if (spec && targetRatio && Math.abs(actualRatio - targetRatio) / targetRatio > 0.18) {
+        bitmap.close()
+        setError(`The image shape does not match ${spec.ratio}. Resize or crop it to approximately ${spec.width} × ${spec.height} px.`)
+        return
+      }
+      bitmap.close()
+    } catch {
+      setError('The image dimensions could not be read. Try another JPG, PNG, WebP or AVIF file.')
       return
     }
     setUploading(true)
@@ -129,6 +154,7 @@ function ImageUploadField({
     try {
       const form = new FormData()
       form.append('image', file)
+      if (spec) form.append('slot', spec.key)
       const response = await fetch('/api/admin/uploads', { method: 'POST', body: form })
       const result = await response.json().catch(() => ({}))
       if (response.status === 401) {
@@ -154,9 +180,85 @@ function ImageUploadField({
         {uploading ? 'Uploading…' : value ? 'Replace image' : 'Upload image'}
         <input type="file" accept="image/jpeg,image/png,image/webp,image/avif" disabled={disabled || uploading} onChange={(event) => { void upload(event.target.files?.[0]); event.target.value = '' }} />
       </label>
-      <small>JPG, PNG, WebP or AVIF. Maximum 4 MB. Landscape images work best.</small>
+      {spec ? <div className={styles.imageRequirements}>
+        <strong>{spec.label}</strong>
+        <span><b>Recommended size</b>{spec.width} × {spec.height} px</span>
+        <span><b>Image ratio</b>{spec.ratio}</span>
+        <span><b>File format</b>{spec.formats}</span>
+        <span><b>Maximum file</b>{Math.round(spec.maxBytes / 1024 / 1024)} MB</span>
+        <small>{spec.note}</small>
+        {dimensions && <em>Selected image: {dimensions}</em>}
+      </div> : <small>JPG, PNG, WebP or AVIF. Maximum 4 MB.</small>}
     </div>
     {error && <p className={styles.uploadError}>{error}</p>}
+  </div>
+}
+
+function PagesEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
+  const root = record(payload)
+  const hero = record(root.hero)
+  const rows = Array.isArray(root.sections) ? root.sections.map(record) : []
+  const [panel, setPanel] = useState<{ index: number; mode: ItemPanelMode } | null>(null)
+  const updateHero = (key: string, value: unknown) => onChange({ ...root, hero: { ...hero, [key]: value } })
+  const commitSections = (sections: Entry[]) => onChange({ ...root, sections })
+  const updateSection = (index: number, key: string, value: unknown) => commitSections(rows.map((row, rowIndex) => rowIndex === index ? { ...row, [key]: value } : row))
+  const addSection = () => {
+    const index = rows.length
+    commitSections([...rows, { id: `section-${index + 1}`, name: `Section ${index + 1}`, visible: true, eyebrow: '', heading: '', body: '', image: '', imageAlt: '' }])
+    setPanel({ index, mode: 'edit' })
+  }
+  const removeSection = (index: number) => {
+    if (confirmRemove(text(rows[index].name) || `Section ${index + 1}`)) {
+      commitSections(rows.filter((_, rowIndex) => rowIndex !== index))
+      setPanel(null)
+    }
+  }
+  const heroSpec = text(root.path) === '/' ? homeHeroImageSpec : heroImageSpec
+
+  return <div className={styles.guidedEditor}>
+    <SectionTitle icon={<LayoutTemplate size={20} />} title={`Edit ${text(root.pageName) || 'website page'}`} description="Update the page one section at a time. Existing design, spacing and colours stay protected." />
+    <section className={styles.pageEditorBlock}>
+      <div className={styles.pageEditorBlockHead}><span>1</span><div><strong>Top of page (Hero)</strong><small>The first section customers see.</small></div></div>
+      <div className={styles.formGrid}>
+        <label>Small label<input value={text(hero.eyebrow)} onChange={(event) => updateHero('eyebrow', event.target.value)} maxLength={120} placeholder="Currency Exchange" disabled={disabled} /></label>
+        <label>Page heading<input value={text(hero.title)} onChange={(event) => updateHero('title', event.target.value)} maxLength={220} required disabled={disabled} /></label>
+        <label className={styles.spanTwo}>Introductory message<textarea value={text(hero.lead)} onChange={(event) => updateHero('lead', event.target.value)} maxLength={700} disabled={disabled} /></label>
+        <div className={styles.spanTwo}><label>Hero image</label><ImageUploadField value={text(hero.image)} alt={text(hero.imageAlt)} disabled={disabled} spec={heroSpec} onChange={(url) => updateHero('image', url)} /></div>
+        {text(hero.image) && <label className={styles.spanTwo}>Image description<input value={text(hero.imageAlt)} onChange={(event) => updateHero('imageAlt', event.target.value)} maxLength={180} placeholder="Describe the people, place or activity shown" disabled={disabled} /><small>Required for accessibility and useful for search engines.</small></label>}
+      </div>
+    </section>
+    <section className={styles.pageEditorBlock}>
+      <div className={styles.pageEditorBlockHead}><span>2</span><div><strong>Additional page sections</strong><small>Add a new section without changing the existing page layout.</small></div></div>
+      <CollectionToolbar count={rows.length} noun="section" addLabel="Add section" disabled={disabled} onAdd={addSection} />
+      <div className={styles.collectionList}>{rows.map((row, index) => <CollectionItem key={`${text(row.id)}-${index}`} index={index} kind="Page section" title={text(row.name) || `Section ${index + 1}`} meta={text(row.eyebrow)} summary={text(row.heading)} active={checked(row.visible)} activeLabel={checked(row.visible) ? 'Visible' : 'Hidden'} disabled={disabled} mode={panel?.index === index ? panel.mode : null} onMode={(mode) => setPanel(mode ? { index, mode } : null)} onToggle={(visible) => updateSection(index, 'visible', visible)} onDuplicate={() => { const copy = { ...row, id: `${slugify(text(row.id) || 'section')}-copy`, name: `${text(row.name) || 'Section'} copy`, visible: false }; commitSections([...rows.slice(0, index + 1), copy, ...rows.slice(index + 1)]); setPanel({ index: index + 1, mode: 'edit' }) }} onRemove={() => removeSection(index)}
+        edit={<div className={styles.formGrid}>
+          <label>Section name<input value={text(row.name)} onChange={(event) => updateSection(index, 'name', event.target.value)} maxLength={120} placeholder="Why choose HME" disabled={disabled} /><small>Only staff see this organising label.</small></label>
+          <label>Small label<input value={text(row.eyebrow)} onChange={(event) => updateSection(index, 'eyebrow', event.target.value)} maxLength={120} disabled={disabled} /></label>
+          <label className={styles.spanTwo}>Heading<input value={text(row.heading)} onChange={(event) => updateSection(index, 'heading', event.target.value)} maxLength={220} disabled={disabled} /></label>
+          <label className={styles.spanTwo}>Text<textarea className={styles.articleBody} value={text(row.body)} onChange={(event) => updateSection(index, 'body', event.target.value)} maxLength={5000} disabled={disabled} /></label>
+          <div className={styles.spanTwo}><label>Section image</label><ImageUploadField value={text(row.image)} alt={text(row.imageAlt)} disabled={disabled} spec={sectionImageSpec} onChange={(url) => updateSection(index, 'image', url)} /></div>
+          {text(row.image) && <label className={styles.spanTwo}>Image description<input value={text(row.imageAlt)} onChange={(event) => updateSection(index, 'imageAlt', event.target.value)} maxLength={180} disabled={disabled} /></label>}
+          <label className={styles.spanTwo}>Section ID<input value={text(row.id)} onChange={(event) => updateSection(index, 'id', slugify(event.target.value))} disabled={disabled} /><small>Technical identifier. Keep it short and unique on this page.</small></label>
+        </div>}
+        preview={<PreviewCard image={text(row.image)} imageAlt={text(row.imageAlt)} eyebrow={text(row.eyebrow)} title={text(row.heading) || text(row.name)} body={text(row.body)} />}
+      />)}</div>
+      {rows.length === 0 && <div className={styles.blankState}>No extra managed sections yet. The existing page design remains visible.</div>}
+    </section>
+  </div>
+}
+
+function GlobalEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
+  const root = record(payload)
+  const update = (key: string, value: string) => onChange({ ...root, [key]: value })
+  return <div className={styles.guidedEditor}>
+    <SectionTitle icon={<Globe2 size={20} />} title="Footer and social media" description="Change social links and the copyright line once for the whole website. Contact information has its own tab." />
+    <div className={styles.formGrid}>
+      <label>Facebook link<input value={text(root.facebookUrl)} onChange={(event) => update('facebookUrl', event.target.value)} disabled={disabled} /></label>
+      <label>Instagram link<input value={text(root.instagramUrl)} onChange={(event) => update('instagramUrl', event.target.value)} disabled={disabled} /></label>
+      <label>TikTok link<input value={text(root.tiktokUrl)} onChange={(event) => update('tiktokUrl', event.target.value)} disabled={disabled} /></label>
+      <label>LinkedIn link<input value={text(root.linkedinUrl)} onChange={(event) => update('linkedinUrl', event.target.value)} disabled={disabled} /></label>
+      <label className={styles.spanTwo}>Footer copyright<input value={text(root.footerCopyright)} onChange={(event) => update('footerCopyright', event.target.value)} maxLength={240} disabled={disabled} /></label>
+    </div>
   </div>
 }
 
@@ -455,6 +557,8 @@ function BranchesEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
 }
 
 export function GuidedEditor(props: Props) {
+  if (props.type === 'pages') return <PagesEditor {...props} />
+  if (props.type === 'global') return <GlobalEditor {...props} />
   if (props.type === 'rates') return <RatesEditor {...props} />
   if (props.type === 'transfer-rates') return <TransferRatesEditor {...props} />
   if (props.type === 'promotions') return <PromotionsEditor {...props} />
@@ -467,6 +571,22 @@ export function GuidedEditor(props: Props) {
 
 export function ContentPreview({ type, payload }: { type: CmsContentType; payload: unknown }) {
   const root = record(payload)
+
+  if (type === 'pages') {
+    const hero = record(root.hero)
+    const sections = Array.isArray(root.sections) ? root.sections.map(record).filter((section) => checked(section.visible)) : []
+    return <div className={styles.previewSurface}>
+      <div className={styles.pageHeroPreview}>
+        {text(hero.image) && <Image src={text(hero.image)} alt={text(hero.imageAlt)} fill sizes="900px" />}
+        <div><small>{text(hero.eyebrow)}</small><h3>{text(hero.title) || 'Page heading'}</h3><p>{text(hero.lead)}</p></div>
+      </div>
+      <div className={styles.pageSectionsPreview}>{sections.map((section, index) => <PreviewCard key={index} image={text(section.image)} imageAlt={text(section.imageAlt)} eyebrow={text(section.eyebrow)} title={text(section.heading) || text(section.name)} body={text(section.body)} />)}{sections.length === 0 && <div className={styles.blankState}>The current page sections remain unchanged.</div>}</div>
+    </div>
+  }
+
+  if (type === 'global') {
+    return <div className={styles.previewSurface}><div className={styles.previewHeader}><Globe2 size={21} /><div><span>Shared website details</span><h3>Footer preview</h3></div></div><div className={styles.contactPreview}><div><strong>Social media links</strong><span>{text(root.facebookUrl)}</span><span>{text(root.instagramUrl)}</span><span>{text(root.tiktokUrl)}</span><span>{text(root.linkedinUrl)}</span></div><p>{text(root.footerCopyright)}</p></div></div>
+  }
 
   if (type === 'rates') {
     const rows = Array.isArray(root.rates) ? root.rates.map(record) : []

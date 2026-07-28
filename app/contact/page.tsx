@@ -37,7 +37,7 @@ export default async function ContactPage() {
 
   return (
     <>
-      <PageHero eyebrow="Contact Us" title={contact.headline} lead={contact.lead} />
+      <PageHero pageKey="contact" eyebrow="Contact Us" title={contact.headline} lead={contact.lead} />
       <section className="py-14 md:py-20">
         <div className="wrap grid gap-8 lg:grid-cols-[0.95fr_1.05fr]">
           <div className="space-y-3">

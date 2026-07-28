@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 export default function FAQPage() {
   return (
     <>
-      <PageHero eyebrow="FAQ" title="Questions, answered"
+      <PageHero pageKey="faq" eyebrow="FAQ" title="Questions, answered"
         lead="Everything customers ask most about rates, money transfer, booking and what to bring to the branch." />
       <FAQSection />
     </>

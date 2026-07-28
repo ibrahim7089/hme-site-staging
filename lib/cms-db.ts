@@ -64,7 +64,7 @@ const schemaStatements = [
   )`,
   `CREATE TABLE IF NOT EXISTS cms_items (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    content_type TEXT NOT NULL CHECK(content_type IN ('rates','transfer-rates','promotions','branches','news','blog','careers','contact')),
+    content_type TEXT NOT NULL CHECK(content_type IN ('pages','global','rates','transfer-rates','promotions','branches','news','blog','careers','contact')),
     content_key TEXT NOT NULL DEFAULT 'primary',
     version INTEGER NOT NULL,
     status TEXT NOT NULL DEFAULT 'DRAFT'
@@ -220,7 +220,7 @@ async function migrateCmsItemsContentTypes(db: Client) {
     "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'cms_items' LIMIT 1",
   )
   const tableSql = String(existing.rows[0]?.sql || '')
-  const requiredTypes = ['rates', 'transfer-rates', 'promotions', 'branches', 'news', 'blog', 'careers', 'contact']
+  const requiredTypes = ['pages', 'global', 'rates', 'transfer-rates', 'promotions', 'branches', 'news', 'blog', 'careers', 'contact']
   if (!tableSql || requiredTypes.every((type) => tableSql.includes(`'${type}'`))) return
 
   const desired = schemaStatements.find((statement) =>
