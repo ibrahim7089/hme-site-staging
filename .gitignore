@@ -32,3 +32,5 @@ next-env.d.ts
 
 # local CMS database
 /data/*.db*
+
+.env.local

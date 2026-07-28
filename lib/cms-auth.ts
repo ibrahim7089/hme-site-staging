@@ -15,6 +15,8 @@ export type CmsPermission =
   | 'publishing.submit'
   | 'publishing.approve'
   | 'publishing.publish'
+  | 'enquiries.view'
+  | 'enquiries.manage'
   | 'users.manage'
 
 export type CmsUser = {
@@ -32,10 +34,12 @@ const rolePermissions: Record<CmsRole, CmsPermission[]> = {
     'publishing.submit',
     'publishing.approve',
     'publishing.publish',
+    'enquiries.view',
+    'enquiries.manage',
     'users.manage',
   ],
-  'Website Editor': ['publishing.view', 'publishing.create', 'publishing.submit'],
-  'Website Checker': ['publishing.view', 'publishing.approve', 'publishing.publish'],
+  'Website Editor': ['publishing.view', 'publishing.create', 'publishing.submit', 'enquiries.view', 'enquiries.manage'],
+  'Website Checker': ['publishing.view', 'publishing.approve', 'publishing.publish', 'enquiries.view', 'enquiries.manage'],
 }
 
 export class CmsAuthError extends Error {

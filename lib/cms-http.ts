@@ -13,7 +13,10 @@ export function cmsRequestId(request: Request) {
 export function cmsJson(data: unknown, status = 200, requestId?: string) {
   return NextResponse.json(data, {
     status,
-    headers: requestId ? { 'x-request-id': requestId } : undefined,
+    headers: {
+      'Cache-Control': 'no-store',
+      ...(requestId ? { 'x-request-id': requestId } : {}),
+    },
   })
 }
 

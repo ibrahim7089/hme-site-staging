@@ -117,9 +117,51 @@ const schemaStatements = [
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     FOREIGN KEY(item_id) REFERENCES cms_items(id)
   )`,
+  `CREATE TABLE IF NOT EXISTS enquiries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    reference TEXT NOT NULL UNIQUE,
+    enquiry_type TEXT NOT NULL
+      CHECK(enquiry_type IN ('general','rates','transfer','booking','business','agent','career','complaint','privacy')),
+    subject TEXT NOT NULL DEFAULT '',
+    customer_name TEXT NOT NULL,
+    customer_email TEXT NOT NULL,
+    customer_phone TEXT NOT NULL,
+    location TEXT NOT NULL DEFAULT '',
+    message TEXT NOT NULL,
+    preferred_contact TEXT NOT NULL
+      CHECK(preferred_contact IN ('email','phone','whatsapp')),
+    status TEXT NOT NULL DEFAULT 'NEW'
+      CHECK(status IN ('NEW','IN_PROGRESS','RESOLVED','ARCHIVED')),
+    assigned_to_user_id INTEGER DEFAULT NULL,
+    assigned_to_name TEXT NOT NULL DEFAULT '',
+    email_delivery_status TEXT NOT NULL DEFAULT 'PENDING'
+      CHECK(email_delivery_status IN ('PENDING','SENT','FAILED')),
+    consent_at TEXT NOT NULL,
+    resolved_at TEXT DEFAULT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY(assigned_to_user_id) REFERENCES cms_users(id)
+  )`,
+  `CREATE TABLE IF NOT EXISTS enquiry_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    enquiry_id INTEGER NOT NULL,
+    action TEXT NOT NULL,
+    actor_user_id INTEGER DEFAULT NULL,
+    actor_name TEXT NOT NULL DEFAULT '',
+    from_status TEXT DEFAULT NULL,
+    to_status TEXT DEFAULT NULL,
+    note TEXT NOT NULL DEFAULT '',
+    request_id TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY(enquiry_id) REFERENCES enquiries(id)
+  )`,
   'CREATE INDEX IF NOT EXISTS idx_cms_items_queue ON cms_items(status, scheduled_for, updated_at DESC)',
   'CREATE INDEX IF NOT EXISTS idx_cms_items_content ON cms_items(content_type, content_key, version DESC)',
   'CREATE INDEX IF NOT EXISTS idx_cms_events_item ON cms_events(item_id, created_at DESC)',
+  'CREATE INDEX IF NOT EXISTS idx_enquiries_queue ON enquiries(status, updated_at DESC)',
+  'CREATE INDEX IF NOT EXISTS idx_enquiries_type ON enquiries(enquiry_type, created_at DESC)',
+  'CREATE INDEX IF NOT EXISTS idx_enquiries_assignee ON enquiries(assigned_to_user_id, status, updated_at DESC)',
+  'CREATE INDEX IF NOT EXISTS idx_enquiry_events_item ON enquiry_events(enquiry_id, created_at DESC)',
   `CREATE TRIGGER IF NOT EXISTS cms_events_immutable_update
     BEFORE UPDATE ON cms_events
     BEGIN
@@ -129,6 +171,16 @@ const schemaStatements = [
     BEFORE DELETE ON cms_events
     BEGIN
       SELECT RAISE(ABORT, 'CMS events are immutable');
+    END`,
+  `CREATE TRIGGER IF NOT EXISTS enquiry_events_immutable_update
+    BEFORE UPDATE ON enquiry_events
+    BEGIN
+      SELECT RAISE(ABORT, 'Enquiry events are immutable');
+    END`,
+  `CREATE TRIGGER IF NOT EXISTS enquiry_events_immutable_delete
+    BEFORE DELETE ON enquiry_events
+    BEGIN
+      SELECT RAISE(ABORT, 'Enquiry events are immutable');
     END`,
 ]
 

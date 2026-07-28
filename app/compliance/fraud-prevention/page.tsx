@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import PageHero from "@/components/PageHero";
 import { site } from "@/lib/site";
 
@@ -31,7 +32,8 @@ export default function FraudPreventionPage() {
             ))}
           </div>
           <p className="mt-8 text-sm text-slate2">
-            Suspect fraud involving HME&rsquo;s name? Report it immediately at {site.phone} or <b className="text-navy">{site.email}</b>.
+            Suspect fraud involving HME&rsquo;s name? Call {site.phone} or{" "}
+            <Link href="/enquiry?type=complaint&subject=Suspected%20fraud" className="font-bold text-brand-blue hover:underline">submit a fraud report</Link> immediately.
           </p>
         </div>
       </section>

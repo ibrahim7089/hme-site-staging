@@ -20,6 +20,7 @@ const routes = [
   "/corporate",
   "/currency-booking",
   "/currency-exchange",
+  "/enquiry",
   "/faq",
   "/locate-us",
   "/media/blog",

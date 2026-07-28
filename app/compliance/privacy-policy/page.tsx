@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import PageHero from "@/components/PageHero";
-import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Privacy Policy | HME Compliance",
@@ -28,7 +28,8 @@ export default function PrivacyPolicyPage() {
             </div>
           ))}
           <p className="mt-6 text-sm text-slate2">
-            Questions about your data? Contact us at <b className="text-navy">{site.email}</b> or {site.phone}.
+            Questions about your data?{" "}
+            <Link href="/enquiry?type=privacy" className="font-bold text-brand-blue hover:underline">Submit a privacy enquiry</Link>.
           </p>
         </div>
       </section>

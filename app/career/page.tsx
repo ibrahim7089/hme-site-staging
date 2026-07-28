@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import PageHero from '@/components/PageHero'
 import { getPublishedCareers, type PublishedCareers } from '@/lib/cms'
 
@@ -27,7 +28,7 @@ export default async function CareerPage() {
         <div className="wrap">
           {careers.jobs.length > 0 ? <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {careers.jobs.map((job) => {
-              const applyHref = job.applyUrl || `mailto:${job.applyEmail || careers.generalApplicationsEmail}?subject=${encodeURIComponent(`Application: ${job.title}`)}`
+              const applyHref = job.applyUrl || `/enquiry?type=career&subject=${encodeURIComponent(`Application: ${job.title}`)}`
               const external = applyHref.startsWith('https://')
               return <article key={job.slug} className="flex flex-col rounded-card border border-line bg-white p-6 transition hover:shadow-soft">
                 <div className="flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-wide text-mist"><span>{job.location}</span><span aria-hidden="true">/</span><span>{job.employmentType}</span></div>
@@ -35,11 +36,13 @@ export default async function CareerPage() {
                 <p className="mt-3 text-sm leading-6 text-slate2">{job.summary}</p>
                 <details className="group mt-4 flex-1 border-t border-line pt-4"><summary className="cursor-pointer list-none text-sm font-bold text-brand-blue"><span className="group-open:hidden">View role details &rarr;</span><span className="hidden group-open:inline">Hide details &uarr;</span></summary><div className="mt-3 whitespace-pre-line text-sm leading-6 text-slate2">{job.description}</div></details>
                 {job.closingDate && <p className="mt-4 text-xs font-semibold text-slate2">Applications close: {job.closingDate}</p>}
-                <a href={applyHref} target={external ? '_blank' : undefined} rel={external ? 'noreferrer' : undefined} className="btn-primary mt-5 self-start">Apply now</a>
+                {external
+                  ? <a href={applyHref} target="_blank" rel="noreferrer" className="btn-primary mt-5 self-start">Apply now</a>
+                  : <Link href={applyHref} className="btn-primary mt-5 self-start">Enquire about role</Link>}
               </article>
             })}
           </div> : <div className="rounded-card border border-line bg-cloud p-8 text-center"><h2 className="text-xl font-bold text-navy">No current vacancies</h2><p className="mt-2 text-sm text-slate2">You can still send us a general application.</p></div>}
-          <p className="mt-8 text-sm text-slate2">Don&apos;t see your role? Send your CV to <a className="font-bold text-navy" href={`mailto:${careers.generalApplicationsEmail}`}>{careers.generalApplicationsEmail}</a> and tell us where you fit.</p>
+          <p className="mt-8 text-sm text-slate2">Don&apos;t see your role? <Link className="font-bold text-brand-blue hover:underline" href="/enquiry?type=career&subject=General%20career%20enquiry">Send a general career enquiry</Link> and tell us where you fit.</p>
         </div>
       </section>
     </>

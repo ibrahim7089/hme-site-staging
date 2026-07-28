@@ -1,0 +1,305 @@
+/* eslint-disable react-hooks/set-state-in-effect */
+'use client'
+
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  Archive,
+  CheckCircle2,
+  ChevronRight,
+  CircleDot,
+  Clock3,
+  Inbox,
+  Mail,
+  MapPin,
+  MessageSquareText,
+  Phone,
+  RefreshCw,
+  Save,
+  Search,
+  UserRound,
+} from 'lucide-react'
+import { enquiryTypeLabels, enquiryTypes, type EnquiryType } from '@/lib/enquiry'
+import type { EmailDeliveryStatus, EnquiryRecord, EnquiryStatus } from '@/lib/enquiry-service'
+import styles from './admin.module.css'
+
+type EnquiryEvent = {
+  id: number
+  action: string
+  actor_name: string
+  from_status?: string | null
+  to_status?: string | null
+  note?: string
+  created_at: string
+}
+
+type Assignee = { id: number; name: string }
+type Counts = Record<EnquiryStatus, number>
+type EnquiryResponse = {
+  items: EnquiryRecord[]
+  counts: Counts
+  assignees: Assignee[]
+}
+
+const statusLabels: Record<EnquiryStatus, string> = {
+  NEW: 'New',
+  IN_PROGRESS: 'In progress',
+  RESOLVED: 'Resolved',
+  ARCHIVED: 'Archived',
+}
+
+const statusIcons = {
+  NEW: CircleDot,
+  IN_PROGRESS: Clock3,
+  RESOLVED: CheckCircle2,
+  ARCHIVED: Archive,
+}
+
+function formatDate(value?: string | null) {
+  if (!value) return '—'
+  const normalized = value.includes('T') ? value : `${value.replace(' ', 'T')}Z`
+  const parsed = new Date(normalized)
+  return Number.isNaN(parsed.getTime())
+    ? value
+    : new Intl.DateTimeFormat('en-MY', { dateStyle: 'medium', timeStyle: 'short' }).format(parsed)
+}
+
+async function adminApi(url: string, init?: RequestInit) {
+  const response = await fetch(url, {
+    ...init,
+    headers: { 'Content-Type': 'application/json', ...(init?.headers || {}) },
+  })
+  const body = await response.json().catch(() => ({}))
+  if (response.status === 401) {
+    window.location.assign('/admin/login')
+    throw new Error('Session expired')
+  }
+  if (!response.ok) throw new Error(body.error || 'Request failed')
+  return body
+}
+
+function readableAction(event: EnquiryEvent) {
+  if (event.action === 'STATUS_CHANGED') {
+    return `Status changed to ${statusLabels[event.to_status as EnquiryStatus] || event.to_status}`
+  }
+  const labels: Record<string, string> = {
+    CREATED: 'Enquiry received',
+    ASSIGNED: 'Assigned to staff',
+    UNASSIGNED: 'Assignment removed',
+    INTERNAL_NOTE_ADDED: 'Internal note added',
+    EMAIL_NOTIFICATION_SENT: 'Email notification delivered',
+    EMAIL_NOTIFICATION_FAILED: 'Email notification failed',
+    CUSTOMER_ACKNOWLEDGEMENT_SENT: 'Customer confirmation delivered',
+    CUSTOMER_ACKNOWLEDGEMENT_FAILED: 'Customer confirmation failed',
+  }
+  return labels[event.action] || event.action.replaceAll('_', ' ').toLowerCase()
+}
+
+function EmailStatus({ status }: { status: EmailDeliveryStatus }) {
+  return <span className={styles[`email${status}`]}>
+    <Mail size={13} />
+    {status === 'SENT' ? 'Email delivered' : status === 'FAILED' ? 'Saved; email alert failed' : 'Sending email'}
+  </span>
+}
+
+export default function EnquiriesManager() {
+  const [items, setItems] = useState<EnquiryRecord[]>([])
+  const [selected, setSelected] = useState<EnquiryRecord | null>(null)
+  const [events, setEvents] = useState<EnquiryEvent[]>([])
+  const [assignees, setAssignees] = useState<Assignee[]>([])
+  const [counts, setCounts] = useState<Counts>({ NEW: 0, IN_PROGRESS: 0, RESOLVED: 0, ARCHIVED: 0 })
+  const [statusFilter, setStatusFilter] = useState<EnquiryStatus | 'ALL'>('ALL')
+  const [typeFilter, setTypeFilter] = useState<EnquiryType | 'ALL'>('ALL')
+  const [search, setSearch] = useState('')
+  const [draftStatus, setDraftStatus] = useState<EnquiryStatus>('NEW')
+  const [draftAssignee, setDraftAssignee] = useState('')
+  const [note, setNote] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
+
+  const load = useCallback(async () => {
+    const query = new URLSearchParams()
+    if (statusFilter !== 'ALL') query.set('status', statusFilter)
+    if (typeFilter !== 'ALL') query.set('type', typeFilter)
+    if (search.trim()) query.set('q', search.trim())
+    try {
+      const result = await adminApi(`/api/admin/enquiries?${query}`) as EnquiryResponse
+      setItems(result.items)
+      setCounts(result.counts)
+      setAssignees(result.assignees)
+      setSelected((current) => {
+        if (!current) return result.items[0] || null
+        return result.items.find((item) => item.id === current.id) || result.items[0] || null
+      })
+      setError('')
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Unable to load enquiries')
+    }
+  }, [search, statusFilter, typeFilter])
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => { void load() }, 250)
+    return () => window.clearTimeout(timeout)
+  }, [load])
+
+  useEffect(() => {
+    if (!selected) {
+      setEvents([])
+      return
+    }
+    setDraftStatus(selected.status)
+    setDraftAssignee(selected.assigned_to_user_id ? String(selected.assigned_to_user_id) : '')
+    setNote('')
+    void adminApi(`/api/admin/enquiries/${selected.id}`)
+      .then(setEvents)
+      .catch((caught) => setError(caught instanceof Error ? caught.message : 'Unable to load activity'))
+  }, [selected])
+
+  const totalEnquiries = counts.NEW + counts.IN_PROGRESS + counts.RESOLVED + counts.ARCHIVED
+  const hasWorkflowChanges = selected
+    ? draftStatus !== selected.status || draftAssignee !== (selected.assigned_to_user_id ? String(selected.assigned_to_user_id) : '')
+    : false
+
+  const selectedIndex = useMemo(
+    () => items.findIndex((item) => item.id === selected?.id),
+    [items, selected],
+  )
+
+  function flash(message: string) {
+    setNotice(message)
+    window.setTimeout(() => setNotice(''), 3500)
+  }
+
+  async function updateWorkflow() {
+    if (!selected || !hasWorkflowChanges) return
+    setBusy(true)
+    try {
+      const updated = await adminApi(`/api/admin/enquiries/${selected.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          status: draftStatus,
+          assignedToUserId: draftAssignee ? Number(draftAssignee) : null,
+        }),
+      }) as EnquiryRecord
+      setSelected(updated)
+      await load()
+      flash('Enquiry updated')
+      setError('')
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Unable to update enquiry')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function addNote(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!selected || !note.trim()) return
+    setBusy(true)
+    try {
+      await adminApi(`/api/admin/enquiries/${selected.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ note: note.trim() }),
+      })
+      setNote('')
+      setEvents(await adminApi(`/api/admin/enquiries/${selected.id}`))
+      flash('Internal note added')
+      setError('')
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Unable to add note')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return <section className={styles.enquirySection}>
+    <div className={styles.enquiryIntro}>
+      <div><p className={styles.kicker}>Customer inbox</p><h2>Every enquiry in one place</h2><p>New submissions are saved here first. Email is used as a notification, so no enquiry is lost if delivery is delayed.</p></div>
+      <div className={styles.enquirySummary}>
+        <button className={statusFilter === 'ALL' ? styles.summaryActive : ''} onClick={() => setStatusFilter('ALL')}><Inbox size={19} /><span><b>{totalEnquiries}</b><small>All</small></span></button>
+        <button className={statusFilter === 'NEW' ? styles.summaryActive : ''} onClick={() => setStatusFilter('NEW')}><CircleDot size={19} /><span><b>{counts.NEW}</b><small>New</small></span></button>
+        <button className={statusFilter === 'IN_PROGRESS' ? styles.summaryActive : ''} onClick={() => setStatusFilter('IN_PROGRESS')}><Clock3 size={19} /><span><b>{counts.IN_PROGRESS}</b><small>In progress</small></span></button>
+        <button className={statusFilter === 'RESOLVED' ? styles.summaryActive : ''} onClick={() => setStatusFilter('RESOLVED')}><CheckCircle2 size={19} /><span><b>{counts.RESOLVED}</b><small>Resolved</small></span></button>
+      </div>
+    </div>
+
+    {notice && <div className={styles.success}><CheckCircle2 size={18} /> {notice}</div>}
+    {error && <div className={styles.error} role="alert"><CircleDot size={18} /><span>{error}</span></div>}
+
+    <div className={styles.enquiryTools}>
+      <label className={styles.enquirySearch}><Search size={17} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search name, reference, email or message" aria-label="Search enquiries" /></label>
+      <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value as EnquiryType | 'ALL')} aria-label="Filter by enquiry type">
+        <option value="ALL">All enquiry types</option>
+        {enquiryTypes.map((type) => <option key={type} value={type}>{enquiryTypeLabels[type]}</option>)}
+      </select>
+      <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as EnquiryStatus | 'ALL')} aria-label="Filter by status">
+        <option value="ALL">All statuses</option>
+        {(Object.keys(statusLabels) as EnquiryStatus[]).map((status) => <option key={status} value={status}>{statusLabels[status]}</option>)}
+      </select>
+      <button title="Refresh enquiries" onClick={() => void load()}><RefreshCw size={17} /></button>
+    </div>
+
+    <div className={styles.enquiryWorkspace}>
+      <div className={styles.enquiryList}>
+        {items.length === 0 && <div className={styles.empty}>No enquiries match this view.</div>}
+        {items.map((item) => {
+          const StatusIcon = statusIcons[item.status]
+          return <button key={item.id} className={selected?.id === item.id ? styles.enquiryItemActive : styles.enquiryItem} onClick={() => setSelected(item)}>
+            <span className={styles.enquiryItemIcon}><StatusIcon size={17} /></span>
+            <span className={styles.enquiryItemText}>
+              <small>{item.reference} · {enquiryTypeLabels[item.enquiry_type]}</small>
+              <strong>{item.customer_name}</strong>
+              <span>{item.subject || item.message}</span>
+              <time>{formatDate(item.created_at)}</time>
+            </span>
+            <em className={styles[`enquiryStatus${item.status}`]}>{statusLabels[item.status]}</em>
+            <ChevronRight size={17} />
+          </button>
+        })}
+      </div>
+
+      <div className={styles.enquiryDetail}>
+        {!selected && <div className={styles.enquiryBlank}><Inbox size={32} /><h3>Select an enquiry</h3><p>Customer details, status and activity will appear here.</p></div>}
+        {selected && <>
+          <div className={styles.enquiryDetailHead}>
+            <div><p className={styles.kicker}>{enquiryTypeLabels[selected.enquiry_type]}</p><h2>{selected.subject || 'Customer enquiry'}</h2><span>{selected.reference} · received {formatDate(selected.created_at)}</span></div>
+            <EmailStatus status={selected.email_delivery_status} />
+          </div>
+
+          <div className={styles.workflowCard}>
+            <div><strong>Move this enquiry forward</strong><small>Assign an owner and keep the status current.</small></div>
+            <label>Status<select value={draftStatus} onChange={(event) => setDraftStatus(event.target.value as EnquiryStatus)}>{(Object.keys(statusLabels) as EnquiryStatus[]).map((status) => <option key={status} value={status}>{statusLabels[status]}</option>)}</select></label>
+            <label>Assigned to<select value={draftAssignee} onChange={(event) => setDraftAssignee(event.target.value)}><option value="">Unassigned</option>{assignees.map((assignee) => <option key={assignee.id} value={assignee.id}>{assignee.name}</option>)}</select></label>
+            <button className={styles.primaryButton} onClick={updateWorkflow} disabled={busy || !hasWorkflowChanges}><Save size={16} /> Save</button>
+          </div>
+
+          <div className={styles.customerGrid}>
+            <div><Mail size={17} /><span><small>Email</small><strong>{selected.customer_email}</strong></span></div>
+            <div><Phone size={17} /><span><small>Phone</small><strong>{selected.customer_phone}</strong></span></div>
+            <div><MessageSquareText size={17} /><span><small>Preferred contact</small><strong>{selected.preferred_contact}</strong></span></div>
+            <div><MapPin size={17} /><span><small>City / branch</small><strong>{selected.location || 'Not provided'}</strong></span></div>
+          </div>
+
+          <div className={styles.customerMessage}><div><MessageSquareText size={17} /><strong>Customer message</strong></div><p>{selected.message}</p></div>
+
+          <form className={styles.noteForm} onSubmit={addNote}>
+            <label><UserRound size={17} /><span><strong>Add an internal note</strong><small>Only signed-in HME staff can see these notes.</small></span></label>
+            <textarea value={note} onChange={(event) => setNote(event.target.value)} maxLength={1200} placeholder="Example: Called customer; waiting for transaction reference." required />
+            <button className={styles.primaryButton} disabled={busy || !note.trim()}>Add note</button>
+          </form>
+
+          <div className={styles.enquiryHistory}>
+            <div><p className={styles.kicker}>Activity history</p><h3>What happened</h3></div>
+            {events.length === 0 && <p className={styles.empty}>No activity yet.</p>}
+            {events.map((entry) => <div className={styles.enquiryEvent} key={entry.id}><i /><span><strong>{readableAction(entry)}</strong><small>{entry.actor_name || 'System'} · {formatDate(entry.created_at)}</small>{entry.note && <p>{entry.note}</p>}</span></div>)}
+          </div>
+
+          <div className={styles.recordNavigation}>
+            <span>{selectedIndex + 1} of {items.length}</span>
+            <div><button disabled={selectedIndex <= 0} onClick={() => setSelected(items[selectedIndex - 1])}>Previous</button><button disabled={selectedIndex < 0 || selectedIndex >= items.length - 1} onClick={() => setSelected(items[selectedIndex + 1])}>Next</button></div>
+          </div>
+        </>}
+      </div>
+    </div>
+  </section>
+}

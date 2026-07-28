@@ -3,10 +3,11 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
-import { Check, ChevronRight, CircleHelp, Code2, Eye, FileCheck2, History, LogOut, PencilLine, Plus, RefreshCw, RotateCcw, Send, ShieldCheck, Trash2, Users, X } from 'lucide-react'
+import { Check, ChevronRight, CircleHelp, Code2, Eye, FileCheck2, History, Inbox, LogOut, PencilLine, Plus, RefreshCw, RotateCcw, Send, ShieldCheck, Trash2, Users, X } from 'lucide-react'
 import type { CmsPermission, CmsUser } from '@/lib/cms-auth'
 import type { CmsContentType } from '@/lib/cms-validation'
 import { ContentPreview, GuidedEditor } from './GuidedEditor'
+import EnquiriesManager from './EnquiriesManager'
 import styles from './admin.module.css'
 
 type CmsItem = {
@@ -94,7 +95,7 @@ async function api(url: string, init?: RequestInit) {
 }
 
 export default function AdminDashboard({ user, permissions }: { user: CmsUser; permissions: CmsPermission[] }) {
-  const [section, setSection] = useState<'publishing' | 'users'>('publishing')
+  const [section, setSection] = useState<'publishing' | 'enquiries' | 'users'>('publishing')
   const [type, setType] = useState<CmsContentType>('rates')
   const [status, setStatus] = useState('ACTIVE')
   const [items, setItems] = useState<CmsItem[]>([])
@@ -250,17 +251,18 @@ export default function AdminDashboard({ user, permissions }: { user: CmsUser; p
       <div className={styles.brand}><Image src="/logo.png" alt="HME" width={82} height={49} priority /><span><strong>Website Admin</strong><small>Simple content manager</small></span></div>
       <nav>
         <button className={section === 'publishing' ? styles.navActive : ''} onClick={() => setSection('publishing')}><FileCheck2 size={19} /> Website content</button>
+        {can('enquiries.view') && <button className={section === 'enquiries' ? styles.navActive : ''} onClick={() => setSection('enquiries')}><Inbox size={19} /> Enquiries</button>}
         {can('users.manage') && <button className={section === 'users' ? styles.navActive : ''} onClick={showUsers}><Users size={19} /> Users & roles</button>}
       </nav>
       <div className={styles.profile}><span className={styles.avatar}>{user.name[0].toUpperCase()}</span><span><strong>{user.name}</strong><small>{user.role}</small></span><button title="Sign out" onClick={logout}><LogOut size={18} /></button></div>
     </aside>
 
     <main className={styles.main}>
-      <header className={styles.topbar}><div><p className={styles.kicker}>HME website manager</p><h1>{section === 'publishing' ? 'Update website content' : 'Users & roles'}</h1></div><div className={styles.secure}><ShieldCheck size={18} /> Role-based publishing is on</div></header>
+      <header className={styles.topbar}><div><p className={styles.kicker}>HME website manager</p><h1>{section === 'publishing' ? 'Update website content' : section === 'enquiries' ? 'Customer enquiries' : 'Users & roles'}</h1></div><div className={styles.secure}><ShieldCheck size={18} /> {section === 'enquiries' ? 'Customer data access is protected' : 'Role-based publishing is on'}</div></header>
       {notice && <div className={styles.success}><Check size={18} /> {notice}</div>}
       {error && <div className={styles.error} role="alert"><X size={18} /><span>{error}</span></div>}
 
-      {section === 'users' ? <section className={styles.userGrid}>
+      {section === 'enquiries' ? <EnquiriesManager /> : section === 'users' ? <section className={styles.userGrid}>
         <div className={styles.panel}><div className={styles.panelHead}><p className={styles.kicker}>Access control</p><h2>Current users</h2></div>
           <div className={styles.userList}>{users.map((entry) => <div className={styles.userRow} key={entry.id}><span className={styles.avatar}>{entry.name[0].toUpperCase()}</span><span><strong>{entry.name}</strong><small>{entry.email}</small></span><b>{entry.role}</b><em>{entry.status}</em></div>)}</div>
         </div>

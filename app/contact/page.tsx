@@ -1,13 +1,13 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { Building2, CheckCircle2, Mail, MessageCircle, Phone } from 'lucide-react'
+import { Building2, CheckCircle2, MessageCircle, MessageSquareText, Phone } from 'lucide-react'
 import PageHero from '@/components/PageHero'
 import { getPublishedContact, type PublishedContact } from '@/lib/cms'
 import { site } from '@/lib/site'
 
 export const metadata: Metadata = {
   title: 'Contact HME | Customer Support & Inquiries',
-  description: 'Contact Hasani Munawarah Exchange - call, WhatsApp or email our team, or visit an HME branch for exchange, transfer, booking and partnership inquiries.',
+  description: 'Contact Hasani Munawarah Exchange by phone, WhatsApp or a secure online enquiry form, or visit an HME branch.',
 }
 
 const fallbackContact: PublishedContact = {
@@ -31,7 +31,7 @@ export default async function ContactPage() {
   const actions = [
     { icon: Phone, title: 'Call us', value: contact.phone, href: phoneHref },
     { icon: MessageCircle, title: 'WhatsApp', value: 'Chat with our team', href: contact.whatsappUrl, external: true },
-    { icon: Mail, title: 'Email', value: contact.email, href: `mailto:${contact.email}` },
+    { icon: MessageSquareText, title: 'Online enquiry', value: 'Send details through our secure form', href: '/enquiry' },
     { icon: Building2, title: 'Head Office', value: address, href: mapsUrl, external: true },
   ]
 
@@ -50,7 +50,7 @@ export default async function ContactPage() {
             <h2 className="mt-3 text-2xl font-extrabold sm:text-3xl">{contact.supportHeading}</h2>
             <p className="mt-3 max-w-xl text-sm leading-relaxed text-[#D4E0F2]">{contact.supportNote}</p>
             <div className="mt-7 grid gap-3 sm:grid-cols-2">{contact.services.map((item) => <span key={item} className="flex items-center gap-2 rounded-xl bg-white/8 p-3 text-sm text-white/90"><CheckCircle2 className="h-4 w-4 flex-none text-[#7FB2F5]" />{item}</span>)}</div>
-            <div className="mt-8 flex flex-wrap gap-3"><a href={contact.whatsappUrl} target="_blank" rel="noreferrer" className="btn-red"><MessageCircle className="h-4 w-4" /> Start on WhatsApp</a><a href={`mailto:${contact.email}`} className="btn-ghost"><Mail className="h-4 w-4" /> Send an Email</a></div>
+            <div className="mt-8 flex flex-wrap gap-3"><a href={contact.whatsappUrl} target="_blank" rel="noreferrer" className="btn-red"><MessageCircle className="h-4 w-4" /> Start on WhatsApp</a><Link href="/enquiry" className="btn-ghost"><MessageSquareText className="h-4 w-4" /> Send an Enquiry</Link></div>
           </div>
         </div>
       </section>

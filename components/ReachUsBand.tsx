@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { Phone, Mail, MapPin, MessageCircle } from "lucide-react";
+import { Phone, MessageSquareText, MapPin, MessageCircle } from "lucide-react";
 import { site } from "@/lib/site";
 
 const items = [
   { icon: Phone, label: `Call us: ${site.phone}`, href: `tel:${site.phone}` },
-  { icon: Mail, label: `Email: ${site.email}`, href: `mailto:${site.email}` },
+  { icon: MessageSquareText, label: "Send an Online Enquiry", href: "/enquiry" },
   { icon: MapPin, label: "Visit a Branch Near You", href: "/locate-us" },
   { icon: MessageCircle, label: "Message Us", href: site.whatsapp },
 ];

@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import {
   CheckCircle2,
   DollarSign,
   GraduationCap,
-  Mail,
+  MessageSquareText,
   MessageCircle,
   ShieldCheck,
   TrendingUp,
@@ -110,7 +111,7 @@ export default function AgentPage() {
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <a href="#apply" className="btn-red">Start an Agent Inquiry</a>
-              <a href={`mailto:${site.email}?subject=HME%20Agent%20Inquiry`} className="btn-ghost">Email Partnerships</a>
+              <Link href="/enquiry?type=agent&subject=Agent%20partnership" className="btn-ghost">Send Partnership Enquiry</Link>
             </div>
           </div>
         </div>
@@ -202,9 +203,9 @@ export default function AgentPage() {
               <a href={whatsappUrl} target="_blank" rel="noreferrer" className="btn-red">
                 <MessageCircle className="h-4 w-4" /> WhatsApp HME
               </a>
-              <a href={`mailto:${site.email}?subject=HME%20Agent%20Inquiry`} className="btn-primary">
-                <Mail className="h-4 w-4" /> Email Inquiry
-              </a>
+              <Link href="/enquiry?type=agent&subject=Agent%20partnership" className="btn-primary">
+                <MessageSquareText className="h-4 w-4" /> Enquiry Form
+              </Link>
             </div>
             <p className="mt-6 border-t border-line pt-5 text-xs leading-relaxed text-slate2">
               An inquiry does not guarantee appointment. HME will advise suitable applicants about documents and next steps.

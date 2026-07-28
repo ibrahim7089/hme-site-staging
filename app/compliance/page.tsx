@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import PageHero from "@/components/PageHero";
 import ComplianceTrustSection from "@/components/ComplianceTrustSection";
 import { site } from "@/lib/site";
@@ -29,7 +30,8 @@ export default function CompliancePage() {
             <h3 className="text-xl font-bold text-navy">Complaints & feedback</h3>
             <p className="mt-3 text-sm text-slate2">
               If something is not right, tell us. Raise any issue at a branch, by
-              phone at {site.phone}, or by email at {site.email}. We acknowledge
+              phone at {site.phone}, or through our{" "}
+              <Link href="/enquiry?type=complaint" className="font-bold text-brand-blue hover:underline">online complaint form</Link>. We acknowledge
               complaints promptly and keep you informed until resolution.
             </p>
           </div>
