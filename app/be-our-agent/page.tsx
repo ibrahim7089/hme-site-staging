@@ -73,7 +73,7 @@ const steps = [
 ];
 
 const eligibility = [
-  "Registered business in Malaysia (SSM-registered sole proprietor, partnership or Sdn Bhd)",
+  "Registered business in Malaysia (SSM-registered Sdn Bhd or Bhd companies)",
   "Physical business premises with public access",
   "Willing to complete AML/CFT training and comply with applicable regulatory requirements",
   "Reliable internet access and ability to operate HME systems",
@@ -173,7 +173,7 @@ export default function AgentPage() {
           <div>
             <SectionHeading eyebrow="Eligibility" title="Who can inquire?" />
             <p className="mt-4 text-[15px] leading-relaxed text-slate2">
-              HME welcomes inquiries from established businesses across Malaysia. Appointment remains subject to due diligence, site assessment, regulatory requirements and approval.
+              HME welcomes inquiries from new and established businesses across Malaysia. Appointment remains subject to due diligence, site assessment, regulatory requirements and approval.
             </p>
             <ul className="mt-6 space-y-3.5">
               {eligibility.map((item) => (
