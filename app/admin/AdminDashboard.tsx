@@ -10,7 +10,7 @@ import { ContentPreview, GuidedEditor } from './GuidedEditor'
 import EnquiriesManager from './EnquiriesManager'
 import styles from './admin.module.css'
 import { globalContentTemplate } from '@/lib/global-content'
-import { pageTemplate, websitePages } from '@/lib/page-content'
+import { hydratePagePayload, pageTemplate, websitePages } from '@/lib/page-content'
 
 type CmsItem = {
   id: number
@@ -123,6 +123,9 @@ export default function AdminDashboard({ user, permissions }: { user: CmsUser; p
   const templateFor = useCallback((contentType: CmsContentType, key: string) => (
     contentType === 'pages' ? pageTemplate(key) : templates[contentType]
   ), [])
+  const payloadFor = useCallback((contentType: CmsContentType, key: string, payload?: unknown) => (
+    contentType === 'pages' ? hydratePagePayload(key, payload) : payload || templateFor(contentType, key)
+  ), [templateFor])
 
   const parsedPayload = useMemo(() => {
     try { return JSON.parse(editor) as unknown }
@@ -139,7 +142,7 @@ export default function AdminDashboard({ user, permissions }: { user: CmsUser; p
         setItems(status === 'ACTIVE' ? result.filter((item) => item.status !== 'ARCHIVED') : result)
         if (seededEditorType.current !== type) {
           const live = result.find((item) => item.status === 'PUBLISHED')
-          setEditor(JSON.stringify(live?.payload || templateFor(type, contentKey), null, 2))
+          setEditor(JSON.stringify(payloadFor(type, contentKey, live?.payload), null, 2))
           seededEditorType.current = type
         }
         setError('')
@@ -147,7 +150,7 @@ export default function AdminDashboard({ user, permissions }: { user: CmsUser; p
     } catch (caught) {
       if (activeListRequest.current.type === type && activeListRequest.current.status === status && activeListRequest.current.contentKey === contentKey) setError(caught instanceof Error ? caught.message : 'Unable to load content')
     }
-  }, [contentKey, status, templateFor, type])
+  }, [contentKey, payloadFor, status, type])
 
   useEffect(() => { activeListRequest.current = { type, status, contentKey } }, [type, status, contentKey])
   useEffect(() => { void load() }, [load])
@@ -156,18 +159,18 @@ export default function AdminDashboard({ user, permissions }: { user: CmsUser; p
     setSelected(null)
     setItems([])
     const nextKey = type === 'pages' ? contentKey : 'primary'
-    setEditor(JSON.stringify(templateFor(type, nextKey), null, 2))
+    setEditor(JSON.stringify(payloadFor(type, nextKey), null, 2))
     setEditorMode('guided')
-  }, [contentKey, templateFor, type])
+  }, [contentKey, payloadFor, type])
   useEffect(() => { setSelected(null); setItems([]) }, [status])
   useEffect(() => {
     if (!selected) { setEvents([]); setNote(''); setSchedule(''); return }
-    setEditor(JSON.stringify(selected.payload, null, 2))
+    setEditor(JSON.stringify(payloadFor(type, contentKey, selected.payload), null, 2))
     setNote(selected.change_note || '')
     setSchedule(selected.scheduled_for ? new Date(selected.scheduled_for).toISOString().slice(0, 16) : '')
     setEditorMode('guided')
     void api(`/api/admin/publishing/${selected.id}/events`).then(setEvents).catch(() => setEvents([]))
-  }, [selected])
+  }, [contentKey, payloadFor, selected, type])
 
   function flash(text: string) {
     setNotice(text)
@@ -179,7 +182,7 @@ export default function AdminDashboard({ user, permissions }: { user: CmsUser; p
     setEvents([])
     setNote('')
     setSchedule('')
-    setEditor(JSON.stringify(baseline?.payload || templateFor(type, contentKey), null, 2))
+    setEditor(JSON.stringify(payloadFor(type, contentKey, baseline?.payload), null, 2))
     setEditorMode('guided')
     flash(baseline ? `Editable copy of Version ${baseline.version} is ready. Your live website has not changed yet.` : 'A new draft is ready.')
   }
@@ -227,7 +230,7 @@ export default function AdminDashboard({ user, permissions }: { user: CmsUser; p
       if (action === 'discard') {
         const live = items.find((item) => item.status === 'PUBLISHED')
         setSelected(null)
-        setEditor(JSON.stringify(live?.payload || templateFor(type, contentKey), null, 2))
+        setEditor(JSON.stringify(payloadFor(type, contentKey, live?.payload), null, 2))
         flash(`Draft Version ${selected.version} was discarded`)
         await load()
         return

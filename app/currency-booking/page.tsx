@@ -3,6 +3,7 @@ import Link from "next/link";
 import { CalendarClock, CheckCircle2, MapPin, MessageCircle, Phone } from "lucide-react";
 import PageHero from "@/components/PageHero";
 import { site } from "@/lib/site";
+import { getPublishedPageContent } from "@/lib/cms";
 
 export const metadata: Metadata = {
   title: "Currency Booking | Reserve Foreign Currency",
@@ -17,7 +18,15 @@ const steps = [
   { title: "Pay and collect at the counter", copy: "Bring accepted identification. The final rate is confirmed at collection." },
 ];
 
-export default function CurrencyBookingPage() {
+export default async function CurrencyBookingPage() {
+  const managed = await getPublishedPageContent("currency-booking");
+  const stepsSection = managed?.sections.find((section) => section.id === "booking-steps");
+  const managedSteps = stepsSection?.items.filter((item) => item.active).map((item, index) => ({
+    title: item.title,
+    copy: item.body,
+    number: item.meta || String(index + 1).padStart(2, "0"),
+  }));
+  const displayedSteps = stepsSection ? managedSteps || [] : steps.map((step, index) => ({ ...step, number: String(index + 1).padStart(2, "0") }));
   const message = encodeURIComponent(
     "Hi HME, I would like to ask about a currency booking. Currency: [currency], Amount: [amount], Preferred branch: [branch], Collection date: [date].",
   );
@@ -29,15 +38,16 @@ export default function CurrencyBookingPage() {
         title="Plan ahead. Collect with confidence."
         lead="Ask your preferred HME branch to check currency availability and arrange a collection date. The branch will confirm your request before you travel." />
       <section className="py-14 md:py-20">
-        <div className="wrap grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
-          <div>
-            <p className="eyebrow mb-3">How it works</p>
-            <h2 className="text-2xl font-extrabold text-navy sm:text-3xl">Four clear steps</h2>
+        <div className={stepsSection?.visible === false ? "wrap max-w-2xl" : "wrap grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start"}>
+          {stepsSection?.visible !== false && <div>
+            <p className="eyebrow mb-3">{stepsSection?.eyebrow || "How it works"}</p>
+            <h2 className="text-2xl font-extrabold text-navy sm:text-3xl">{stepsSection?.heading || "Four clear steps"}</h2>
+            {stepsSection?.body && <p className="mt-3 text-sm leading-relaxed text-slate2">{stepsSection.body}</p>}
             <div className="mt-7 space-y-3">
-              {steps.map((step, index) => (
+              {displayedSteps.map((step) => (
                 <div key={step.title} className="flex gap-4 rounded-tile border border-line bg-white p-5">
                   <span className="grid h-9 w-9 flex-none place-items-center rounded-lg bg-brand-bluesoft font-mono text-xs font-bold text-brand-blue">
-                    {String(index + 1).padStart(2, "0")}
+                    {step.number}
                   </span>
                   <span>
                     <b className="block font-display text-sm text-navy">{step.title}</b>
@@ -46,7 +56,7 @@ export default function CurrencyBookingPage() {
                 </div>
               ))}
             </div>
-          </div>
+          </div>}
 
           <div className="rounded-card border border-line bg-white p-7 shadow-soft sm:p-9">
             <span className="mb-5 grid h-12 w-12 place-items-center rounded-xl bg-brand-redsoft">

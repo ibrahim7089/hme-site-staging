@@ -20,12 +20,22 @@ export type PageHeroContent = {
 export type PageSectionContent = {
   id: string
   name: string
+  kind: 'additional' | 'content-slot'
   visible: boolean
   eyebrow: string
   heading: string
   body: string
   image: string
   imageAlt: string
+  items: PageSectionItem[]
+}
+
+export type PageSectionItem = {
+  id: string
+  title: string
+  body: string
+  meta: string
+  active: boolean
 }
 
 export type PageContentPayload = {
@@ -111,28 +121,147 @@ export function pageDefinition(key: string) {
 
 export function pageTemplate(key: string): PageContentPayload {
   const definition = pageDefinition(key)
-  const sections: PageSectionContent[] = key === 'home' ? [
+  const sectionsByPage: Record<string, PageSectionContent[]> = {
+    home: [
     {
       id: 'hme-way',
       name: 'The HME way',
+      kind: 'content-slot',
       visible: true,
       eyebrow: 'The HME way',
       heading: 'Financial services should feel clear, secure and close to you',
       body: 'HME brings currency exchange, international transfers, booking and branch support into one nationwide network.\n\nWhether you are travelling, supporting family or running a business, your next step stays simple and familiar.',
       image: '',
       imageAlt: '',
+      items: [],
     },
     {
       id: 'services',
       name: 'Services introduction',
+      kind: 'content-slot',
       visible: true,
       eyebrow: 'Start with your need',
       heading: 'Five everyday needs. One trusted HME network.',
       body: 'Choose what you need today. Every service connects to the same experienced teams and nationwide branch network.',
       image: '',
       imageAlt: '',
+      items: [],
     },
-  ] : []
+    ],
+    'biz-fx': [
+      {
+        id: 'offers',
+        name: 'Business FX service cards',
+        kind: 'content-slot',
+        visible: true,
+        eyebrow: 'Business FX',
+        heading: 'Foreign currency support for businesses',
+        body: '',
+        image: '',
+        imageAlt: '',
+        items: [
+          { id: 'business-currency-exchange', title: 'Business currency exchange', body: 'Foreign currency for trade, travel and operations at competitive rates, with volume handling at selected branches.', meta: '', active: true },
+          { id: 'competitive-fx-rates', title: 'Competitive FX rates', body: 'Access preferential rates for larger business currency requirements with dedicated counter service.', meta: '', active: true },
+          { id: 'relationship-support', title: 'Dedicated relationship support', body: 'A single point of contact for your recurring business FX requirements.', meta: '', active: true },
+          { id: 'compliance-ready', title: 'Compliance-ready processes', body: 'KYC/KYB onboarding and transaction documentation aligned to Malaysian regulatory requirements.', meta: '', active: true },
+        ],
+      },
+    ],
+    'biz-remit': [
+      {
+        id: 'offers',
+        name: 'Business remittance service cards',
+        kind: 'content-slot',
+        visible: true,
+        eyebrow: 'Business Remittance',
+        heading: 'International payments for Malaysian businesses',
+        body: '',
+        image: '',
+        imageAlt: '',
+        items: [
+          { id: 'outward-transfer', title: 'Outward money transfer', body: 'Send business payments overseas to suppliers, partners and contractors with proper documentation and regulatory compliance.', meta: '', active: true },
+          { id: 'supplier-payments', title: 'Supplier & trade payments', body: "Facilitate international trade payments with competitive rates and fast processing through HME's remittance network.", meta: '', active: true },
+          { id: 'payroll-remittance', title: 'Payroll remittance', body: 'Regular payroll transfers for foreign workers and overseas staff, handled efficiently and compliantly.', meta: '', active: true },
+          { id: 'compliance-ready', title: 'Compliance-ready processes', body: 'Full KYC/KYB onboarding and transaction documentation aligned to Bank Negara Malaysia and MSB Act 2011 requirements.', meta: '', active: true },
+        ],
+      },
+    ],
+    'currency-booking': [
+      {
+        id: 'booking-steps',
+        name: 'Booking steps',
+        kind: 'content-slot',
+        visible: true,
+        eyebrow: 'How it works',
+        heading: 'Four clear steps',
+        body: '',
+        image: '',
+        imageAlt: '',
+        items: [
+          { id: 'share-request', title: 'Tell us the currency and amount', body: 'Share what you need so the branch can check current availability.', meta: '01', active: true },
+          { id: 'choose-branch', title: 'Choose a preferred branch and date', body: 'Let us know where and when you would like to collect.', meta: '02', active: true },
+          { id: 'wait-confirmation', title: 'Wait for branch confirmation', body: 'Your booking is only confirmed after the branch verifies availability and collection details.', meta: '03', active: true },
+          { id: 'collect', title: 'Pay and collect at the counter', body: 'Bring accepted identification. The final rate is confirmed at collection.', meta: '04', active: true },
+        ],
+      },
+    ],
+    'be-our-agent': [
+      {
+        id: 'benefits',
+        name: 'Agent benefits',
+        kind: 'content-slot',
+        visible: true,
+        eyebrow: 'Why partner with HME',
+        heading: 'Support for approved agents',
+        body: 'Explore the systems, training and operational support available to suitable businesses appointed to the HME network.',
+        image: '',
+        imageAlt: '',
+        items: [
+          { id: 'commercial-opportunity', title: 'Commercial opportunity', body: 'Learn about available service lines and commercial terms for approved HME agent locations.', meta: '', active: true },
+          { id: 'regulated-network', title: 'Regulated network', body: "Agent appointments are assessed under HME's applicable regulatory, compliance and operational requirements.", meta: '', active: true },
+          { id: 'training', title: 'Training and onboarding', body: 'Approved agents receive relevant system, operational and AML/CFT guidance before going live.', meta: '', active: true },
+          { id: 'infrastructure', title: 'Operational infrastructure', body: 'Approved locations can access the systems and processes needed to deliver assigned HME services.', meta: '', active: true },
+          { id: 'support', title: 'Agent support', body: 'A support contact helps approved agents with operational questions, escalations and compliance matters.', meta: '', active: true },
+          { id: 'onboarding', title: 'Structured onboarding', body: 'HME guides suitable applicants through due diligence, assessment, agreement and onboarding stages.', meta: '', active: true },
+        ],
+      },
+      {
+        id: 'process',
+        name: 'Application process',
+        kind: 'content-slot',
+        visible: true,
+        eyebrow: 'The Process',
+        heading: 'What happens next',
+        body: '',
+        image: '',
+        imageAlt: '',
+        items: [
+          { id: 'conversation', title: 'Start a conversation', body: 'Share your company, premises, proposed location and contact details with the partnerships team.', meta: '01', active: true },
+          { id: 'assessment', title: 'Due diligence and assessment', body: 'HME will explain the required business checks, documents, site assessment and approval process.', meta: '02', active: true },
+          { id: 'agreement', title: 'Agreement and onboarding', body: 'Approved applicants complete the relevant agreement, training and operational setup before launch.', meta: '03', active: true },
+        ],
+      },
+      {
+        id: 'eligibility',
+        name: 'Agent eligibility',
+        kind: 'content-slot',
+        visible: true,
+        eyebrow: 'Eligibility',
+        heading: 'Who can inquire?',
+        body: 'HME welcomes inquiries from new and established businesses across Malaysia. Appointment remains subject to due diligence, site assessment, regulatory requirements and approval.',
+        image: '',
+        imageAlt: '',
+        items: [
+          { id: 'registered-business', title: 'Registered business in Malaysia (SSM-registered Sdn Bhd or Bhd companies)', body: '', meta: '', active: true },
+          { id: 'premises', title: 'Physical business premises with public access', body: '', meta: '', active: true },
+          { id: 'training', title: 'Willing to complete AML/CFT training and comply with applicable regulatory requirements', body: '', meta: '', active: true },
+          { id: 'internet', title: 'Reliable internet access and ability to operate HME systems', body: '', meta: '', active: true },
+          { id: 'good-standing', title: 'Good standing with no known financial crime convictions or regulatory sanctions', body: '', meta: '', active: true },
+        ],
+      },
+    ],
+  }
+  const sections = sectionsByPage[key] || []
   return {
     pageName: definition.name,
     path: definition.path,
@@ -141,5 +270,24 @@ export function pageTemplate(key: string): PageContentPayload {
       imageAlt: definition.hero.imageAlt || '',
     },
     sections,
+  }
+}
+
+export function hydratePagePayload(key: string, payload: unknown): PageContentPayload {
+  const template = pageTemplate(key)
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return template
+  const saved = payload as Partial<PageContentPayload>
+  const savedSections = Array.isArray(saved.sections) ? saved.sections : []
+  const missingBuiltInSections = template.sections.filter((section) =>
+    section.kind === 'content-slot' && !savedSections.some((savedSection) => savedSection?.id === section.id),
+  )
+  return {
+    ...template,
+    ...saved,
+    hero: {
+      ...template.hero,
+      ...(saved.hero || {}),
+    },
+    sections: [...savedSections, ...missingBuiltInSections],
   }
 }

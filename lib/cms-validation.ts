@@ -224,15 +224,25 @@ const contact = z.object({
   services: z.array(z.string().trim().min(1).max(120)).min(1).max(12),
 }).strict()
 
+const pageSectionItem = z.object({
+  id: slug,
+  title: z.string().trim().min(1).max(180),
+  body: z.string().trim().max(2000).optional().default(''),
+  meta: z.string().trim().max(80).optional().default(''),
+  active: z.boolean().optional().default(true),
+}).strict()
+
 const pageSection = z.object({
   id: slug,
   name: z.string().trim().min(1).max(120),
+  kind: z.enum(['additional', 'content-slot']).optional().default('additional'),
   visible: z.boolean().optional().default(true),
   eyebrow: z.string().trim().max(120).optional().default(''),
   heading: z.string().trim().max(220).optional().default(''),
   body: z.string().trim().max(5000).optional().default(''),
   image: cmsImage.optional().default(''),
   imageAlt: z.string().trim().max(180).optional().default(''),
+  items: z.array(pageSectionItem).max(30).optional().default([]),
 }).strict()
 
 const pages = z.object({
@@ -256,6 +266,13 @@ const pages = z.object({
     if (section.image && !section.imageAlt) {
       ctx.addIssue({ code: 'custom', path: ['sections', index, 'imageAlt'], message: 'Describe the section image for accessibility' })
     }
+    const itemIds = new Set<string>()
+    section.items.forEach((item, itemIndex) => {
+      if (itemIds.has(item.id)) {
+        ctx.addIssue({ code: 'custom', path: ['sections', index, 'items', itemIndex, 'id'], message: 'Item names must be unique within a section' })
+      }
+      itemIds.add(item.id)
+    })
   })
   if (value.hero.image && !value.hero.imageAlt) {
     ctx.addIssue({ code: 'custom', path: ['hero', 'imageAlt'], message: 'Describe the hero image for accessibility' })

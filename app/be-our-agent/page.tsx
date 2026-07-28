@@ -85,6 +85,26 @@ const eligibility = [
 export default async function AgentPage() {
   const managed = await getPublishedPageContent("be-our-agent");
   const hero = managed?.hero;
+  const benefitsSection = managed?.sections.find((section) => section.id === "benefits");
+  const processSection = managed?.sections.find((section) => section.id === "process");
+  const eligibilitySection = managed?.sections.find((section) => section.id === "eligibility");
+  const displayedBenefits = benefitsSection
+    ? benefitsSection.items.filter((item) => item.active).map((item, index) => ({
+      icon: benefits[index % benefits.length].icon,
+      title: item.title,
+      desc: item.body,
+    }))
+    : benefits;
+  const displayedSteps = processSection
+    ? processSection.items.filter((item) => item.active).map((item, index) => ({
+      num: item.meta || String(index + 1).padStart(2, "0"),
+      title: item.title,
+      desc: item.body,
+    }))
+    : steps;
+  const displayedEligibility = eligibilitySection
+    ? eligibilitySection.items.filter((item) => item.active).map((item) => item.title)
+    : eligibility;
   const message = encodeURIComponent(
     "Hi HME, I am interested in becoming an agent. Company name: [company], SSM no.: [number], Business type: [type], Proposed location: [location], Contact person: [name].",
   );
@@ -135,13 +155,13 @@ export default async function AgentPage() {
         </div>
       </div>
 
-      <section className="py-16 md:py-20">
+      {benefitsSection?.visible !== false && <section className="py-16 md:py-20">
         <div className="wrap">
-          <SectionHeading center eyebrow="Why partner with HME"
-            title="Support for approved agents"
-            lead="Explore the systems, training and operational support available to suitable businesses appointed to the HME network." />
+          <SectionHeading center eyebrow={benefitsSection?.eyebrow || "Why partner with HME"}
+            title={benefitsSection?.heading || "Support for approved agents"}
+            lead={benefitsSection?.body || "Explore the systems, training and operational support available to suitable businesses appointed to the HME network."} />
           <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {benefits.map(({ icon: Icon, title, desc }) => (
+            {displayedBenefits.map(({ icon: Icon, title, desc }) => (
               <div key={title} className="rounded-card border border-line bg-white p-6 shadow-soft">
                 <span className="mb-4 grid h-12 w-12 place-items-center rounded-xl bg-brand-bluesoft">
                   <Icon className="h-5 w-5 text-brand-blue" strokeWidth={1.75} />
@@ -152,14 +172,14 @@ export default async function AgentPage() {
             ))}
           </div>
         </div>
-      </section>
+      </section>}
 
-      <section className="bg-cloud py-16 md:py-20">
+      {processSection?.visible !== false && <section className="bg-cloud py-16 md:py-20">
         <div className="wrap">
-          <SectionHeading center eyebrow="The Process" title="What happens next" />
+          <SectionHeading center eyebrow={processSection?.eyebrow || "The Process"} title={processSection?.heading || "What happens next"} lead={processSection?.body || undefined} />
           <div className="relative mt-12 grid gap-9 md:grid-cols-3">
             <div className="absolute left-[16.67%] right-[16.67%] top-7 hidden h-px bg-line md:block" />
-            {steps.map(({ num, title, desc }) => (
+            {displayedSteps.map(({ num, title, desc }) => (
               <div key={num} className="relative flex flex-col items-center text-center">
                 <div className="relative z-10 mb-5 grid h-14 w-14 place-items-center rounded-full bg-brand-blue text-lg font-extrabold text-white shadow-md">
                   {num}
@@ -170,17 +190,17 @@ export default async function AgentPage() {
             ))}
           </div>
         </div>
-      </section>
+      </section>}
 
-      <section className="py-16 md:py-20" id="apply">
+      {eligibilitySection?.visible !== false && <section className="py-16 md:py-20" id="apply">
         <div className="wrap grid gap-10 lg:grid-cols-[1fr_1.05fr] lg:items-start">
           <div>
-            <SectionHeading eyebrow="Eligibility" title="Who can inquire?" />
+            <SectionHeading eyebrow={eligibilitySection?.eyebrow || "Eligibility"} title={eligibilitySection?.heading || "Who can inquire?"} />
             <p className="mt-4 text-[15px] leading-relaxed text-slate2">
-              HME welcomes inquiries from new and established businesses across Malaysia. Appointment remains subject to due diligence, site assessment, regulatory requirements and approval.
+              {eligibilitySection?.body || "HME welcomes inquiries from new and established businesses across Malaysia. Appointment remains subject to due diligence, site assessment, regulatory requirements and approval."}
             </p>
             <ul className="mt-6 space-y-3.5">
-              {eligibility.map((item) => (
+              {displayedEligibility.map((item) => (
                 <li key={item} className="flex items-start gap-3 text-[14px] text-slate2">
                   <CheckCircle2 className="mt-0.5 h-5 w-5 flex-none text-brand-blue" strokeWidth={1.75} />
                   {item}
@@ -215,7 +235,7 @@ export default async function AgentPage() {
             </p>
           </div>
         </div>
-      </section>
+      </section>}
     </>
   );
 }

@@ -54,7 +54,7 @@ function CollectionToolbar({ count, noun, plural, addLabel, disabled, onAdd, chi
   </div>
 }
 
-function CollectionItem({ index, kind, title, meta, summary, active, activeLabel, disabled, mode, onMode, onToggle, onDuplicate, onRemove, edit, preview }: {
+function CollectionItem({ index, kind, title, meta, summary, active, activeLabel, disabled, structureLocked = false, mode, onMode, onToggle, onDuplicate, onRemove, edit, preview }: {
   index: number
   kind: string
   title: string
@@ -63,6 +63,7 @@ function CollectionItem({ index, kind, title, meta, summary, active, activeLabel
   active: boolean
   activeLabel: string
   disabled: boolean
+  structureLocked?: boolean
   mode: ItemPanelMode | null
   onMode: (mode: ItemPanelMode | null) => void
   onToggle: (active: boolean) => void
@@ -84,8 +85,8 @@ function CollectionItem({ index, kind, title, meta, summary, active, activeLabel
         <label className={styles.itemVisibility}><input type="checkbox" checked={active} onChange={(event) => onToggle(event.target.checked)} disabled={disabled} /><span>{activeLabel}</span></label>
         <button type="button" className={mode === 'edit' ? styles.itemActionActive : styles.itemAction} onClick={() => onMode(mode === 'edit' ? null : 'edit')}><PencilLine size={15} /> {mode === 'edit' ? 'Close editor' : 'Edit'}</button>
         <button type="button" className={mode === 'preview' ? styles.itemActionActive : styles.itemAction} onClick={() => onMode(mode === 'preview' ? null : 'preview')}><Eye size={15} /> Preview</button>
-        <button type="button" className={styles.itemIconAction} title={`Duplicate ${kind.toLowerCase()}`} onClick={onDuplicate} disabled={disabled}><Copy size={15} /></button>
-        <button type="button" className={styles.itemIconDanger} title={`Delete ${kind.toLowerCase()}`} onClick={onRemove} disabled={disabled}><Trash2 size={15} /></button>
+        <button type="button" className={styles.itemIconAction} title={structureLocked ? 'Built-in sections cannot be duplicated' : `Duplicate ${kind.toLowerCase()}`} onClick={onDuplicate} disabled={disabled || structureLocked}><Copy size={15} /></button>
+        <button type="button" className={styles.itemIconDanger} title={structureLocked ? 'Built-in sections cannot be deleted' : `Delete ${kind.toLowerCase()}`} onClick={onRemove} disabled={disabled || structureLocked}><Trash2 size={15} /></button>
       </div>
     </div>
     {mode === 'edit' && <div className={styles.collectionEditor}>{edit}</div>}
@@ -202,9 +203,25 @@ function PagesEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
   const updateHero = (key: string, value: unknown) => onChange({ ...root, hero: { ...hero, [key]: value } })
   const commitSections = (sections: Entry[]) => onChange({ ...root, sections })
   const updateSection = (index: number, key: string, value: unknown) => commitSections(rows.map((row, rowIndex) => rowIndex === index ? { ...row, [key]: value } : row))
+  const sectionItems = (index: number) => Array.isArray(rows[index]?.items) ? (rows[index].items as unknown[]).map(record) : []
+  const commitSectionItems = (index: number, items: Entry[]) => updateSection(index, 'items', items)
+  const updateSectionItem = (sectionIndex: number, itemIndex: number, key: string, value: unknown) => {
+    const items = sectionItems(sectionIndex)
+    commitSectionItems(sectionIndex, items.map((item, index) => index === itemIndex ? { ...item, [key]: value } : item))
+  }
+  const addSectionItem = (sectionIndex: number) => {
+    const items = sectionItems(sectionIndex)
+    commitSectionItems(sectionIndex, [...items, { id: `item-${items.length + 1}`, title: `Item ${items.length + 1}`, body: '', meta: '', active: true }])
+  }
+  const removeSectionItem = (sectionIndex: number, itemIndex: number) => {
+    const items = sectionItems(sectionIndex)
+    if (confirmRemove(text(items[itemIndex]?.title) || `Item ${itemIndex + 1}`)) {
+      commitSectionItems(sectionIndex, items.filter((_, index) => index !== itemIndex))
+    }
+  }
   const addSection = () => {
     const index = rows.length
-    commitSections([...rows, { id: `section-${index + 1}`, name: `Section ${index + 1}`, visible: true, eyebrow: '', heading: '', body: '', image: '', imageAlt: '' }])
+    commitSections([...rows, { id: `section-${index + 1}`, name: `Section ${index + 1}`, kind: 'additional', visible: true, eyebrow: '', heading: '', body: '', image: '', imageAlt: '', items: [] }])
     setPanel({ index, mode: 'edit' })
   }
   const removeSection = (index: number) => {
@@ -228,9 +245,12 @@ function PagesEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
       </div>
     </section>
     <section className={styles.pageEditorBlock}>
-      <div className={styles.pageEditorBlockHead}><span>2</span><div><strong>Additional page sections</strong><small>Add a new section without changing the existing page layout.</small></div></div>
+      <div className={styles.pageEditorBlockHead}><span>2</span><div><strong>Page sections and cards</strong><small>Built-in sections keep the website design protected. Edit each card as a separate item.</small></div></div>
       <CollectionToolbar count={rows.length} noun="section" addLabel="Add section" disabled={disabled} onAdd={addSection} />
-      <div className={styles.collectionList}>{rows.map((row, index) => <CollectionItem key={`${text(row.id)}-${index}`} index={index} kind="Page section" title={text(row.name) || `Section ${index + 1}`} meta={text(row.eyebrow)} summary={text(row.heading)} active={checked(row.visible)} activeLabel={checked(row.visible) ? 'Visible' : 'Hidden'} disabled={disabled} mode={panel?.index === index ? panel.mode : null} onMode={(mode) => setPanel(mode ? { index, mode } : null)} onToggle={(visible) => updateSection(index, 'visible', visible)} onDuplicate={() => { const copy = { ...row, id: `${slugify(text(row.id) || 'section')}-copy`, name: `${text(row.name) || 'Section'} copy`, visible: false }; commitSections([...rows.slice(0, index + 1), copy, ...rows.slice(index + 1)]); setPanel({ index: index + 1, mode: 'edit' }) }} onRemove={() => removeSection(index)}
+      <div className={styles.collectionList}>{rows.map((row, index) => {
+        const items = sectionItems(index)
+        const builtIn = text(row.kind) === 'content-slot'
+        return <CollectionItem key={`${text(row.id)}-${index}`} index={index} kind={builtIn ? 'Built-in website section' : 'Page section'} title={text(row.name) || `Section ${index + 1}`} meta={text(row.eyebrow)} summary={text(row.heading)} active={checked(row.visible)} activeLabel={checked(row.visible) ? 'Visible' : 'Hidden'} disabled={disabled} structureLocked={builtIn} mode={panel?.index === index ? panel.mode : null} onMode={(mode) => setPanel(mode ? { index, mode } : null)} onToggle={(visible) => updateSection(index, 'visible', visible)} onDuplicate={() => { const copy = { ...row, kind: 'additional', id: `${slugify(text(row.id) || 'section')}-copy`, name: `${text(row.name) || 'Section'} copy`, visible: false }; commitSections([...rows.slice(0, index + 1), copy, ...rows.slice(index + 1)]); setPanel({ index: index + 1, mode: 'edit' }) }} onRemove={() => removeSection(index)}
         edit={<div className={styles.formGrid}>
           <label>Section name<input value={text(row.name)} onChange={(event) => updateSection(index, 'name', event.target.value)} maxLength={120} placeholder="Why choose HME" disabled={disabled} /><small>Only staff see this organising label.</small></label>
           <label>Small label<input value={text(row.eyebrow)} onChange={(event) => updateSection(index, 'eyebrow', event.target.value)} maxLength={120} disabled={disabled} /></label>
@@ -238,10 +258,22 @@ function PagesEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
           <label className={styles.spanTwo}>Text<textarea className={styles.articleBody} value={text(row.body)} onChange={(event) => updateSection(index, 'body', event.target.value)} maxLength={5000} disabled={disabled} /></label>
           <div className={styles.spanTwo}><label>Section image</label><ImageUploadField value={text(row.image)} alt={text(row.imageAlt)} disabled={disabled} spec={sectionImageSpec} onChange={(url) => updateSection(index, 'image', url)} /></div>
           {text(row.image) && <label className={styles.spanTwo}>Image description<input value={text(row.imageAlt)} onChange={(event) => updateSection(index, 'imageAlt', event.target.value)} maxLength={180} disabled={disabled} /></label>}
-          <label className={styles.spanTwo}>Section ID<input value={text(row.id)} onChange={(event) => updateSection(index, 'id', slugify(event.target.value))} disabled={disabled} /><small>Technical identifier. Keep it short and unique on this page.</small></label>
+          {!builtIn && <label className={styles.spanTwo}>Section ID<input value={text(row.id)} onChange={(event) => updateSection(index, 'id', slugify(event.target.value))} disabled={disabled} /><small>Technical identifier. Keep it short and unique on this page.</small></label>}
+          <div className={`${styles.spanTwo} ${styles.sectionItemsEditor}`}>
+            <div className={styles.sectionItemsHead}><div><strong>Cards or list items</strong><small>Each box below controls one item on the website.</small></div><button type="button" onClick={() => addSectionItem(index)} disabled={disabled}><Plus size={15} /> Add item</button></div>
+            {items.map((item, itemIndex) => <article className={styles.sectionItemEditor} key={`${text(item.id)}-${itemIndex}`}>
+              <div className={styles.sectionItemBar}><strong>Item {itemIndex + 1}</strong><label><input type="checkbox" checked={checked(item.active)} onChange={(event) => updateSectionItem(index, itemIndex, 'active', event.target.checked)} disabled={disabled} /> Show</label><button type="button" title="Delete item" onClick={() => removeSectionItem(index, itemIndex)} disabled={disabled}><Trash2 size={15} /></button></div>
+              <div className={styles.formGrid}>
+                <label>Title<input value={text(item.title)} onChange={(event) => updateSectionItem(index, itemIndex, 'title', event.target.value)} maxLength={180} disabled={disabled} /></label>
+                <label>Number or small label<input value={text(item.meta)} onChange={(event) => updateSectionItem(index, itemIndex, 'meta', event.target.value)} maxLength={80} placeholder="Optional: 01" disabled={disabled} /></label>
+                <label className={styles.spanTwo}>Description<textarea value={text(item.body)} onChange={(event) => updateSectionItem(index, itemIndex, 'body', event.target.value)} maxLength={2000} disabled={disabled} /></label>
+              </div>
+            </article>)}
+            {items.length === 0 && <div className={styles.blankState}>No cards in this section yet. Select “Add item” to create one.</div>}
+          </div>
         </div>}
-        preview={<PreviewCard image={text(row.image)} imageAlt={text(row.imageAlt)} eyebrow={text(row.eyebrow)} title={text(row.heading) || text(row.name)} body={text(row.body)} />}
-      />)}</div>
+        preview={<><PreviewCard image={text(row.image)} imageAlt={text(row.imageAlt)} eyebrow={text(row.eyebrow)} title={text(row.heading) || text(row.name)} body={text(row.body)} />{items.length > 0 && <div className={styles.sectionItemsPreview}>{items.filter((item) => checked(item.active)).map((item, itemIndex) => <article key={itemIndex}><small>{text(item.meta)}</small><strong>{text(item.title)}</strong><p>{text(item.body)}</p></article>)}</div>}</>}
+      />})}</div>
       {rows.length === 0 && <div className={styles.blankState}>No extra managed sections yet. The existing page design remains visible.</div>}
     </section>
   </div>
