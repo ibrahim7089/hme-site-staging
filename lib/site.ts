@@ -15,7 +15,7 @@ export const site = {
   msbNo: "202101028197",
   social: {
     facebook: "https://www.facebook.com/hmeremit",
-    instagram: "https://www.instagram.com/hme_remit/",
+    instagram: "https://www.instagram.com/hasanimunawarahexchangesdnbhd/",
     tiktok: "https://www.tiktok.com/@hmemoneychanger",
     linkedin: "https://www.linkedin.com/company/hasani-munawarah-exchange-sdn-bhd/",
   },
