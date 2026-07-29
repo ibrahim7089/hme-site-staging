@@ -5,7 +5,7 @@ import type { Client, Transaction } from '@libsql/client'
 import type { CmsUser } from './cms-auth'
 import { ensureCmsSchema } from './cms-db'
 import { CmsWorkflowError } from './cms-service'
-import { enquiryTypeLabels, type EnquiryPayload, type EnquiryType } from './enquiry'
+import { enquiryTypeLabels, enquiryTypes, type EnquiryPayload, type EnquiryType } from './enquiry'
 import { site } from './site'
 
 export type EnquiryStatus = 'NEW' | 'IN_PROGRESS' | 'RESOLVED' | 'ARCHIVED'
@@ -34,11 +34,13 @@ export type EnquiryRecord = {
 
 export type EnquiryNotificationSettings = {
   notificationEmail: string
+  routing: Record<EnquiryType, string>
   source: 'admin' | 'server-default'
   updatedByName: string
   updatedAt: string | null
   history: Array<{
     id: number
+    enquiryType: EnquiryType | null
     oldValue: string
     newValue: string
     actorName: string
@@ -48,6 +50,27 @@ export type EnquiryNotificationSettings = {
 
 type Executor = Pick<Client, 'execute'> | Pick<Transaction, 'execute'>
 const enquiryNotificationEmailKey = 'enquiry_notification_email'
+const enquiryNotificationRoutePrefix = 'enquiry_notification_email_'
+
+function emptyEnquiryRouting(): Record<EnquiryType, string> {
+  return {
+    general: '',
+    rates: '',
+    transfer: '',
+    booking: '',
+    business: '',
+    agent: '',
+    career: '',
+    complaint: '',
+    privacy: '',
+  }
+}
+
+function typeFromSettingKey(settingKey: string): EnquiryType | null {
+  if (!settingKey.startsWith(enquiryNotificationRoutePrefix)) return null
+  const type = settingKey.slice(enquiryNotificationRoutePrefix.length)
+  return type in enquiryTypeLabels ? type as EnquiryType : null
+}
 
 function mapEnquiry(row: Record<string, unknown> | undefined): EnquiryRecord | null {
   if (!row) return null
@@ -227,30 +250,44 @@ async function sendEmail(input: {
 
 export async function getEnquiryNotificationSettings(): Promise<EnquiryNotificationSettings> {
   const db = await ensureCmsSchema()
-  const [settingResult, historyResult] = await Promise.all([
+  const [settingsResult, historyResult] = await Promise.all([
     db.execute({
-      sql: `SELECT setting_value, updated_by_name, updated_at
-        FROM cms_settings WHERE setting_key = ? LIMIT 1`,
-      args: [enquiryNotificationEmailKey],
+      sql: `SELECT setting_key, setting_value, updated_by_name, updated_at
+        FROM cms_settings
+        WHERE setting_key = ? OR setting_key LIKE ?`,
+      args: [enquiryNotificationEmailKey, `${enquiryNotificationRoutePrefix}%`],
     }),
     db.execute({
-      sql: `SELECT id, old_value, new_value, actor_name, created_at
+      sql: `SELECT id, setting_key, old_value, new_value, actor_name, created_at
         FROM cms_setting_events
-        WHERE setting_key = ?
+        WHERE setting_key = ? OR setting_key LIKE ?
         ORDER BY created_at DESC, id DESC
-        LIMIT 10`,
-      args: [enquiryNotificationEmailKey],
+        LIMIT 20`,
+      args: [enquiryNotificationEmailKey, `${enquiryNotificationRoutePrefix}%`],
     }),
   ])
-  const setting = settingResult.rows[0]
-  const configuredEmail = String(setting?.setting_value || '').trim().toLowerCase()
+  const settings = new Map(settingsResult.rows.map((row) => [
+    String(row.setting_key),
+    row,
+  ]))
+  const generalSetting = settings.get(enquiryNotificationEmailKey)
+  const configuredEmail = String(generalSetting?.setting_value || '').trim().toLowerCase()
+  const routing = emptyEnquiryRouting()
+  for (const type of enquiryTypes) {
+    routing[type] = String(settings.get(`${enquiryNotificationRoutePrefix}${type}`)?.setting_value || '').trim().toLowerCase()
+  }
+  const latestSetting = settingsResult.rows
+    .filter((row) => row.updated_at)
+    .sort((a, b) => String(b.updated_at).localeCompare(String(a.updated_at)))[0]
   return {
     notificationEmail: configuredEmail || process.env.ENQUIRY_TO_EMAIL?.trim().toLowerCase() || site.email,
+    routing,
     source: configuredEmail ? 'admin' : 'server-default',
-    updatedByName: String(setting?.updated_by_name || ''),
-    updatedAt: setting?.updated_at ? String(setting.updated_at) : null,
+    updatedByName: String(latestSetting?.updated_by_name || ''),
+    updatedAt: latestSetting?.updated_at ? String(latestSetting.updated_at) : null,
     history: historyResult.rows.map((row) => ({
       id: Number(row.id),
+      enquiryType: typeFromSettingKey(String(row.setting_key || '')),
       oldValue: String(row.old_value || ''),
       newValue: String(row.new_value || ''),
       actorName: String(row.actor_name || ''),
@@ -259,8 +296,9 @@ export async function getEnquiryNotificationSettings(): Promise<EnquiryNotificat
   }
 }
 
-export async function updateEnquiryNotificationEmail(input: {
+export async function updateEnquiryNotificationSettings(input: {
   notificationEmail: string
+  routing: Record<EnquiryType, string>
   user: CmsUser
   requestId: string
 }) {
@@ -268,12 +306,20 @@ export async function updateEnquiryNotificationEmail(input: {
   const notificationEmail = input.notificationEmail.trim().toLowerCase()
   const tx = await db.transaction('write')
   try {
-    const existingResult = await tx.execute({
-      sql: 'SELECT setting_value FROM cms_settings WHERE setting_key = ? LIMIT 1',
-      args: [enquiryNotificationEmailKey],
-    })
-    const oldValue = String(existingResult.rows[0]?.setting_value || '')
-    if (oldValue !== notificationEmail) {
+    const updates: Array<{ settingKey: string; value: string }> = [
+      { settingKey: enquiryNotificationEmailKey, value: notificationEmail },
+      ...enquiryTypes.map((type) => ({
+        settingKey: `${enquiryNotificationRoutePrefix}${type}`,
+        value: input.routing[type].trim().toLowerCase(),
+      })),
+    ]
+    for (const update of updates) {
+      const existingResult = await tx.execute({
+        sql: 'SELECT setting_value FROM cms_settings WHERE setting_key = ? LIMIT 1',
+        args: [update.settingKey],
+      })
+      const oldValue = String(existingResult.rows[0]?.setting_value || '')
+      if (oldValue === update.value) continue
       await tx.execute({
         sql: `INSERT INTO cms_settings (
           setting_key, setting_value, updated_by_user_id, updated_by_name, updated_at
@@ -283,16 +329,16 @@ export async function updateEnquiryNotificationEmail(input: {
           updated_by_user_id = excluded.updated_by_user_id,
           updated_by_name = excluded.updated_by_name,
           updated_at = datetime('now')`,
-        args: [enquiryNotificationEmailKey, notificationEmail, input.user.id, input.user.name],
+        args: [update.settingKey, update.value, input.user.id, input.user.name],
       })
       await tx.execute({
         sql: `INSERT INTO cms_setting_events (
           setting_key, old_value, new_value, actor_user_id, actor_name, request_id
         ) VALUES (?, ?, ?, ?, ?, ?)`,
         args: [
-          enquiryNotificationEmailKey,
+          update.settingKey,
           oldValue,
-          notificationEmail,
+          update.value,
           input.user.id,
           input.user.name,
           input.requestId,
@@ -311,7 +357,8 @@ export async function updateEnquiryNotificationEmail(input: {
 
 export async function deliverEnquiryEmails(enquiry: EnquiryRecord, requestId: string) {
   const notificationSettings = await getEnquiryNotificationSettings()
-  const notificationEmail = notificationSettings.notificationEmail
+  const notificationEmail = notificationSettings.routing[enquiry.enquiry_type]
+    || notificationSettings.notificationEmail
   const typeLabel = enquiryTypeLabels[enquiry.enquiry_type]
   const subjectDetail = enquiry.subject ? ` — ${enquiry.subject.replace(/[\r\n]+/g, ' ')}` : ''
   const submittedAt = new Intl.DateTimeFormat('en-MY', {
@@ -369,7 +416,7 @@ export async function deliverEnquiryEmails(enquiry: EnquiryRecord, requestId: st
     enquiryId: enquiry.id,
     status: staff.ok ? 'SENT' : 'FAILED',
     requestId,
-    note: staff.reason,
+    note: staff.ok ? `Routed to ${notificationEmail}` : staff.reason,
   })
 
   if (!staff.ok) return false

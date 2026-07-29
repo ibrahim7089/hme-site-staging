@@ -3,14 +3,30 @@ import { assertCmsOrigin, requireCmsPermission } from '@/lib/cms-auth'
 import { cmsError, cmsJson, cmsRequestId } from '@/lib/cms-http'
 import {
   getEnquiryNotificationSettings,
-  updateEnquiryNotificationEmail,
+  updateEnquiryNotificationSettings,
 } from '@/lib/enquiry-service'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
+const optionalEmail = z.union([
+  z.literal(''),
+  z.string().trim().email('Enter a valid email address').max(254),
+])
+
 const settingsSchema = z.object({
   notificationEmail: z.string().trim().email('Enter a valid email address').max(254),
+  routing: z.object({
+    general: optionalEmail,
+    rates: optionalEmail,
+    transfer: optionalEmail,
+    booking: optionalEmail,
+    business: optionalEmail,
+    agent: optionalEmail,
+    career: optionalEmail,
+    complaint: optionalEmail,
+    privacy: optionalEmail,
+  }).strict(),
 }).strict()
 
 export async function GET(request: Request) {
@@ -35,8 +51,9 @@ export async function PATCH(request: Request) {
         code: 'VALIDATION_ERROR',
       }, 400, requestId)
     }
-    return cmsJson(await updateEnquiryNotificationEmail({
+    return cmsJson(await updateEnquiryNotificationSettings({
       notificationEmail: parsed.data.notificationEmail,
+      routing: parsed.data.routing,
       user,
       requestId,
     }), 200, requestId)

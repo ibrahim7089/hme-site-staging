@@ -43,16 +43,30 @@ type EnquiryResponse = {
 }
 type NotificationSettings = {
   notificationEmail: string
+  routing: Record<EnquiryType, string>
   source: 'admin' | 'server-default'
   updatedByName: string
   updatedAt: string | null
   history: Array<{
     id: number
+    enquiryType: EnquiryType | null
     oldValue: string
     newValue: string
     actorName: string
     createdAt: string
   }>
+}
+
+const emptyNotificationRouting: Record<EnquiryType, string> = {
+  general: '',
+  rates: '',
+  transfer: '',
+  booking: '',
+  business: '',
+  agent: '',
+  career: '',
+  complaint: '',
+  privacy: '',
 }
 
 const statusLabels: Record<EnquiryStatus, string> = {
@@ -132,6 +146,7 @@ export default function EnquiriesManager({ canManageSettings }: { canManageSetti
   const [settingsBusy, setSettingsBusy] = useState(false)
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings | null>(null)
   const [notificationEmail, setNotificationEmail] = useState('')
+  const [notificationRouting, setNotificationRouting] = useState<Record<EnquiryType, string>>({ ...emptyNotificationRouting })
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
 
@@ -166,6 +181,7 @@ export default function EnquiriesManager({ canManageSettings }: { canManageSetti
       .then((result: NotificationSettings) => {
         setNotificationSettings(result)
         setNotificationEmail(result.notificationEmail)
+        setNotificationRouting(result.routing)
       })
       .catch((caught) => setError(caught instanceof Error ? caught.message : 'Unable to load notification settings'))
   }, [canManageSettings])
@@ -246,11 +262,12 @@ export default function EnquiriesManager({ canManageSettings }: { canManageSetti
     try {
       const result = await adminApi('/api/admin/enquiries/settings', {
         method: 'PATCH',
-        body: JSON.stringify({ notificationEmail }),
+        body: JSON.stringify({ notificationEmail, routing: notificationRouting }),
       }) as NotificationSettings
       setNotificationSettings(result)
       setNotificationEmail(result.notificationEmail)
-      flash('Notification email updated')
+      setNotificationRouting(result.routing)
+      flash('Enquiry email routing updated')
       setError('')
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Unable to update notification email')
@@ -278,12 +295,12 @@ export default function EnquiriesManager({ canManageSettings }: { canManageSetti
         <span className={styles.notificationSettingsIcon}><Settings2 size={20} /></span>
         <div>
           <p className={styles.kicker}>Admin settings</p>
-          <h3>Where should new enquiry alerts go?</h3>
-          <p>Every enquiry is still saved in this inbox. This address receives an email alert and can be changed without editing the website.</p>
+          <h3>Route enquiries to the right department</h3>
+          <p>Set one default inbox, then add a department email for any category that needs separate handling. Every enquiry is still saved here first.</p>
         </div>
       </div>
-      <form onSubmit={saveNotificationEmail}>
-        <label>Notification email
+      <form className={styles.notificationRoutingForm} onSubmit={saveNotificationEmail}>
+        <label className={styles.notificationDefaultEmail}>Default enquiry inbox
           <span>
             <Mail size={16} />
             <input
@@ -295,9 +312,25 @@ export default function EnquiriesManager({ canManageSettings }: { canManageSetti
               required
             />
           </span>
+          <small>Used whenever a category below does not have its own department email.</small>
         </label>
+        <div className={styles.notificationRoutingGrid}>
+          {enquiryTypes.map((type) => <label key={type}>
+            <span className={styles.notificationRouteLabel}>{enquiryTypeLabels[type]}</span>
+            <span>
+              <Mail size={15} />
+              <input
+                type="email"
+                value={notificationRouting[type]}
+                onChange={(event) => setNotificationRouting((current) => ({ ...current, [type]: event.target.value }))}
+                maxLength={254}
+                placeholder={`Uses ${notificationEmail || 'default inbox'}`}
+              />
+            </span>
+          </label>)}
+        </div>
         <button className={styles.primaryButton} disabled={settingsBusy || !notificationEmail.trim()}>
-          <Save size={16} /> {settingsBusy ? 'Saving...' : 'Save email'}
+          <Save size={16} /> {settingsBusy ? 'Saving...' : 'Save email routing'}
         </button>
       </form>
       <div className={styles.notificationSettingsNote}>
@@ -308,7 +341,7 @@ export default function EnquiriesManager({ canManageSettings }: { canManageSetti
         <strong>Recent changes</strong>
         {notificationSettings.history.slice(0, 3).map((entry) => <span key={entry.id}>
           <Mail size={13} />
-          <b>{entry.newValue}</b>
+          <b>{entry.enquiryType ? enquiryTypeLabels[entry.enquiryType] : 'Default inbox'}: {entry.newValue || 'Uses default inbox'}</b>
           <small>by {entry.actorName} · {formatDate(entry.createdAt)}</small>
         </span>)}
       </div>}
