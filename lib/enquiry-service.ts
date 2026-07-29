@@ -460,12 +460,16 @@ export async function createEnquiryCategory(input: {
 
 export async function updateEnquiryCategory(input: {
   key: string
-  active: boolean
+  active?: boolean
+  label?: string
   user: CmsUser
   requestId: string
 }) {
-  if (input.key === 'general' && !input.active) {
+  if (input.key === 'general' && input.active === false) {
     throw new CmsWorkflowError(400, 'GENERAL_REQUIRED', 'General enquiry must remain available')
+  }
+  if (input.active === undefined && input.label === undefined) {
+    throw new CmsWorkflowError(400, 'NO_CATEGORY_CHANGES', 'Change the name or visibility first')
   }
   const db = await ensureCmsSchema()
   const tx = await db.transaction('write')
@@ -476,14 +480,30 @@ export async function updateEnquiryCategory(input: {
     })
     const category = existing.rows[0]
     if (!category) throw new CmsWorkflowError(404, 'CATEGORY_NOT_FOUND', 'Enquiry type not found')
-    const oldValue = Number(category.active) === 1 ? 'ACTIVE' : 'INACTIVE'
-    const newValue = input.active ? 'ACTIVE' : 'INACTIVE'
-    if (oldValue !== newValue) {
+    const currentLabel = String(category.label)
+    const nextLabel = input.label === undefined
+      ? currentLabel
+      : input.label.trim().replace(/\s+/g, ' ')
+    if (nextLabel.length < 3 || nextLabel.length > 80) {
+      throw new CmsWorkflowError(400, 'INVALID_CATEGORY_NAME', 'Enter a name between 3 and 80 characters')
+    }
+    if (nextLabel.toLowerCase() !== currentLabel.toLowerCase()) {
+      const duplicate = await tx.execute({
+        sql: 'SELECT category_key FROM enquiry_categories WHERE lower(label) = lower(?) AND category_key <> ? LIMIT 1',
+        args: [nextLabel, input.key],
+      })
+      if (duplicate.rows[0]) {
+        throw new CmsWorkflowError(409, 'CATEGORY_NAME_EXISTS', 'Another enquiry type already uses this name')
+      }
+    }
+    const currentActive = Number(category.active) === 1
+    const nextActive = input.active ?? currentActive
+    if (currentLabel !== nextLabel || currentActive !== nextActive) {
       await tx.execute({
         sql: `UPDATE enquiry_categories SET
-          active = ?, updated_by_user_id = ?, updated_by_name = ?, updated_at = datetime('now')
+          label = ?, active = ?, updated_by_user_id = ?, updated_by_name = ?, updated_at = datetime('now')
           WHERE category_key = ?`,
-        args: [input.active ? 1 : 0, input.user.id, input.user.name, input.key],
+        args: [nextLabel, nextActive ? 1 : 0, input.user.id, input.user.name, input.key],
       })
       await tx.execute({
         sql: `INSERT INTO cms_setting_events (
@@ -491,8 +511,8 @@ export async function updateEnquiryCategory(input: {
         ) VALUES (?, ?, ?, ?, ?, ?)`,
         args: [
           `enquiry_category_${input.key}`,
-          oldValue,
-          newValue,
+          JSON.stringify({ label: currentLabel, active: currentActive }),
+          JSON.stringify({ label: nextLabel, active: nextActive }),
           input.user.id,
           input.user.name,
           input.requestId,
@@ -502,10 +522,89 @@ export async function updateEnquiryCategory(input: {
     await tx.commit()
     return {
       key: String(category.category_key),
-      label: String(category.label),
-      active: input.active,
+      label: nextLabel,
+      active: nextActive,
       builtIn: Number(category.built_in) === 1,
     } satisfies EnquiryCategory
+  } catch (error) {
+    if (!tx.closed) await tx.rollback()
+    throw error
+  } finally {
+    tx.close()
+  }
+}
+
+export async function deleteEnquiryCategory(input: {
+  key: string
+  confirmation: string
+  user: CmsUser
+  requestId: string
+}) {
+  const db = await ensureCmsSchema()
+  const tx = await db.transaction('write')
+  try {
+    const existing = await tx.execute({
+      sql: `SELECT category_key, label, built_in FROM enquiry_categories
+        WHERE category_key = ? LIMIT 1`,
+      args: [input.key],
+    })
+    const category = existing.rows[0]
+    if (!category) throw new CmsWorkflowError(404, 'CATEGORY_NOT_FOUND', 'Enquiry type not found')
+    const label = String(category.label)
+    if (Number(category.built_in) === 1) {
+      throw new CmsWorkflowError(400, 'BUILT_IN_CATEGORY', 'Built-in enquiry types can be renamed or hidden, but not deleted')
+    }
+    if (input.confirmation.trim() !== label) {
+      throw new CmsWorkflowError(400, 'CATEGORY_CONFIRMATION_MISMATCH', 'The confirmation name does not match')
+    }
+    const usage = await tx.execute({
+      sql: 'SELECT COUNT(*) AS total FROM enquiries WHERE enquiry_category_key = ?',
+      args: [input.key],
+    })
+    const enquiryCount = Number(usage.rows[0]?.total || 0)
+    if (enquiryCount > 0) {
+      throw new CmsWorkflowError(
+        409,
+        'CATEGORY_IN_USE',
+        `This type has ${enquiryCount} existing ${enquiryCount === 1 ? 'enquiry' : 'enquiries'}. Hide it instead to preserve those records.`,
+      )
+    }
+    const routeKey = `${enquiryNotificationRoutePrefix}${input.key}`
+    const routeResult = await tx.execute({
+      sql: 'SELECT setting_value FROM cms_settings WHERE setting_key = ? LIMIT 1',
+      args: [routeKey],
+    })
+    const routeValue = String(routeResult.rows[0]?.setting_value || '')
+    if (routeResult.rows[0]) {
+      await tx.execute({
+        sql: 'DELETE FROM cms_settings WHERE setting_key = ?',
+        args: [routeKey],
+      })
+      await tx.execute({
+        sql: `INSERT INTO cms_setting_events (
+          setting_key, old_value, new_value, actor_user_id, actor_name, request_id
+        ) VALUES (?, ?, '', ?, ?, ?)`,
+        args: [routeKey, routeValue, input.user.id, input.user.name, input.requestId],
+      })
+    }
+    await tx.execute({
+      sql: 'DELETE FROM enquiry_categories WHERE category_key = ?',
+      args: [input.key],
+    })
+    await tx.execute({
+      sql: `INSERT INTO cms_setting_events (
+        setting_key, old_value, new_value, actor_user_id, actor_name, request_id
+      ) VALUES (?, ?, 'DELETED', ?, ?, ?)`,
+      args: [
+        `enquiry_category_${input.key}`,
+        label,
+        input.user.id,
+        input.user.name,
+        input.requestId,
+      ],
+    })
+    await tx.commit()
+    return { deleted: true, key: input.key, label }
   } catch (error) {
     if (!tx.closed) await tx.rollback()
     throw error

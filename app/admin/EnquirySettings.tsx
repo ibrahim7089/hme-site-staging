@@ -13,6 +13,7 @@ import {
   Save,
   ShieldCheck,
   Tags,
+  Trash2,
 } from 'lucide-react'
 import type { EnquiryCategory, EnquiryType } from '@/lib/enquiry'
 import styles from './admin.module.css'
@@ -63,6 +64,7 @@ export default function EnquirySettings() {
   const [routing, setRouting] = useState<Record<EnquiryType, string>>({})
   const [selectedType, setSelectedType] = useState('general')
   const [newCategoryLabel, setNewCategoryLabel] = useState('')
+  const [categoryLabelDrafts, setCategoryLabelDrafts] = useState<Record<string, string>>({})
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
@@ -78,6 +80,9 @@ export default function EnquirySettings() {
     setSettings(result)
     setNotificationEmail(result.notificationEmail)
     setRouting(result.routing)
+    setCategoryLabelDrafts(Object.fromEntries(
+      result.categories.map((category) => [category.key, category.label]),
+    ))
     setSelectedType((current) => result.categories.some((category) => category.key === current)
       ? current
       : result.categories[0]?.key || 'general')
@@ -154,6 +159,56 @@ export default function EnquirySettings() {
       setError('')
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Unable to update enquiry type')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function saveCategoryName() {
+    if (!selectedCategory) return
+    const nextLabel = (categoryLabelDrafts[selectedCategory.key] || '').trim()
+    if (!nextLabel || nextLabel === selectedCategory.label) return
+    setBusy(true)
+    try {
+      await adminApi('/api/admin/enquiries/categories', {
+        method: 'PATCH',
+        body: JSON.stringify({ key: selectedCategory.key, label: nextLabel }),
+      })
+      const result = await adminApi('/api/admin/enquiries/settings') as NotificationSettings
+      applySettings(result)
+      flash(`Enquiry type renamed to ${nextLabel}`)
+      setError('')
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Unable to rename enquiry type')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function deleteCategory() {
+    if (!selectedCategory || selectedCategory.builtIn) return
+    const confirmed = window.confirm(
+      `Permanently delete "${selectedCategory.label}"?\n\nThis is available only when no enquiries use this type. The action cannot be undone.`,
+    )
+    if (!confirmed) return
+    const confirmation = window.prompt(`Type ${selectedCategory.label} to confirm deletion`)
+    if (confirmation === null) return
+    if (confirmation.trim() !== selectedCategory.label) {
+      setError('The name did not match. Nothing was deleted.')
+      return
+    }
+    setBusy(true)
+    try {
+      await adminApi('/api/admin/enquiries/categories', {
+        method: 'DELETE',
+        body: JSON.stringify({ key: selectedCategory.key, confirmation: confirmation.trim() }),
+      })
+      const result = await adminApi('/api/admin/enquiries/settings') as NotificationSettings
+      applySettings(result)
+      flash(`${selectedCategory.label} was permanently deleted`)
+      setError('')
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Unable to delete enquiry type')
     } finally {
       setBusy(false)
     }
@@ -267,11 +322,34 @@ export default function EnquirySettings() {
               </option>)}
             </select>
           </label>
-          <div>
+          <label>Display name
+            <input
+              value={selectedCategory ? categoryLabelDrafts[selectedCategory.key] || '' : ''}
+              onChange={(event) => {
+                if (!selectedCategory) return
+                setCategoryLabelDrafts((current) => ({
+                  ...current,
+                  [selectedCategory.key]: event.target.value,
+                }))
+              }}
+              minLength={3}
+              maxLength={80}
+              disabled={!selectedCategory}
+            />
+          </label>
+          <div className={styles.settingsCategoryActions}>
             <span className={selectedCategory?.active ? styles.categoryVisible : styles.categoryHidden}>
               {selectedCategory?.active ? <Eye size={15} /> : <EyeOff size={15} />}
               {selectedCategory?.active ? 'Visible to customers' : 'Hidden from customers'}
             </span>
+            <button
+              type="button"
+              onClick={() => void saveCategoryName()}
+              disabled={busy || !selectedCategory
+                || (categoryLabelDrafts[selectedCategory.key] || '').trim() === selectedCategory.label}
+            >
+              <Save size={16} /> Save name
+            </button>
             <button
               type="button"
               onClick={() => void toggleCategory()}
@@ -280,8 +358,20 @@ export default function EnquirySettings() {
               {selectedCategory?.active ? <EyeOff size={16} /> : <Eye size={16} />}
               {selectedCategory?.active ? 'Hide from form' : 'Show on form'}
             </button>
+            {!selectedCategory?.builtIn && <button
+              type="button"
+              className={styles.settingsDeleteButton}
+              onClick={() => void deleteCategory()}
+              disabled={busy || !selectedCategory}
+            >
+              <Trash2 size={16} /> Delete type
+            </button>}
           </div>
-          {selectedType === 'general' && <small>General enquiry always remains available as the safe fallback.</small>}
+          {selectedType === 'general'
+            ? <small>General enquiry always remains available as the safe fallback.</small>
+            : selectedCategory?.builtIn
+              ? <small>This is a built-in type. You can rename or hide it, but it cannot be permanently deleted.</small>
+              : <small>Custom types can be permanently deleted only when no enquiry records use them.</small>}
         </div>
       </div>
     </article>
