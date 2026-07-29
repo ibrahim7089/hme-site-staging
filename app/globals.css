@@ -243,9 +243,9 @@
     102deg,
     #fff 0%,
     #fff 43%,
-    #dcecff 62%,
-    #ff3656 84%,
-    #ff94a7 100%
+    #eaf5ff 62%,
+    #8fd4ff 84%,
+    #c0edff 100%
   );
   background-position: 0 0;
   background-size: 240% 100%;
@@ -265,7 +265,7 @@
     background-position: 100% 0;
     filter:
       drop-shadow(0 8px 24px rgba(7, 30, 68, 0.24))
-      drop-shadow(0 0 24px rgba(232, 9, 44, 0.2));
+      drop-shadow(0 0 26px rgba(93, 190, 255, 0.26));
     transform: translateX(6px) scale(1.055);
   }
 }
