@@ -16,17 +16,14 @@ const trustPoints = [
   {
     icon: ShieldCheck,
     title: "Licensed & regulated",
-    copy: "By Bank Negara Malaysia",
   },
   {
     icon: UsersRound,
     title: "Trusted nationwide",
-    copy: "Individuals & businesses",
   },
   {
     icon: Globe2,
     title: "50+ locations",
-    copy: "Across Malaysia",
   },
 ];
 
@@ -117,22 +114,17 @@ export default async function VideoHero() {
             className="hero-assurance-rail mt-9 hidden w-[570px] grid-cols-3 overflow-hidden lg:grid xl:w-[650px]"
             aria-label="Why customers trust HME"
           >
-            {trustPoints.map(({ icon: Icon, title, copy }) => (
+            {trustPoints.map(({ icon: Icon, title }) => (
               <li
                 key={title}
-                className="hero-assurance-item group relative flex min-h-[126px] min-w-0 flex-col items-start justify-center gap-3 px-[18px] py-[18px] xl:px-5"
+                className="hero-assurance-item group relative flex min-h-[110px] min-w-0 flex-col items-start justify-center gap-3 px-[18px] py-4 xl:px-5"
               >
                 <span className="hero-assurance-seal grid h-11 w-11 flex-none place-items-center rounded-full">
                   <Icon className="h-5 w-5 text-[#D5E9FF]" strokeWidth={1.9} />
                 </span>
-                <span className="min-w-0">
-                  <b className="block font-display text-[14px] font-extrabold capitalize leading-[1.15] tracking-[-0.025em] text-white xl:text-[15px]">
-                    {title}
-                  </b>
-                  <small className="mt-1.5 block text-[9px] font-bold uppercase leading-[1.35] tracking-[0.07em] text-[#AFCFF4] xl:text-[10px]">
-                    {copy}
-                  </small>
-                </span>
+                <b className="block font-display text-[14px] font-extrabold capitalize leading-[1.15] tracking-[-0.025em] text-white xl:text-[15px]">
+                  {title}
+                </b>
                 <span
                   className="absolute bottom-0 left-4 right-4 h-px origin-left scale-x-0 bg-gradient-to-r from-[#70B7FF] to-transparent transition-transform duration-300 group-hover:scale-x-100"
                   aria-hidden="true"
