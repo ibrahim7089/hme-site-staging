@@ -162,8 +162,8 @@ export default async function VideoHero() {
               key={title}
               className={`hero-benefit-item flex w-fit items-center gap-3.5 ${offset}`}
             >
-              <span className="grid h-11 w-11 flex-none place-items-center rounded-full border border-white/70 bg-white/95 shadow-[0_9px_25px_rgba(7,30,68,0.2)]">
-                <Icon className="h-[19px] w-[19px] text-navy" strokeWidth={1.9} />
+              <span className="hero-benefit-icon grid h-11 w-11 flex-none place-items-center rounded-full border border-white/70 bg-white/95 shadow-[0_9px_25px_rgba(7,30,68,0.2)]">
+                <Icon className="hero-benefit-glyph h-[19px] w-[19px] text-navy" strokeWidth={1.9} />
               </span>
               <b className="hero-benefit-title block whitespace-nowrap font-display text-[18px] font-extrabold capitalize leading-none tracking-[-0.025em]">
                 {title}
