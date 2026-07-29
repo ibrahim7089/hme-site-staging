@@ -120,16 +120,16 @@ export default async function VideoHero() {
             {trustPoints.map(({ icon: Icon, title, copy }) => (
               <li
                 key={title}
-                className="hero-assurance-item group relative flex min-w-0 items-center gap-3 px-4 py-4"
+                className="hero-assurance-item group relative flex min-h-[126px] min-w-0 flex-col items-start justify-center gap-3 px-[18px] py-[18px] xl:px-5"
               >
-                <span className="hero-assurance-seal grid h-12 w-12 flex-none place-items-center rounded-full">
-                  <Icon className="h-[22px] w-[22px] text-[#D5E9FF]" strokeWidth={1.9} />
+                <span className="hero-assurance-seal grid h-11 w-11 flex-none place-items-center rounded-full">
+                  <Icon className="h-5 w-5 text-[#D5E9FF]" strokeWidth={1.9} />
                 </span>
                 <span className="min-w-0">
-                  <b className="block whitespace-nowrap font-display text-[14px] font-extrabold capitalize leading-tight tracking-[-0.025em] text-white xl:text-[15px]">
+                  <b className="block font-display text-[14px] font-extrabold capitalize leading-[1.15] tracking-[-0.025em] text-white xl:text-[15px]">
                     {title}
                   </b>
-                  <small className="mt-1.5 block whitespace-nowrap text-[9px] font-bold uppercase leading-tight tracking-[0.07em] text-[#AFCFF4] xl:text-[10px]">
+                  <small className="mt-1.5 block text-[9px] font-bold uppercase leading-[1.35] tracking-[0.07em] text-[#AFCFF4] xl:text-[10px]">
                     {copy}
                   </small>
                 </span>
