@@ -122,7 +122,7 @@ export default async function VideoHero() {
                 <span className="hero-assurance-seal grid h-11 w-11 flex-none place-items-center rounded-full">
                   <Icon className="h-5 w-5 text-[#D5E9FF]" strokeWidth={1.9} />
                 </span>
-                <b className="block font-display text-[14px] font-extrabold capitalize leading-[1.15] tracking-[-0.025em] text-white xl:text-[15px]">
+                <b className="hero-assurance-title block font-display text-[14px] font-extrabold capitalize leading-[1.15] tracking-[-0.025em] text-white xl:text-[15px]">
                   {title}
                 </b>
                 <span

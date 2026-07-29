@@ -148,6 +148,18 @@
   transform: translateY(-2px);
 }
 
+.hero-assurance-title {
+  transform-origin: center;
+  transition:
+    transform 220ms ease,
+    text-shadow 220ms ease;
+}
+
+.hero-assurance-item:hover .hero-assurance-title {
+  text-shadow: 0 5px 18px rgba(116, 181, 255, 0.28);
+  transform: scale(1.08);
+}
+
 .hero-assurance-seal {
   border: 1px solid rgba(181, 216, 255, 0.38);
   background:
@@ -168,7 +180,7 @@
     0 12px 28px rgba(1, 17, 45, 0.34),
     0 0 22px rgba(94, 166, 244, 0.16),
     inset 0 0 0 4px rgba(130, 186, 247, 0.07);
-  transform: scale(1.04);
+  transform: scale(1.13);
 }
 
 .hero-copy {
@@ -259,6 +271,7 @@
   .hero-network,
   .hero-assurance-item,
   .hero-assurance-seal,
+  .hero-assurance-title,
   .scroll-reveal,
   ::view-transition-old(root),
   ::view-transition-new(root) {
