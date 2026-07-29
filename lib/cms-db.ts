@@ -155,6 +155,21 @@ const schemaStatements = [
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     FOREIGN KEY(enquiry_id) REFERENCES enquiries(id)
   )`,
+  `CREATE TABLE IF NOT EXISTS enquiry_deletion_authorizations (
+    enquiry_id INTEGER PRIMARY KEY,
+    request_id TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`,
+  `CREATE TABLE IF NOT EXISTS enquiry_deletion_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    reference TEXT NOT NULL,
+    enquiry_type TEXT NOT NULL,
+    actor_user_id INTEGER NOT NULL,
+    actor_name TEXT NOT NULL,
+    request_id TEXT NOT NULL,
+    deleted_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY(actor_user_id) REFERENCES cms_users(id)
+  )`,
   `CREATE TABLE IF NOT EXISTS cms_settings (
     setting_key TEXT PRIMARY KEY,
     setting_value TEXT NOT NULL,
@@ -181,6 +196,7 @@ const schemaStatements = [
   'CREATE INDEX IF NOT EXISTS idx_enquiries_type ON enquiries(enquiry_type, created_at DESC)',
   'CREATE INDEX IF NOT EXISTS idx_enquiries_assignee ON enquiries(assigned_to_user_id, status, updated_at DESC)',
   'CREATE INDEX IF NOT EXISTS idx_enquiry_events_item ON enquiry_events(enquiry_id, created_at DESC)',
+  'CREATE INDEX IF NOT EXISTS idx_enquiry_deletion_events_date ON enquiry_deletion_events(deleted_at DESC)',
   'CREATE INDEX IF NOT EXISTS idx_cms_setting_events_key ON cms_setting_events(setting_key, created_at DESC)',
   `CREATE TRIGGER IF NOT EXISTS cms_events_immutable_update
     BEFORE UPDATE ON cms_events
@@ -199,8 +215,22 @@ const schemaStatements = [
     END`,
   `CREATE TRIGGER IF NOT EXISTS enquiry_events_immutable_delete
     BEFORE DELETE ON enquiry_events
+    WHEN NOT EXISTS (
+      SELECT 1 FROM enquiry_deletion_authorizations
+      WHERE enquiry_id = OLD.enquiry_id
+    )
     BEGIN
       SELECT RAISE(ABORT, 'Enquiry events are immutable');
+    END`,
+  `CREATE TRIGGER IF NOT EXISTS enquiry_deletion_events_immutable_update
+    BEFORE UPDATE ON enquiry_deletion_events
+    BEGIN
+      SELECT RAISE(ABORT, 'Enquiry deletion events are immutable');
+    END`,
+  `CREATE TRIGGER IF NOT EXISTS enquiry_deletion_events_immutable_delete
+    BEFORE DELETE ON enquiry_deletion_events
+    BEGIN
+      SELECT RAISE(ABORT, 'Enquiry deletion events are immutable');
     END`,
   `CREATE TRIGGER IF NOT EXISTS cms_setting_events_immutable_update
     BEFORE UPDATE ON cms_setting_events
@@ -213,6 +243,34 @@ const schemaStatements = [
       SELECT RAISE(ABORT, 'CMS setting events are immutable');
     END`,
 ]
+
+async function ensureEnquiryDeletionSchema(db: Client) {
+  const tx = await db.transaction('write')
+  try {
+    const existing = await tx.execute(
+      "SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = 'enquiry_events_immutable_delete' LIMIT 1",
+    )
+    const triggerSql = String(existing.rows[0]?.sql || '')
+    if (!triggerSql.includes('enquiry_deletion_authorizations')) {
+      await tx.execute('DROP TRIGGER IF EXISTS enquiry_events_immutable_delete')
+      await tx.execute(`CREATE TRIGGER enquiry_events_immutable_delete
+        BEFORE DELETE ON enquiry_events
+        WHEN NOT EXISTS (
+          SELECT 1 FROM enquiry_deletion_authorizations
+          WHERE enquiry_id = OLD.enquiry_id
+        )
+        BEGIN
+          SELECT RAISE(ABORT, 'Enquiry events are immutable');
+        END`)
+    }
+    await tx.commit()
+  } catch (error) {
+    if (!tx.closed) await tx.rollback()
+    throw error
+  } finally {
+    tx.close()
+  }
+}
 
 
 async function migrateCmsItemsContentTypes(db: Client) {
@@ -312,6 +370,7 @@ export async function ensureCmsSchema() {
         await db.execute(statement)
       }
       await migrateCmsItemsContentTypes(db)
+      await ensureEnquiryDeletionSchema(db)
       await seedFirstAdmin(db)
     })().catch((error) => {
       globalThis.hmeCmsSchemaPromise = undefined

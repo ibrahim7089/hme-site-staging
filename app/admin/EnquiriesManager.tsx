@@ -18,6 +18,7 @@ import {
   Search,
   Settings2,
   ShieldCheck,
+  Trash2,
   UserRound,
 } from 'lucide-react'
 import { enquiryTypeLabels, enquiryTypes, type EnquiryType } from '@/lib/enquiry'
@@ -256,6 +257,36 @@ export default function EnquiriesManager({ canManageSettings }: { canManageSetti
     }
   }
 
+  async function deleteSelectedEnquiry() {
+    if (!selected || !canManageSettings) return
+    const confirmed = window.confirm(
+      `Permanently delete ${selected.reference}?\n\nThis removes the customer details, message, notes and activity history. This action cannot be undone.`,
+    )
+    if (!confirmed) return
+    const typedReference = window.prompt(`Type ${selected.reference} to confirm permanent deletion`)
+    if (typedReference === null) return
+    if (typedReference.trim() !== selected.reference) {
+      setError('The reference did not match. Nothing was deleted.')
+      return
+    }
+    setBusy(true)
+    try {
+      await adminApi(`/api/admin/enquiries/${selected.id}`, {
+        method: 'DELETE',
+        body: JSON.stringify({ reference: typedReference.trim() }),
+      })
+      setSelected(null)
+      setEvents([])
+      await load()
+      flash(`Enquiry ${typedReference.trim()} was permanently deleted`)
+      setError('')
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Unable to delete enquiry')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function saveNotificationEmail(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setSettingsBusy(true)
@@ -419,6 +450,10 @@ export default function EnquiriesManager({ canManageSettings }: { canManageSetti
             <span>{selectedIndex + 1} of {items.length}</span>
             <div><button disabled={selectedIndex <= 0} onClick={() => setSelected(items[selectedIndex - 1])}>Previous</button><button disabled={selectedIndex < 0 || selectedIndex >= items.length - 1} onClick={() => setSelected(items[selectedIndex + 1])}>Next</button></div>
           </div>
+          {canManageSettings && <div className={styles.enquiryDangerZone}>
+            <span><strong>Permanent deletion</strong><small>Removes customer details, message, internal notes and activity history. This cannot be undone.</small></span>
+            <button type="button" onClick={deleteSelectedEnquiry} disabled={busy}><Trash2 size={16} /> Delete permanently</button>
+          </div>}
         </>}
       </div>
     </div>

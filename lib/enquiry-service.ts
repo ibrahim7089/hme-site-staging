@@ -503,6 +503,68 @@ export async function listEnquiryEvents(enquiryId: number) {
   return result.rows.map((row) => ({ ...row, id: Number(row.id) }))
 }
 
+export async function deleteEnquiryPermanently(input: {
+  enquiryId: number
+  reference: string
+  user: CmsUser
+  requestId: string
+}) {
+  const db = await ensureCmsSchema()
+  const tx = await db.transaction('write')
+  try {
+    const existingResult = await tx.execute({
+      sql: 'SELECT id, reference, enquiry_type FROM enquiries WHERE id = ? LIMIT 1',
+      args: [input.enquiryId],
+    })
+    const existing = existingResult.rows[0]
+    if (!existing) throw new CmsWorkflowError(404, 'ENQUIRY_NOT_FOUND', 'Enquiry not found')
+    const reference = String(existing.reference)
+    if (input.reference.trim() !== reference) {
+      throw new CmsWorkflowError(400, 'REFERENCE_MISMATCH', 'The confirmation reference does not match this enquiry')
+    }
+
+    await tx.execute({
+      sql: `INSERT INTO enquiry_deletion_authorizations (enquiry_id, request_id)
+        VALUES (?, ?)
+        ON CONFLICT(enquiry_id) DO UPDATE SET
+          request_id = excluded.request_id,
+          created_at = datetime('now')`,
+      args: [input.enquiryId, input.requestId],
+    })
+    await tx.execute({
+      sql: `INSERT INTO enquiry_deletion_events (
+        reference, enquiry_type, actor_user_id, actor_name, request_id
+      ) VALUES (?, ?, ?, ?, ?)`,
+      args: [
+        reference,
+        String(existing.enquiry_type),
+        input.user.id,
+        input.user.name,
+        input.requestId,
+      ],
+    })
+    await tx.execute({
+      sql: 'DELETE FROM enquiry_events WHERE enquiry_id = ?',
+      args: [input.enquiryId],
+    })
+    await tx.execute({
+      sql: 'DELETE FROM enquiries WHERE id = ?',
+      args: [input.enquiryId],
+    })
+    await tx.execute({
+      sql: 'DELETE FROM enquiry_deletion_authorizations WHERE enquiry_id = ?',
+      args: [input.enquiryId],
+    })
+    await tx.commit()
+    return { deleted: true, reference }
+  } catch (error) {
+    if (!tx.closed) await tx.rollback()
+    throw error
+  } finally {
+    tx.close()
+  }
+}
+
 export async function updateEnquiry(input: {
   enquiryId: number
   status?: EnquiryStatus
