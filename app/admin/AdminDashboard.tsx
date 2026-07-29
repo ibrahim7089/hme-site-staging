@@ -3,11 +3,13 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
-import { Check, ChevronRight, CircleHelp, Code2, Eye, FileCheck2, History, Inbox, LogOut, PencilLine, Plus, RefreshCw, RotateCcw, Send, ShieldCheck, Trash2, Users, X } from 'lucide-react'
+import Link from 'next/link'
+import { Check, ChevronRight, CircleHelp, Code2, Eye, FileCheck2, History, Inbox, LogOut, PencilLine, Plus, RefreshCw, RotateCcw, Send, Settings2, ShieldCheck, Trash2, Users, X } from 'lucide-react'
 import type { CmsPermission, CmsUser } from '@/lib/cms-auth'
 import type { CmsContentType } from '@/lib/cms-validation'
 import { ContentPreview, GuidedEditor } from './GuidedEditor'
 import EnquiriesManager from './EnquiriesManager'
+import EnquirySettings from './EnquirySettings'
 import styles from './admin.module.css'
 import { globalContentTemplate } from '@/lib/global-content'
 import { hydratePagePayload, pageTemplate, websitePages } from '@/lib/page-content'
@@ -29,6 +31,7 @@ type CmsItem = {
 type AuditEvent = { id: number; action: string; actor_name: string; note?: string; created_at: string }
 type ManagedUser = { id: number; name: string; email: string; role: string; status: string }
 type EditorMode = 'guided' | 'preview' | 'advanced'
+export type AdminSection = 'publishing' | 'enquiries' | 'enquiry-settings' | 'users'
 
 const labels: Record<CmsContentType, string> = {
   pages: 'Website pages',
@@ -101,8 +104,16 @@ async function api(url: string, init?: RequestInit) {
   return body
 }
 
-export default function AdminDashboard({ user, permissions }: { user: CmsUser; permissions: CmsPermission[] }) {
-  const [section, setSection] = useState<'publishing' | 'enquiries' | 'users'>('publishing')
+export default function AdminDashboard({
+  user,
+  permissions,
+  initialSection = 'publishing',
+}: {
+  user: CmsUser
+  permissions: CmsPermission[]
+  initialSection?: AdminSection
+}) {
+  const section = initialSection
   const [type, setType] = useState<CmsContentType>('pages')
   const [contentKey, setContentKey] = useState('home')
   const [status, setStatus] = useState('ACTIVE')
@@ -171,6 +182,15 @@ export default function AdminDashboard({ user, permissions }: { user: CmsUser; p
     setEditorMode('guided')
     void api(`/api/admin/publishing/${selected.id}/events`).then(setEvents).catch(() => setEvents([]))
   }, [contentKey, payloadFor, selected, type])
+  useEffect(() => {
+    if (section !== 'users' || !can('users.manage')) return
+    void api('/api/admin/users')
+      .then((result: ManagedUser[]) => {
+        setUsers(result)
+        setError('')
+      })
+      .catch((caught) => setError(caught instanceof Error ? caught.message : 'Unable to load users'))
+  }, [can, section])
 
   function flash(text: string) {
     setNotice(text)
@@ -243,11 +263,6 @@ export default function AdminDashboard({ user, permissions }: { user: CmsUser; p
     await api('/api/admin/auth/logout', { method: 'POST' }).catch(() => null)
     window.location.assign('/admin/login')
   }
-  async function showUsers() {
-    setSection('users')
-    try { setUsers(await api('/api/admin/users')); setError('') }
-    catch (caught) { setError(caught instanceof Error ? caught.message : 'Unable to load users') }
-  }
   async function addUser(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const formElement = event.currentTarget
@@ -266,19 +281,20 @@ export default function AdminDashboard({ user, permissions }: { user: CmsUser; p
     <aside className={styles.sidebar}>
       <div className={styles.brand}><Image src="/logo.png" alt="HME" width={82} height={49} priority /><span><strong>Website Admin</strong><small>Simple content manager</small></span></div>
       <nav>
-        <button className={section === 'publishing' ? styles.navActive : ''} onClick={() => setSection('publishing')}><FileCheck2 size={19} /> Website content</button>
-        {can('enquiries.view') && <button className={section === 'enquiries' ? styles.navActive : ''} onClick={() => setSection('enquiries')}><Inbox size={19} /> Enquiries</button>}
-        {can('users.manage') && <button className={section === 'users' ? styles.navActive : ''} onClick={showUsers}><Users size={19} /> Users & roles</button>}
+        <Link className={section === 'publishing' ? styles.navActive : ''} href="/admin"><FileCheck2 size={19} /> Website content</Link>
+        {can('enquiries.view') && <Link className={section === 'enquiries' ? styles.navActive : ''} href="/admin?section=enquiries"><Inbox size={19} /> Enquiries</Link>}
+        {can('settings.manage') && <Link className={section === 'enquiry-settings' ? styles.navActive : ''} href="/admin/enquiry-settings"><Settings2 size={19} /> Enquiry settings</Link>}
+        {can('users.manage') && <Link className={section === 'users' ? styles.navActive : ''} href="/admin?section=users"><Users size={19} /> Users & roles</Link>}
       </nav>
       <div className={styles.profile}><span className={styles.avatar}>{user.name[0].toUpperCase()}</span><span><strong>{user.name}</strong><small>{user.role}</small></span><button title="Sign out" onClick={logout}><LogOut size={18} /></button></div>
     </aside>
 
     <main className={styles.main}>
-      <header className={styles.topbar}><div><p className={styles.kicker}>HME website manager</p><h1>{section === 'publishing' ? 'Update website content' : section === 'enquiries' ? 'Customer enquiries' : 'Users & roles'}</h1></div><div className={styles.secure}><ShieldCheck size={18} /> {section === 'enquiries' ? 'Customer data access is protected' : 'Role-based publishing is on'}</div></header>
+      <header className={styles.topbar}><div><p className={styles.kicker}>HME website manager</p><h1>{section === 'publishing' ? 'Update website content' : section === 'enquiries' ? 'Customer enquiries' : section === 'enquiry-settings' ? 'Enquiry settings' : 'Users & roles'}</h1></div><div className={styles.secure}><ShieldCheck size={18} /> {section === 'enquiries' ? 'Customer data access is protected' : section === 'enquiry-settings' ? 'Admin access only' : 'Role-based publishing is on'}</div></header>
       {notice && <div className={styles.success}><Check size={18} /> {notice}</div>}
       {error && <div className={styles.error} role="alert"><X size={18} /><span>{error}</span></div>}
 
-      {section === 'enquiries' ? <EnquiriesManager canManageSettings={can('settings.manage')} /> : section === 'users' ? <section className={styles.userGrid}>
+      {section === 'enquiry-settings' ? <EnquirySettings /> : section === 'enquiries' ? <EnquiriesManager canManageSettings={can('settings.manage')} /> : section === 'users' ? <section className={styles.userGrid}>
         <div className={styles.panel}><div className={styles.panelHead}><p className={styles.kicker}>Access control</p><h2>Current users</h2></div>
           <div className={styles.userList}>{users.map((entry) => <div className={styles.userRow} key={entry.id}><span className={styles.avatar}>{entry.name[0].toUpperCase()}</span><span><strong>{entry.name}</strong><small>{entry.email}</small></span><b>{entry.role}</b><em>{entry.status}</em></div>)}</div>
         </div>
