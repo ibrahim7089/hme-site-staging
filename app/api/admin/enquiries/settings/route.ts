@@ -16,16 +16,9 @@ const optionalEmail = z.union([
 
 const settingsSchema = z.object({
   notificationEmail: z.string().trim().email('Enter a valid email address').max(254),
-  routing: z.object({
-    general: optionalEmail,
-    rates: optionalEmail,
-    transfer: optionalEmail,
-    booking: optionalEmail,
-    business: optionalEmail,
-    agent: optionalEmail,
-    career: optionalEmail,
-    complaint: optionalEmail,
-    privacy: optionalEmail,
+  route: z.object({
+    type: z.string().trim().min(2).max(48).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+    email: optionalEmail,
   }).strict(),
 }).strict()
 
@@ -53,7 +46,7 @@ export async function PATCH(request: Request) {
     }
     return cmsJson(await updateEnquiryNotificationSettings({
       notificationEmail: parsed.data.notificationEmail,
-      routing: parsed.data.routing,
+      route: parsed.data.route,
       user,
       requestId,
     }), 200, requestId)

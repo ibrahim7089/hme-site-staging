@@ -1,9 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { AlertCircle, CheckCircle2, LoaderCircle, Send } from 'lucide-react'
-import { enquiryTypeLabels, enquiryTypes, type EnquiryType } from '@/lib/enquiry'
+import {
+  defaultEnquiryCategories,
+  type EnquiryCategory,
+  type EnquiryType,
+} from '@/lib/enquiry'
 
 type EnquiryFormProps = {
   defaultType?: EnquiryType
@@ -25,6 +29,26 @@ export default function EnquiryForm({
 }: EnquiryFormProps) {
   const [status, setStatus] = useState<FormStatus>({ state: 'idle' })
   const [startedAt] = useState(() => Date.now())
+  const [categories, setCategories] = useState<EnquiryCategory[]>(defaultEnquiryCategories)
+  const [selectedType, setSelectedType] = useState(defaultType)
+
+  useEffect(() => {
+    void fetch('/api/enquiries', { cache: 'no-store' })
+      .then(async (response) => {
+        if (!response.ok) throw new Error('Unable to load enquiry types')
+        return response.json() as Promise<{ categories: EnquiryCategory[] }>
+      })
+      .then((result) => {
+        if (!result.categories.length) return
+        setCategories(result.categories)
+        setSelectedType((current) => result.categories.some((category) => category.key === current)
+          ? current
+          : result.categories[0].key)
+      })
+      .catch(() => {
+        // Keep the built-in categories available if the category service is temporarily unavailable.
+      })
+  }, [])
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -90,9 +114,15 @@ export default function EnquiryForm({
       <div className="grid gap-5 sm:grid-cols-2">
         <label className={labelClass}>
           Enquiry about
-          <select name="type" defaultValue={defaultType} className={inputClass} required>
-            {enquiryTypes.map((type) => (
-              <option key={type} value={type}>{enquiryTypeLabels[type]}</option>
+          <select
+            name="type"
+            value={selectedType}
+            onChange={(event) => setSelectedType(event.target.value)}
+            className={inputClass}
+            required
+          >
+            {categories.map((category) => (
+              <option key={category.key} value={category.key}>{category.label}</option>
             ))}
           </select>
         </label>

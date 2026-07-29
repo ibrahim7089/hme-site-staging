@@ -13,6 +13,7 @@ import {
   MapPin,
   MessageSquareText,
   Phone,
+  Plus,
   RefreshCw,
   Save,
   Search,
@@ -21,7 +22,7 @@ import {
   Trash2,
   UserRound,
 } from 'lucide-react'
-import { enquiryTypeLabels, enquiryTypes, type EnquiryType } from '@/lib/enquiry'
+import { enquiryTypeLabels, type EnquiryCategory, type EnquiryType } from '@/lib/enquiry'
 import type { EmailDeliveryStatus, EnquiryRecord, EnquiryStatus } from '@/lib/enquiry-service'
 import styles from './admin.module.css'
 
@@ -41,10 +42,12 @@ type EnquiryResponse = {
   items: EnquiryRecord[]
   counts: Counts
   assignees: Assignee[]
+  categories: EnquiryCategory[]
 }
 type NotificationSettings = {
   notificationEmail: string
   routing: Record<EnquiryType, string>
+  categories: EnquiryCategory[]
   source: 'admin' | 'server-default'
   updatedByName: string
   updatedAt: string | null
@@ -56,18 +59,6 @@ type NotificationSettings = {
     actorName: string
     createdAt: string
   }>
-}
-
-const emptyNotificationRouting: Record<EnquiryType, string> = {
-  general: '',
-  rates: '',
-  transfer: '',
-  booking: '',
-  business: '',
-  agent: '',
-  career: '',
-  complaint: '',
-  privacy: '',
 }
 
 const statusLabels: Record<EnquiryStatus, string> = {
@@ -136,6 +127,7 @@ export default function EnquiriesManager({ canManageSettings }: { canManageSetti
   const [selected, setSelected] = useState<EnquiryRecord | null>(null)
   const [events, setEvents] = useState<EnquiryEvent[]>([])
   const [assignees, setAssignees] = useState<Assignee[]>([])
+  const [enquiryCategories, setEnquiryCategories] = useState<EnquiryCategory[]>([])
   const [counts, setCounts] = useState<Counts>({ NEW: 0, IN_PROGRESS: 0, RESOLVED: 0, ARCHIVED: 0 })
   const [statusFilter, setStatusFilter] = useState<EnquiryStatus | 'ALL'>('ALL')
   const [typeFilter, setTypeFilter] = useState<EnquiryType | 'ALL'>('ALL')
@@ -147,7 +139,9 @@ export default function EnquiriesManager({ canManageSettings }: { canManageSetti
   const [settingsBusy, setSettingsBusy] = useState(false)
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings | null>(null)
   const [notificationEmail, setNotificationEmail] = useState('')
-  const [notificationRouting, setNotificationRouting] = useState<Record<EnquiryType, string>>({ ...emptyNotificationRouting })
+  const [notificationRouting, setNotificationRouting] = useState<Record<EnquiryType, string>>({})
+  const [selectedRouteType, setSelectedRouteType] = useState('general')
+  const [newCategoryLabel, setNewCategoryLabel] = useState('')
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
 
@@ -161,6 +155,7 @@ export default function EnquiriesManager({ canManageSettings }: { canManageSetti
       setItems(result.items)
       setCounts(result.counts)
       setAssignees(result.assignees)
+      setEnquiryCategories(result.categories)
       setSelected((current) => {
         if (!current) return result.items[0] || null
         return result.items.find((item) => item.id === current.id) || result.items[0] || null
@@ -183,6 +178,10 @@ export default function EnquiriesManager({ canManageSettings }: { canManageSetti
         setNotificationSettings(result)
         setNotificationEmail(result.notificationEmail)
         setNotificationRouting(result.routing)
+        setEnquiryCategories(result.categories)
+        setSelectedRouteType((current) => result.categories.some((category) => category.key === current)
+          ? current
+          : result.categories[0]?.key || 'general')
       })
       .catch((caught) => setError(caught instanceof Error ? caught.message : 'Unable to load notification settings'))
   }, [canManageSettings])
@@ -208,6 +207,15 @@ export default function EnquiriesManager({ canManageSettings }: { canManageSetti
   const selectedIndex = useMemo(
     () => items.findIndex((item) => item.id === selected?.id),
     [items, selected],
+  )
+  const categories = notificationSettings?.categories || enquiryCategories
+  const categoryLabels = useMemo(
+    () => new Map(categories.map((category) => [category.key, category.label])),
+    [categories],
+  )
+  const labelForType = useCallback(
+    (type: string, savedLabel?: string) => savedLabel || categoryLabels.get(type) || enquiryTypeLabels[type] || type,
+    [categoryLabels],
   )
 
   function flash(message: string) {
@@ -293,15 +301,66 @@ export default function EnquiriesManager({ canManageSettings }: { canManageSetti
     try {
       const result = await adminApi('/api/admin/enquiries/settings', {
         method: 'PATCH',
-        body: JSON.stringify({ notificationEmail, routing: notificationRouting }),
+        body: JSON.stringify({
+          notificationEmail,
+          route: {
+            type: selectedRouteType,
+            email: notificationRouting[selectedRouteType] || '',
+          },
+        }),
       }) as NotificationSettings
       setNotificationSettings(result)
       setNotificationEmail(result.notificationEmail)
       setNotificationRouting(result.routing)
+      setEnquiryCategories(result.categories)
       flash('Enquiry email routing updated')
       setError('')
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Unable to update notification email')
+    } finally {
+      setSettingsBusy(false)
+    }
+  }
+
+  async function addEnquiryCategory(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!newCategoryLabel.trim()) return
+    setSettingsBusy(true)
+    try {
+      const created = await adminApi('/api/admin/enquiries/categories', {
+        method: 'POST',
+        body: JSON.stringify({ label: newCategoryLabel.trim() }),
+      }) as EnquiryCategory
+      const result = await adminApi('/api/admin/enquiries/settings') as NotificationSettings
+      setNotificationSettings(result)
+      setNotificationRouting(result.routing)
+      setEnquiryCategories(result.categories)
+      setSelectedRouteType(created.key)
+      setNewCategoryLabel('')
+      flash(`${created.label} added to the enquiry form`)
+      setError('')
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Unable to add enquiry type')
+    } finally {
+      setSettingsBusy(false)
+    }
+  }
+
+  async function toggleEnquiryCategory(category: EnquiryCategory) {
+    setSettingsBusy(true)
+    try {
+      await adminApi('/api/admin/enquiries/categories', {
+        method: 'PATCH',
+        body: JSON.stringify({ key: category.key, active: !category.active }),
+      })
+      const result = await adminApi('/api/admin/enquiries/settings') as NotificationSettings
+      setNotificationSettings(result)
+      setNotificationRouting(result.routing)
+      setEnquiryCategories(result.categories)
+      flash(`${category.label} ${category.active ? 'hidden from' : 'shown on'} the enquiry form`)
+      setError('')
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Unable to update enquiry type')
     } finally {
       setSettingsBusy(false)
     }
@@ -343,27 +402,79 @@ export default function EnquiriesManager({ canManageSettings }: { canManageSetti
               required
             />
           </span>
-          <small>Used whenever a category below does not have its own department email.</small>
+          <small>Used whenever the selected category does not have its own department email.</small>
         </label>
-        <div className={styles.notificationRoutingGrid}>
-          {enquiryTypes.map((type) => <label key={type}>
-            <span className={styles.notificationRouteLabel}>{enquiryTypeLabels[type]}</span>
+        <div className={styles.notificationRoutingPicker}>
+          <label>Enquiry type
+            <select
+              value={selectedRouteType}
+              onChange={(event) => setSelectedRouteType(event.target.value)}
+              disabled={!categories.length}
+            >
+              {categories.map((category) => <option key={category.key} value={category.key}>
+                {category.label}{category.active ? '' : ' (hidden)'}
+              </option>)}
+            </select>
+          </label>
+          <label>Department inbox <small>(optional)</small>
             <span>
               <Mail size={15} />
               <input
                 type="email"
-                value={notificationRouting[type]}
-                onChange={(event) => setNotificationRouting((current) => ({ ...current, [type]: event.target.value }))}
+                value={notificationRouting[selectedRouteType] || ''}
+                onChange={(event) => setNotificationRouting((current) => ({
+                  ...current,
+                  [selectedRouteType]: event.target.value,
+                }))}
                 maxLength={254}
                 placeholder={`Uses ${notificationEmail || 'default inbox'}`}
               />
             </span>
-          </label>)}
+          </label>
         </div>
         <button className={styles.primaryButton} disabled={settingsBusy || !notificationEmail.trim()}>
           <Save size={16} /> {settingsBusy ? 'Saving...' : 'Save email routing'}
         </button>
       </form>
+      <div className={styles.enquiryCategoryManager}>
+        <div>
+          <strong>Add another enquiry type</strong>
+          <small>It will appear automatically in the public enquiry form.</small>
+        </div>
+        <form onSubmit={addEnquiryCategory}>
+          <input
+            value={newCategoryLabel}
+            onChange={(event) => setNewCategoryLabel(event.target.value)}
+            minLength={3}
+            maxLength={80}
+            placeholder="Example: Corporate partnership"
+            required
+          />
+          <button className={styles.secondaryButton} disabled={settingsBusy || !newCategoryLabel.trim()}>
+            <Plus size={16} /> Add enquiry type
+          </button>
+        </form>
+        {categories.find((category) => category.key === selectedRouteType) && <div className={styles.enquiryCategoryStatus}>
+          <span>
+            <b>{labelForType(selectedRouteType)}</b>
+            <small>{categories.find((category) => category.key === selectedRouteType)?.active
+              ? 'Visible in the public enquiry form'
+              : 'Hidden from the public enquiry form'}</small>
+          </span>
+          <button
+            type="button"
+            disabled={settingsBusy || selectedRouteType === 'general'}
+            onClick={() => {
+              const category = categories.find((item) => item.key === selectedRouteType)
+              if (category) void toggleEnquiryCategory(category)
+            }}
+          >
+            {categories.find((category) => category.key === selectedRouteType)?.active
+              ? 'Hide from form'
+              : 'Show on form'}
+          </button>
+        </div>}
+      </div>
       <div className={styles.notificationSettingsNote}>
         <ShieldCheck size={17} />
         <span><strong>DNS and email security stay protected.</strong><small>Only the alert recipient changes here. Resend credentials and DNS records remain in the secure server setup.</small></span>
@@ -372,7 +483,7 @@ export default function EnquiriesManager({ canManageSettings }: { canManageSetti
         <strong>Recent changes</strong>
         {notificationSettings.history.slice(0, 3).map((entry) => <span key={entry.id}>
           <Mail size={13} />
-          <b>{entry.enquiryType ? enquiryTypeLabels[entry.enquiryType] : 'Default inbox'}: {entry.newValue || 'Uses default inbox'}</b>
+          <b>{entry.enquiryType ? labelForType(entry.enquiryType) : 'Default inbox'}: {entry.newValue || 'Uses default inbox'}</b>
           <small>by {entry.actorName} · {formatDate(entry.createdAt)}</small>
         </span>)}
       </div>}
@@ -382,7 +493,9 @@ export default function EnquiriesManager({ canManageSettings }: { canManageSetti
       <label className={styles.enquirySearch}><Search size={17} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search name, reference, email or message" aria-label="Search enquiries" /></label>
       <select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value as EnquiryType | 'ALL')} aria-label="Filter by enquiry type">
         <option value="ALL">All enquiry types</option>
-        {enquiryTypes.map((type) => <option key={type} value={type}>{enquiryTypeLabels[type]}</option>)}
+        {categories.map((category) => <option key={category.key} value={category.key}>
+          {category.label}{category.active ? '' : ' (hidden)'}
+        </option>)}
       </select>
       <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as EnquiryStatus | 'ALL')} aria-label="Filter by status">
         <option value="ALL">All statuses</option>
@@ -399,7 +512,7 @@ export default function EnquiriesManager({ canManageSettings }: { canManageSetti
           return <button key={item.id} className={selected?.id === item.id ? styles.enquiryItemActive : styles.enquiryItem} onClick={() => setSelected(item)}>
             <span className={styles.enquiryItemIcon}><StatusIcon size={17} /></span>
             <span className={styles.enquiryItemText}>
-              <small>{item.reference} · {enquiryTypeLabels[item.enquiry_type]}</small>
+              <small>{item.reference} · {labelForType(item.enquiry_type, item.enquiry_type_label)}</small>
               <strong>{item.customer_name}</strong>
               <span>{item.subject || item.message}</span>
               <time>{formatDate(item.created_at)}</time>
@@ -414,7 +527,7 @@ export default function EnquiriesManager({ canManageSettings }: { canManageSetti
         {!selected && <div className={styles.enquiryBlank}><Inbox size={32} /><h3>Select an enquiry</h3><p>Customer details, status and activity will appear here.</p></div>}
         {selected && <>
           <div className={styles.enquiryDetailHead}>
-            <div><p className={styles.kicker}>{enquiryTypeLabels[selected.enquiry_type]}</p><h2>{selected.subject || 'Customer enquiry'}</h2><span>{selected.reference} · received {formatDate(selected.created_at)}</span></div>
+            <div><p className={styles.kicker}>{labelForType(selected.enquiry_type, selected.enquiry_type_label)}</p><h2>{selected.subject || 'Customer enquiry'}</h2><span>{selected.reference} · received {formatDate(selected.created_at)}</span></div>
             <EmailStatus status={selected.email_delivery_status} />
           </div>
 

@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
-import { createEnquiry, deliverEnquiryEmails } from '@/lib/enquiry-service'
+import { createEnquiry, deliverEnquiryEmails, listEnquiryCategories } from '@/lib/enquiry-service'
 import { enquirySchema } from '@/lib/enquiry'
+import { CmsWorkflowError } from '@/lib/cms-service'
 
 export const runtime = 'nodejs'
 
@@ -68,6 +69,21 @@ function isAllowedOrigin(request: Request) {
   return originHost === requestHost || allowed.includes(origin)
 }
 
+export async function GET() {
+  try {
+    return Response.json(
+      { categories: await listEnquiryCategories() },
+      { headers: { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' } },
+    )
+  } catch (error) {
+    console.error('[enquiry] Categories could not be loaded', { error })
+    return Response.json(
+      { message: 'Enquiry types are temporarily unavailable.' },
+      { status: 503, headers: { 'Cache-Control': 'no-store' } },
+    )
+  }
+}
+
 export async function POST(request: Request) {
   const requestId = randomUUID()
 
@@ -123,6 +139,9 @@ export async function POST(request: Request) {
       { reference: enquiry.reference },
     )
   } catch (error) {
+    if (error instanceof CmsWorkflowError && error.status < 500) {
+      return json(error.message, error.status, requestId)
+    }
     console.error('[enquiry] Submission could not be saved', { requestId, error })
     return json('We could not record your enquiry. Please try again or contact HME by phone or WhatsApp.', 500, requestId)
   }

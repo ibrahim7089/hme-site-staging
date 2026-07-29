@@ -1,13 +1,13 @@
 import { requireCmsPermission } from '@/lib/cms-auth'
 import { cmsError, cmsJson, cmsRequestId } from '@/lib/cms-http'
-import { enquiryTypes, type EnquiryType } from '@/lib/enquiry'
+import type { EnquiryType } from '@/lib/enquiry'
 import { listEnquiries, type EnquiryStatus } from '@/lib/enquiry-service'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 const statuses = new Set<EnquiryStatus>(['NEW', 'IN_PROGRESS', 'RESOLVED', 'ARCHIVED'])
-const types = new Set<EnquiryType>(enquiryTypes)
+const typePattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
 export async function GET(request: Request) {
   const requestId = cmsRequestId(request)
@@ -17,7 +17,7 @@ export async function GET(request: Request) {
     const rawStatus = url.searchParams.get('status')?.toUpperCase() || null
     const rawType = url.searchParams.get('type') || null
     if ((rawStatus && !statuses.has(rawStatus as EnquiryStatus)) ||
-      (rawType && !types.has(rawType as EnquiryType))) {
+      (rawType && (!typePattern.test(rawType) || rawType.length > 48))) {
       return cmsJson({ error: 'Invalid enquiry filter', code: 'VALIDATION_ERROR' }, 400, requestId)
     }
     const result = await listEnquiries({

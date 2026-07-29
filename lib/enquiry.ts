@@ -12,9 +12,9 @@ export const enquiryTypes = [
   'privacy',
 ] as const
 
-export type EnquiryType = (typeof enquiryTypes)[number]
+export type EnquiryType = string
 
-export const enquiryTypeLabels: Record<EnquiryType, string> = {
+export const enquiryTypeLabels: Record<string, string> = {
   general: 'General enquiry',
   rates: 'Rates and availability',
   transfer: 'Money transfer',
@@ -26,8 +26,25 @@ export const enquiryTypeLabels: Record<EnquiryType, string> = {
   privacy: 'Privacy request',
 }
 
+export type EnquiryCategory = {
+  key: string
+  label: string
+  active: boolean
+  builtIn: boolean
+}
+
+export const defaultEnquiryCategories: EnquiryCategory[] = enquiryTypes.map((key) => ({
+  key,
+  label: enquiryTypeLabels[key],
+  active: true,
+  builtIn: true,
+}))
+
 export const enquirySchema = z.object({
-  type: z.enum(enquiryTypes),
+  type: z.string().trim().min(2).max(48).regex(
+    /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+    'Choose a valid enquiry type',
+  ),
   subject: z.string().trim().max(160).optional().default(''),
   name: z.string().trim().min(2, 'Enter your full name').max(120),
   email: z.string().trim().email('Enter a valid email address').max(254),
@@ -43,6 +60,8 @@ export const enquirySchema = z.object({
 export type EnquiryPayload = z.infer<typeof enquirySchema>
 
 export function normaliseEnquiryType(value: string | string[] | undefined): EnquiryType {
-  const candidate = Array.isArray(value) ? value[0] : value
-  return enquiryTypes.includes(candidate as EnquiryType) ? candidate as EnquiryType : 'general'
+  const candidate = (Array.isArray(value) ? value[0] : value || '').trim().toLowerCase()
+  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(candidate) && candidate.length <= 48
+    ? candidate
+    : 'general'
 }

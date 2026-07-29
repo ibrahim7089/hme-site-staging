@@ -5,7 +5,13 @@ import type { Client, Transaction } from '@libsql/client'
 import type { CmsUser } from './cms-auth'
 import { ensureCmsSchema } from './cms-db'
 import { CmsWorkflowError } from './cms-service'
-import { enquiryTypeLabels, enquiryTypes, type EnquiryPayload, type EnquiryType } from './enquiry'
+import {
+  enquiryTypeLabels,
+  enquiryTypes,
+  type EnquiryCategory,
+  type EnquiryPayload,
+  type EnquiryType,
+} from './enquiry'
 import { site } from './site'
 
 export type EnquiryStatus = 'NEW' | 'IN_PROGRESS' | 'RESOLVED' | 'ARCHIVED'
@@ -15,6 +21,7 @@ export type EnquiryRecord = {
   id: number
   reference: string
   enquiry_type: EnquiryType
+  enquiry_type_label: string
   subject: string
   customer_name: string
   customer_email: string
@@ -35,6 +42,7 @@ export type EnquiryRecord = {
 export type EnquiryNotificationSettings = {
   notificationEmail: string
   routing: Record<EnquiryType, string>
+  categories: EnquiryCategory[]
   source: 'admin' | 'server-default'
   updatedByName: string
   updatedAt: string | null
@@ -51,39 +59,53 @@ export type EnquiryNotificationSettings = {
 type Executor = Pick<Client, 'execute'> | Pick<Transaction, 'execute'>
 const enquiryNotificationEmailKey = 'enquiry_notification_email'
 const enquiryNotificationRoutePrefix = 'enquiry_notification_email_'
-
-function emptyEnquiryRouting(): Record<EnquiryType, string> {
-  return {
-    general: '',
-    rates: '',
-    transfer: '',
-    booking: '',
-    business: '',
-    agent: '',
-    career: '',
-    complaint: '',
-    privacy: '',
-  }
-}
+const legacyEnquiryTypes = new Set<string>(enquiryTypes)
 
 function typeFromSettingKey(settingKey: string): EnquiryType | null {
   if (!settingKey.startsWith(enquiryNotificationRoutePrefix)) return null
   const type = settingKey.slice(enquiryNotificationRoutePrefix.length)
-  return type in enquiryTypeLabels ? type as EnquiryType : null
+  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(type) ? type : null
 }
 
 function mapEnquiry(row: Record<string, unknown> | undefined): EnquiryRecord | null {
   if (!row) return null
+  const categoryKey = String(row.enquiry_category_key || row.enquiry_type || 'general')
   return {
     ...row,
     id: Number(row.id),
-    enquiry_type: String(row.enquiry_type) as EnquiryType,
+    enquiry_type: categoryKey,
+    enquiry_type_label: String(
+      row.enquiry_type_label
+      || row.category_label
+      || enquiryTypeLabels[categoryKey]
+      || categoryKey,
+    ),
     status: String(row.status) as EnquiryStatus,
     preferred_contact: String(row.preferred_contact) as EnquiryRecord['preferred_contact'],
     email_delivery_status: String(row.email_delivery_status) as EmailDeliveryStatus,
     assigned_to_user_id: row.assigned_to_user_id ? Number(row.assigned_to_user_id) : null,
     resolved_at: row.resolved_at ? String(row.resolved_at) : null,
   } as EnquiryRecord
+}
+
+function mapCategory(row: Record<string, unknown>): EnquiryCategory {
+  return {
+    key: String(row.category_key),
+    label: String(row.label),
+    active: Number(row.active) === 1,
+    builtIn: Number(row.built_in) === 1,
+  }
+}
+
+export async function listEnquiryCategories(includeInactive = false) {
+  const db = await ensureCmsSchema()
+  const result = await db.execute(
+    `SELECT category_key, label, active, built_in
+      FROM enquiry_categories
+      ${includeInactive ? '' : 'WHERE active = 1'}
+      ORDER BY sort_order, label`,
+  )
+  return result.rows.map((row) => mapCategory(row as Record<string, unknown>))
 }
 
 async function insertEvent(executor: Executor, input: {
@@ -123,14 +145,25 @@ export async function createEnquiry(payload: EnquiryPayload, requestId: string) 
   const consentAt = new Date().toISOString()
   const tx = await db.transaction('write')
   try {
+    const categoryResult = await tx.execute({
+      sql: `SELECT category_key, label FROM enquiry_categories
+        WHERE category_key = ? AND active = 1 LIMIT 1`,
+      args: [payload.type],
+    })
+    const category = categoryResult.rows[0]
+    if (!category) {
+      throw new CmsWorkflowError(400, 'INVALID_ENQUIRY_TYPE', 'Choose an available enquiry type')
+    }
+    const legacyType = legacyEnquiryTypes.has(payload.type) ? payload.type : 'general'
     const result = await tx.execute({
       sql: `INSERT INTO enquiries (
-        reference, enquiry_type, subject, customer_name, customer_email,
+        reference, enquiry_type, enquiry_category_key, subject, customer_name, customer_email,
         customer_phone, location, message, preferred_contact, consent_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       RETURNING *`,
       args: [
         reference,
+        legacyType,
         payload.type,
         payload.subject,
         payload.name,
@@ -144,11 +177,12 @@ export async function createEnquiry(payload: EnquiryPayload, requestId: string) 
     })
     const enquiry = mapEnquiry(result.rows[0] as Record<string, unknown>)
     if (!enquiry) throw new Error('Enquiry could not be created')
+    enquiry.enquiry_type_label = String(category.label)
     await insertEvent(tx, {
       enquiryId: enquiry.id,
       action: 'CREATED',
       toStatus: 'NEW',
-      note: `Online ${enquiryTypeLabels[payload.type].toLowerCase()} received`,
+      note: `Online ${enquiry.enquiry_type_label.toLowerCase()} received`,
       requestId,
     })
     await tx.commit()
@@ -250,7 +284,7 @@ async function sendEmail(input: {
 
 export async function getEnquiryNotificationSettings(): Promise<EnquiryNotificationSettings> {
   const db = await ensureCmsSchema()
-  const [settingsResult, historyResult] = await Promise.all([
+  const [settingsResult, historyResult, categoriesResult] = await Promise.all([
     db.execute({
       sql: `SELECT setting_key, setting_value, updated_by_name, updated_at
         FROM cms_settings
@@ -265,6 +299,8 @@ export async function getEnquiryNotificationSettings(): Promise<EnquiryNotificat
         LIMIT 20`,
       args: [enquiryNotificationEmailKey, `${enquiryNotificationRoutePrefix}%`],
     }),
+    db.execute(`SELECT category_key, label, active, built_in
+      FROM enquiry_categories ORDER BY sort_order, label`),
   ])
   const settings = new Map(settingsResult.rows.map((row) => [
     String(row.setting_key),
@@ -272,9 +308,12 @@ export async function getEnquiryNotificationSettings(): Promise<EnquiryNotificat
   ]))
   const generalSetting = settings.get(enquiryNotificationEmailKey)
   const configuredEmail = String(generalSetting?.setting_value || '').trim().toLowerCase()
-  const routing = emptyEnquiryRouting()
-  for (const type of enquiryTypes) {
-    routing[type] = String(settings.get(`${enquiryNotificationRoutePrefix}${type}`)?.setting_value || '').trim().toLowerCase()
+  const categories = categoriesResult.rows.map((row) => mapCategory(row as Record<string, unknown>))
+  const routing: Record<string, string> = {}
+  for (const category of categories) {
+    routing[category.key] = String(
+      settings.get(`${enquiryNotificationRoutePrefix}${category.key}`)?.setting_value || '',
+    ).trim().toLowerCase()
   }
   const latestSetting = settingsResult.rows
     .filter((row) => row.updated_at)
@@ -282,6 +321,7 @@ export async function getEnquiryNotificationSettings(): Promise<EnquiryNotificat
   return {
     notificationEmail: configuredEmail || process.env.ENQUIRY_TO_EMAIL?.trim().toLowerCase() || site.email,
     routing,
+    categories,
     source: configuredEmail ? 'admin' : 'server-default',
     updatedByName: String(latestSetting?.updated_by_name || ''),
     updatedAt: latestSetting?.updated_at ? String(latestSetting.updated_at) : null,
@@ -298,7 +338,7 @@ export async function getEnquiryNotificationSettings(): Promise<EnquiryNotificat
 
 export async function updateEnquiryNotificationSettings(input: {
   notificationEmail: string
-  routing: Record<EnquiryType, string>
+  route: { type: EnquiryType; email: string }
   user: CmsUser
   requestId: string
 }) {
@@ -306,12 +346,19 @@ export async function updateEnquiryNotificationSettings(input: {
   const notificationEmail = input.notificationEmail.trim().toLowerCase()
   const tx = await db.transaction('write')
   try {
+    const categoryResult = await tx.execute({
+      sql: 'SELECT category_key FROM enquiry_categories WHERE category_key = ? LIMIT 1',
+      args: [input.route.type],
+    })
+    if (!categoryResult.rows[0]) {
+      throw new CmsWorkflowError(400, 'INVALID_ENQUIRY_TYPE', 'Choose an available enquiry type')
+    }
     const updates: Array<{ settingKey: string; value: string }> = [
       { settingKey: enquiryNotificationEmailKey, value: notificationEmail },
-      ...enquiryTypes.map((type) => ({
-        settingKey: `${enquiryNotificationRoutePrefix}${type}`,
-        value: input.routing[type].trim().toLowerCase(),
-      })),
+      {
+        settingKey: `${enquiryNotificationRoutePrefix}${input.route.type}`,
+        value: input.route.email.trim().toLowerCase(),
+      },
     ]
     for (const update of updates) {
       const existingResult = await tx.execute({
@@ -355,11 +402,126 @@ export async function updateEnquiryNotificationSettings(input: {
   return getEnquiryNotificationSettings()
 }
 
+function categoryKeyFromLabel(label: string) {
+  return label
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 48)
+}
+
+export async function createEnquiryCategory(input: {
+  label: string
+  user: CmsUser
+  requestId: string
+}) {
+  const db = await ensureCmsSchema()
+  const label = input.label.trim().replace(/\s+/g, ' ')
+  const key = categoryKeyFromLabel(label)
+  if (key.length < 2) {
+    throw new CmsWorkflowError(400, 'INVALID_CATEGORY', 'Enter a clear enquiry type name')
+  }
+  const tx = await db.transaction('write')
+  try {
+    const existing = await tx.execute({
+      sql: `SELECT category_key FROM enquiry_categories
+        WHERE category_key = ? OR lower(label) = lower(?) LIMIT 1`,
+      args: [key, label],
+    })
+    if (existing.rows[0]) {
+      throw new CmsWorkflowError(409, 'CATEGORY_EXISTS', 'This enquiry type already exists')
+    }
+    const orderResult = await tx.execute(
+      'SELECT COALESCE(MAX(sort_order), 0) + 10 AS next_order FROM enquiry_categories',
+    )
+    await tx.execute({
+      sql: `INSERT INTO enquiry_categories (
+        category_key, label, active, built_in, sort_order, updated_by_user_id, updated_by_name
+      ) VALUES (?, ?, 1, 0, ?, ?, ?)`,
+      args: [key, label, Number(orderResult.rows[0]?.next_order || 10), input.user.id, input.user.name],
+    })
+    await tx.execute({
+      sql: `INSERT INTO cms_setting_events (
+        setting_key, old_value, new_value, actor_user_id, actor_name, request_id
+      ) VALUES (?, '', ?, ?, ?, ?)`,
+      args: [`enquiry_category_${key}`, label, input.user.id, input.user.name, input.requestId],
+    })
+    await tx.commit()
+    return { key, label, active: true, builtIn: false } satisfies EnquiryCategory
+  } catch (error) {
+    if (!tx.closed) await tx.rollback()
+    throw error
+  } finally {
+    tx.close()
+  }
+}
+
+export async function updateEnquiryCategory(input: {
+  key: string
+  active: boolean
+  user: CmsUser
+  requestId: string
+}) {
+  if (input.key === 'general' && !input.active) {
+    throw new CmsWorkflowError(400, 'GENERAL_REQUIRED', 'General enquiry must remain available')
+  }
+  const db = await ensureCmsSchema()
+  const tx = await db.transaction('write')
+  try {
+    const existing = await tx.execute({
+      sql: 'SELECT category_key, label, active, built_in FROM enquiry_categories WHERE category_key = ? LIMIT 1',
+      args: [input.key],
+    })
+    const category = existing.rows[0]
+    if (!category) throw new CmsWorkflowError(404, 'CATEGORY_NOT_FOUND', 'Enquiry type not found')
+    const oldValue = Number(category.active) === 1 ? 'ACTIVE' : 'INACTIVE'
+    const newValue = input.active ? 'ACTIVE' : 'INACTIVE'
+    if (oldValue !== newValue) {
+      await tx.execute({
+        sql: `UPDATE enquiry_categories SET
+          active = ?, updated_by_user_id = ?, updated_by_name = ?, updated_at = datetime('now')
+          WHERE category_key = ?`,
+        args: [input.active ? 1 : 0, input.user.id, input.user.name, input.key],
+      })
+      await tx.execute({
+        sql: `INSERT INTO cms_setting_events (
+          setting_key, old_value, new_value, actor_user_id, actor_name, request_id
+        ) VALUES (?, ?, ?, ?, ?, ?)`,
+        args: [
+          `enquiry_category_${input.key}`,
+          oldValue,
+          newValue,
+          input.user.id,
+          input.user.name,
+          input.requestId,
+        ],
+      })
+    }
+    await tx.commit()
+    return {
+      key: String(category.category_key),
+      label: String(category.label),
+      active: input.active,
+      builtIn: Number(category.built_in) === 1,
+    } satisfies EnquiryCategory
+  } catch (error) {
+    if (!tx.closed) await tx.rollback()
+    throw error
+  } finally {
+    tx.close()
+  }
+}
+
 export async function deliverEnquiryEmails(enquiry: EnquiryRecord, requestId: string) {
   const notificationSettings = await getEnquiryNotificationSettings()
   const notificationEmail = notificationSettings.routing[enquiry.enquiry_type]
     || notificationSettings.notificationEmail
-  const typeLabel = enquiryTypeLabels[enquiry.enquiry_type]
+  const typeLabel = enquiry.enquiry_type_label
+    || notificationSettings.categories.find((category) => category.key === enquiry.enquiry_type)?.label
+    || enquiryTypeLabels[enquiry.enquiry_type]
+    || enquiry.enquiry_type
   const subjectDetail = enquiry.subject ? ` — ${enquiry.subject.replace(/[\r\n]+/g, ' ')}` : ''
   const submittedAt = new Intl.DateTimeFormat('en-MY', {
     dateStyle: 'medium',
@@ -448,17 +610,17 @@ export async function listEnquiries(filters: {
   const conditions: string[] = []
   const args: Array<string | number> = []
   if (filters.status) {
-    conditions.push('status = ?')
+    conditions.push('e.status = ?')
     args.push(filters.status)
   }
   if (filters.type) {
-    conditions.push('enquiry_type = ?')
+    conditions.push('e.enquiry_category_key = ?')
     args.push(filters.type)
   }
   if (filters.search) {
     conditions.push(`(
-      reference LIKE ? OR customer_name LIKE ? OR customer_email LIKE ?
-      OR customer_phone LIKE ? OR subject LIKE ? OR message LIKE ?
+      e.reference LIKE ? OR e.customer_name LIKE ? OR e.customer_email LIKE ?
+      OR e.customer_phone LIKE ? OR e.subject LIKE ? OR e.message LIKE ?
     )`)
     const term = `%${filters.search.trim().slice(0, 120)}%`
     args.push(term, term, term, term, term, term)
@@ -468,17 +630,22 @@ export async function listEnquiries(filters: {
   const limit = Math.min(Math.max(requestedLimit, 1), 500)
   args.push(limit)
 
-  const [itemsResult, countsResult, usersResult] = await Promise.all([
+  const [itemsResult, countsResult, usersResult, categoriesResult] = await Promise.all([
     db.execute({
-      sql: `SELECT * FROM enquiries ${where}
-        ORDER BY CASE status
+      sql: `SELECT e.*, c.label AS enquiry_type_label
+        FROM enquiries e
+        LEFT JOIN enquiry_categories c ON c.category_key = e.enquiry_category_key
+        ${where}
+        ORDER BY CASE e.status
           WHEN 'NEW' THEN 0 WHEN 'IN_PROGRESS' THEN 1
-          WHEN 'RESOLVED' THEN 2 ELSE 3 END, updated_at DESC
+          WHEN 'RESOLVED' THEN 2 ELSE 3 END, e.updated_at DESC
         LIMIT ?`,
       args,
     }),
     db.execute('SELECT status, COUNT(*) AS total FROM enquiries GROUP BY status'),
     db.execute("SELECT id, name FROM cms_users WHERE status = 'ACTIVE' ORDER BY name"),
+    db.execute(`SELECT category_key, label, active, built_in
+      FROM enquiry_categories ORDER BY sort_order, label`),
   ])
 
   const counts: Record<EnquiryStatus, number> = { NEW: 0, IN_PROGRESS: 0, RESOLVED: 0, ARCHIVED: 0 }
@@ -490,6 +657,7 @@ export async function listEnquiries(filters: {
     items: itemsResult.rows.map((row) => mapEnquiry(row as Record<string, unknown>)),
     counts,
     assignees: usersResult.rows.map((row) => ({ id: Number(row.id), name: String(row.name) })),
+    categories: categoriesResult.rows.map((row) => mapCategory(row as Record<string, unknown>)),
   }
 }
 
@@ -513,7 +681,8 @@ export async function deleteEnquiryPermanently(input: {
   const tx = await db.transaction('write')
   try {
     const existingResult = await tx.execute({
-      sql: 'SELECT id, reference, enquiry_type FROM enquiries WHERE id = ? LIMIT 1',
+      sql: `SELECT id, reference, enquiry_category_key
+        FROM enquiries WHERE id = ? LIMIT 1`,
       args: [input.enquiryId],
     })
     const existing = existingResult.rows[0]
@@ -537,7 +706,7 @@ export async function deleteEnquiryPermanently(input: {
       ) VALUES (?, ?, ?, ?, ?)`,
       args: [
         reference,
-        String(existing.enquiry_type),
+        String(existing.enquiry_category_key || 'general'),
         input.user.id,
         input.user.name,
         input.requestId,
@@ -577,7 +746,10 @@ export async function updateEnquiry(input: {
   const tx = await db.transaction('write')
   try {
     const existingResult = await tx.execute({
-      sql: 'SELECT * FROM enquiries WHERE id = ? LIMIT 1',
+      sql: `SELECT e.*, c.label AS enquiry_type_label
+        FROM enquiries e
+        LEFT JOIN enquiry_categories c ON c.category_key = e.enquiry_category_key
+        WHERE e.id = ? LIMIT 1`,
       args: [input.enquiryId],
     })
     const existing = mapEnquiry(existingResult.rows[0] as Record<string, unknown> | undefined)
@@ -642,7 +814,10 @@ export async function updateEnquiry(input: {
     }
 
     const updatedResult = await tx.execute({
-      sql: 'SELECT * FROM enquiries WHERE id = ? LIMIT 1',
+      sql: `SELECT e.*, c.label AS enquiry_type_label
+        FROM enquiries e
+        LEFT JOIN enquiry_categories c ON c.category_key = e.enquiry_category_key
+        WHERE e.id = ? LIMIT 1`,
       args: [input.enquiryId],
     })
     await tx.commit()

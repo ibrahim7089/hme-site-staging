@@ -155,6 +155,18 @@ const schemaStatements = [
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     FOREIGN KEY(enquiry_id) REFERENCES enquiries(id)
   )`,
+  `CREATE TABLE IF NOT EXISTS enquiry_categories (
+    category_key TEXT PRIMARY KEY,
+    label TEXT NOT NULL COLLATE NOCASE UNIQUE,
+    active INTEGER NOT NULL DEFAULT 1 CHECK(active IN (0,1)),
+    built_in INTEGER NOT NULL DEFAULT 0 CHECK(built_in IN (0,1)),
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    updated_by_user_id INTEGER DEFAULT NULL,
+    updated_by_name TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY(updated_by_user_id) REFERENCES cms_users(id)
+  )`,
   `CREATE TABLE IF NOT EXISTS enquiry_deletion_authorizations (
     enquiry_id INTEGER PRIMARY KEY,
     request_id TEXT NOT NULL,
@@ -243,6 +255,53 @@ const schemaStatements = [
       SELECT RAISE(ABORT, 'CMS setting events are immutable');
     END`,
 ]
+
+const defaultEnquiryCategories = [
+  ['general', 'General enquiry'],
+  ['rates', 'Rates and availability'],
+  ['transfer', 'Money transfer'],
+  ['booking', 'Currency booking'],
+  ['business', 'Business services'],
+  ['agent', 'Become an HME agent'],
+  ['career', 'Career enquiry'],
+  ['complaint', 'Feedback or complaint'],
+  ['privacy', 'Privacy request'],
+] as const
+
+async function ensureEnquiryCategorySchema(db: Client) {
+  const tx = await db.transaction('write')
+  try {
+    const columns = await tx.execute('PRAGMA table_info(enquiries)')
+    const hasCategoryKey = columns.rows.some((row) => String(row.name) === 'enquiry_category_key')
+    if (!hasCategoryKey) {
+      await tx.execute("ALTER TABLE enquiries ADD COLUMN enquiry_category_key TEXT NOT NULL DEFAULT 'general'")
+    }
+    await tx.execute(`UPDATE enquiries
+      SET enquiry_category_key = enquiry_type
+      WHERE enquiry_category_key = 'general' AND enquiry_type <> 'general'`)
+    for (const [index, category] of defaultEnquiryCategories.entries()) {
+      await tx.execute({
+        sql: `INSERT INTO enquiry_categories (
+          category_key, label, active, built_in, sort_order
+        ) VALUES (?, ?, 1, 1, ?)
+        ON CONFLICT(category_key) DO NOTHING`,
+        args: [category[0], category[1], (index + 1) * 10],
+      })
+    }
+    await tx.execute(
+      'CREATE INDEX IF NOT EXISTS idx_enquiries_category ON enquiries(enquiry_category_key, created_at DESC)',
+    )
+    await tx.execute(
+      'CREATE INDEX IF NOT EXISTS idx_enquiry_categories_order ON enquiry_categories(active, sort_order, label)',
+    )
+    await tx.commit()
+  } catch (error) {
+    if (!tx.closed) await tx.rollback()
+    throw error
+  } finally {
+    tx.close()
+  }
+}
 
 async function ensureEnquiryDeletionSchema(db: Client) {
   const tx = await db.transaction('write')
@@ -370,6 +429,7 @@ export async function ensureCmsSchema() {
         await db.execute(statement)
       }
       await migrateCmsItemsContentTypes(db)
+      await ensureEnquiryCategorySchema(db)
       await ensureEnquiryDeletionSchema(db)
       await seedFirstAdmin(db)
     })().catch((error) => {
