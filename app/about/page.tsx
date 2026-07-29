@@ -1,6 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { Building2, Users, ShieldCheck, Star, Target, Eye, Gem, ArrowRight } from "lucide-react";
 import { getPublishedPageContent } from "@/lib/cms";
@@ -41,29 +40,8 @@ export default async function AboutPage() {
   const hero = managed?.hero;
   return (
     <>
-      <section className="hidden overflow-hidden bg-white lg:block">
-        <div className="about-hero-banner relative mx-auto">
-          <Image
-            src={hero?.image || "/images/about-us-banner.webp"}
-            alt={hero?.imageAlt || "Hasani Munawarah Exchange corporate overview and nationwide service network"}
-            fill
-            priority
-            quality={88}
-            sizes="(min-width: 1536px) 1536px, 100vw"
-            className="object-cover object-center"
-          />
-          <div className="sr-only">
-            <h1>{hero?.title || "About Hasani Munawarah Exchange"}</h1>
-            <p>
-              {hero?.lead ||
-                "A trusted Malaysian money services business delivering reliable currency exchange and remittance services through a growing nationwide network."}
-            </p>
-          </div>
-        </div>
-      </section>
-
       {/* ── 1. Hero ── */}
-      <section className="relative isolate min-h-[100svh] overflow-hidden bg-navy-deep text-white lg:hidden">
+      <section className="relative isolate min-h-[100svh] overflow-hidden bg-navy-deep text-white">
         {/* Dot grid texture */}
         <div className="hero-grid absolute inset-0 opacity-30" aria-hidden="true" />
 
