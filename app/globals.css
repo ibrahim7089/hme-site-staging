@@ -47,9 +47,8 @@
 }
 
 .about-hero-banner {
-  width: min(100%, calc((100svh - 72px) * 1.5));
-  max-width: 1536px;
-  aspect-ratio: 3 / 2;
+  width: 100%;
+  height: clamp(760px, calc(100svh + 100px), 1024px);
 }
 
 .hero-premium-glow {

@@ -50,7 +50,7 @@ export default async function AboutPage() {
             priority
             quality={88}
             sizes="(min-width: 1536px) 1536px, 100vw"
-            className="object-contain"
+            className="object-cover object-center"
           />
           <div className="sr-only">
             <h1>{hero?.title || "About Hasani Munawarah Exchange"}</h1>
