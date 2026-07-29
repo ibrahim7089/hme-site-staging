@@ -46,6 +46,12 @@
   mask-image: linear-gradient(to right, transparent, black 45%, black);
 }
 
+.about-hero-banner {
+  width: min(100%, calc((100svh - 72px) * 1.5));
+  max-width: 1536px;
+  aspect-ratio: 3 / 2;
+}
+
 .hero-premium-glow {
   background:
     radial-gradient(circle at 70% 20%, rgba(232, 241, 254, 0.92) 0, rgba(173, 201, 239, 0.55) 17%, transparent 36%),
