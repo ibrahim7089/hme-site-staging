@@ -113,26 +113,33 @@ export default async function VideoHero() {
             </Link>
           </div>
 
-          <div className="mt-9 hidden w-max items-center md:flex">
-            {trustPoints.map(({ icon: Icon, title, copy }, index) => (
-              <div
+          <ul
+            className="hero-assurance-rail mt-9 hidden w-[570px] grid-cols-3 overflow-hidden lg:grid xl:w-[650px]"
+            aria-label="Why customers trust HME"
+          >
+            {trustPoints.map(({ icon: Icon, title, copy }) => (
+              <li
                 key={title}
-                className={`flex items-center gap-2.5 pr-2.5 ${index > 0 ? "border-l border-white/25 pl-2.5" : ""}`}
+                className="hero-assurance-item group relative flex min-w-0 items-center gap-3 px-4 py-4"
               >
-                <span className="grid h-[46px] w-[46px] flex-none place-items-center rounded-xl border border-white/35 bg-white/[0.09] shadow-[0_8px_24px_rgba(7,30,68,0.15)]">
-                  <Icon className="h-[22px] w-[22px] text-[#C7E1FF]" strokeWidth={2} />
+                <span className="hero-assurance-seal grid h-12 w-12 flex-none place-items-center rounded-full">
+                  <Icon className="h-[22px] w-[22px] text-[#D5E9FF]" strokeWidth={1.9} />
                 </span>
-                <span>
-                  <b className="block whitespace-nowrap font-display text-[14px] font-extrabold capitalize tracking-[-0.02em] text-white">
+                <span className="min-w-0">
+                  <b className="block whitespace-nowrap font-display text-[14px] font-extrabold capitalize leading-tight tracking-[-0.025em] text-white xl:text-[15px]">
                     {title}
                   </b>
-                  <small className="mt-1 block whitespace-nowrap text-[10px] font-semibold leading-tight text-white/75">
+                  <small className="mt-1.5 block whitespace-nowrap text-[9px] font-bold uppercase leading-tight tracking-[0.07em] text-[#AFCFF4] xl:text-[10px]">
                     {copy}
                   </small>
                 </span>
-              </div>
+                <span
+                  className="absolute bottom-0 left-4 right-4 h-px origin-left scale-x-0 bg-gradient-to-r from-[#70B7FF] to-transparent transition-transform duration-300 group-hover:scale-x-100"
+                  aria-hidden="true"
+                />
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       </div>
 
