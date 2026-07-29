@@ -117,7 +117,7 @@ export default async function VideoHero() {
             {trustPoints.map(({ icon: Icon, title }) => (
               <li
                 key={title}
-                className="hero-assurance-item group relative flex min-h-[110px] min-w-0 flex-col items-start justify-center gap-3 px-[18px] py-4 xl:px-5"
+                className="hero-assurance-item group relative flex min-h-[110px] min-w-0 flex-col items-center justify-center gap-3 px-[18px] py-4 text-center xl:px-5"
               >
                 <span className="hero-assurance-seal grid h-11 w-11 flex-none place-items-center rounded-full">
                   <Icon className="h-5 w-5 text-[#D5E9FF]" strokeWidth={1.9} />
