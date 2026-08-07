@@ -9,7 +9,7 @@ import {
   ShieldCheck,
   UsersRound,
 } from "lucide-react";
-import heroPerson from "@/public/images/hero-person.webp";
+import heroPerson from "@/public/images/hero-person-v2.webp";
 import { getPublishedPageContent } from "@/lib/cms";
 
 const trustPoints = [
@@ -51,7 +51,7 @@ export default async function VideoHero() {
   const title = hero?.title || "Money moves. Trust stays";
   const lead = hero?.lead || "Exchange foreign currency and send money overseas through HME's nationwide network of 50+ locations.";
   const heroImage = hero?.image || heroPerson;
-  const heroAlt = hero?.imageAlt || "HME customer ready to exchange or send money";
+  const heroAlt = hero?.imageAlt || "HME representative holding foreign currency notes";
   return (
     <section className="hero-stage relative isolate min-h-[800px] overflow-hidden bg-navy-deep text-white sm:min-h-[820px] md:min-h-[max(700px,100svh)] xl:min-h-[max(720px,100svh)]">
       <div className="hero-grid absolute inset-0 opacity-35" aria-hidden="true" />
