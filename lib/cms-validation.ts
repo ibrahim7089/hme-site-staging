@@ -245,6 +245,11 @@ const pageSection = z.object({
   items: z.array(pageSectionItem).max(30).optional().default([]),
 }).strict()
 
+const heroSlide = z.object({
+  image: cmsImage.refine((value) => value.length > 0, 'Upload a slide image'),
+  imageAlt: z.string().trim().min(1).max(180),
+}).strict()
+
 const pages = z.object({
   pageName: z.string().trim().min(1).max(120),
   path: z.string().trim().startsWith('/').max(200),
@@ -254,6 +259,7 @@ const pages = z.object({
     lead: z.string().trim().max(700).optional().default(''),
     image: cmsImage.optional().default(''),
     imageAlt: z.string().trim().max(180).optional().default(''),
+    heroSlides: z.array(heroSlide).max(8).optional().default([]),
   }).strict(),
   sections: z.array(pageSection).max(30),
 }).strict().superRefine((value, ctx) => {

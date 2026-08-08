@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import heroPerson from "@/public/images/hero-person-v2.webp";
 import { getPublishedPageContent } from "@/lib/cms";
+import HeroSlideshow from "@/components/HeroSlideshow";
 
 const trustPoints = [
   {
@@ -52,88 +53,97 @@ export default async function VideoHero() {
   const lead = hero?.lead || "Exchange foreign currency and send money overseas through HME's nationwide network of 50+ locations.";
   const heroImage = hero?.image || heroPerson;
   const heroAlt = hero?.imageAlt || "HME representative holding foreign currency notes";
+  const heroSlides = (hero?.heroSlides || []).filter((slide) => slide.image);
+  const hasSlides = heroSlides.length > 0;
+
   return (
     <section className="hero-stage relative isolate min-h-[800px] overflow-hidden bg-navy-deep text-white sm:min-h-[820px] md:min-h-[max(700px,100svh)] xl:min-h-[max(720px,100svh)]">
-      <div className="hero-grid absolute inset-0 opacity-35" aria-hidden="true" />
-      <div className="hero-premium-glow absolute inset-0" aria-hidden="true" />
-      <div className="hero-wave hero-wave-back" aria-hidden="true" />
-      <div className="hero-wave hero-wave-front" aria-hidden="true" />
+      {hasSlides ? (
+        <HeroSlideshow slides={heroSlides} />
+      ) : (
+        <>
+          <div className="hero-grid absolute inset-0 opacity-35" aria-hidden="true" />
+          <div className="hero-premium-glow absolute inset-0" aria-hidden="true" />
+          <div className="hero-wave hero-wave-back" aria-hidden="true" />
+          <div className="hero-wave hero-wave-front" aria-hidden="true" />
 
-      <svg
-        aria-hidden="true"
-        className="hero-network absolute left-[31%] top-[2%] z-[1] hidden h-[72%] w-[54%] opacity-25 md:block"
-        viewBox="0 0 760 520"
-        fill="none"
-      >
-        <path d="M36 315C178 65 502 42 714 162" stroke="#BBD7FF" strokeWidth="1.2" />
-        <path d="M28 355C206 135 490 119 730 232" stroke="#BBD7FF" strokeWidth="1" />
-        <path d="M85 404C245 222 497 206 708 302" stroke="#BBD7FF" strokeWidth="0.8" />
-        <path d="M169 54C294 145 365 265 388 474" stroke="#BBD7FF" strokeWidth="0.8" />
-        <path d="M392 25C431 147 432 302 384 482" stroke="#BBD7FF" strokeWidth="0.8" />
-        <path d="M597 72C493 164 427 285 386 479" stroke="#BBD7FF" strokeWidth="0.8" />
-        {[
-          [36, 315],
-          [169, 54],
-          [388, 474],
-          [597, 72],
-          [714, 162],
-          [730, 232],
-        ].map(([cx, cy]) => (
-          <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="4" fill="#E7F1FF" />
-        ))}
-      </svg>
-
-      <Image
-        src={heroImage}
-        alt={heroAlt}
-        priority
-        quality={82}
-        sizes="(max-width: 767px) 88vw, (max-width: 1279px) 54vw, 46vw"
-        className="hero-person absolute bottom-0 right-[-18%] z-[4] h-[48%] w-auto max-w-none object-contain object-bottom sm:right-[-2%] sm:h-[51%] md:right-[-2%] md:h-[84%] lg:right-[2%] lg:h-[89%] xl:right-[6%] xl:h-[92%]"
-      />
-
-      <div className="wrap relative z-10 flex min-h-[800px] items-start pb-[400px] pt-[132px] sm:min-h-[820px] sm:pb-[420px] md:min-h-[max(700px,100svh)] md:items-center md:pb-[148px] md:pt-[110px] xl:min-h-[max(720px,100svh)]">
-        <div className="hero-copy max-w-[640px] md:w-[51%] lg:w-[50%]">
-          <h1 className="hero-headline max-w-[9.5ch] whitespace-pre-line text-[clamp(45px,6.2vw,76px)] font-extrabold leading-[0.98] tracking-[-0.055em] [word-spacing:0.06em]">{title}</h1>
-          <p className="mt-6 max-w-[535px] text-[15px] leading-relaxed text-white/80 sm:text-[17px]">
-            {lead}
-          </p>
-
-          <div className="mt-8 flex flex-wrap gap-3">
-            <a href="#services" className="btn-red min-w-[190px]">
-              View Our Services
-              <ArrowRight className="h-4 w-4" />
-            </a>
-            <Link href="/locate-us" className="btn-ghost min-w-[170px] backdrop-blur">
-              Find a Branch
-              <MapPin className="h-4 w-4" />
-            </Link>
-          </div>
-
-          <ul
-            className="hero-assurance-rail mt-9 hidden w-[570px] grid-cols-3 overflow-hidden lg:grid xl:w-[650px]"
-            aria-label="Why customers trust HME"
+          <svg
+            aria-hidden="true"
+            className="hero-network absolute left-[31%] top-[2%] z-[1] hidden h-[72%] w-[54%] opacity-25 md:block"
+            viewBox="0 0 760 520"
+            fill="none"
           >
-            {trustPoints.map(({ icon: Icon, title }) => (
-              <li
-                key={title}
-                className="hero-assurance-item group relative flex min-h-[110px] min-w-0 flex-col items-center justify-center gap-3 px-[18px] py-4 text-center xl:px-5"
-              >
-                <span className="hero-assurance-seal grid h-11 w-11 flex-none place-items-center rounded-full">
-                  <Icon className="h-5 w-5 text-[#D5E9FF]" strokeWidth={1.9} />
-                </span>
-                <b className="hero-assurance-title block font-display text-[14px] font-extrabold capitalize leading-[1.15] tracking-[-0.025em] text-white xl:text-[15px]">
-                  {title}
-                </b>
-                <span
-                  className="absolute bottom-0 left-4 right-4 h-px origin-left scale-x-0 bg-gradient-to-r from-[#70B7FF] to-transparent transition-transform duration-300 group-hover:scale-x-100"
-                  aria-hidden="true"
-                />
-              </li>
+            <path d="M36 315C178 65 502 42 714 162" stroke="#BBD7FF" strokeWidth="1.2" />
+            <path d="M28 355C206 135 490 119 730 232" stroke="#BBD7FF" strokeWidth="1" />
+            <path d="M85 404C245 222 497 206 708 302" stroke="#BBD7FF" strokeWidth="0.8" />
+            <path d="M169 54C294 145 365 265 388 474" stroke="#BBD7FF" strokeWidth="0.8" />
+            <path d="M392 25C431 147 432 302 384 482" stroke="#BBD7FF" strokeWidth="0.8" />
+            <path d="M597 72C493 164 427 285 386 479" stroke="#BBD7FF" strokeWidth="0.8" />
+            {[
+              [36, 315],
+              [169, 54],
+              [388, 474],
+              [597, 72],
+              [714, 162],
+              [730, 232],
+            ].map(([cx, cy]) => (
+              <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="4" fill="#E7F1FF" />
             ))}
-          </ul>
-        </div>
-      </div>
+          </svg>
+
+          <Image
+            src={heroImage}
+            alt={heroAlt}
+            priority
+            quality={82}
+            sizes="(max-width: 767px) 88vw, (max-width: 1279px) 54vw, 46vw"
+            className="hero-person absolute bottom-0 right-[-18%] z-[4] h-[48%] w-auto max-w-none object-contain object-bottom sm:right-[-2%] sm:h-[51%] md:right-[-2%] md:h-[84%] lg:right-[2%] lg:h-[89%] xl:right-[6%] xl:h-[92%]"
+          />
+
+          <div className="wrap relative z-10 flex min-h-[800px] items-start pb-[400px] pt-[132px] sm:min-h-[820px] sm:pb-[420px] md:min-h-[max(700px,100svh)] md:items-center md:pb-[148px] md:pt-[110px] xl:min-h-[max(720px,100svh)]">
+            <div className="hero-copy max-w-[640px] md:w-[51%] lg:w-[50%]">
+              <h1 className="hero-headline max-w-[9.5ch] whitespace-pre-line text-[clamp(45px,6.2vw,76px)] font-extrabold leading-[0.98] tracking-[-0.055em] [word-spacing:0.06em]">{title}</h1>
+              <p className="mt-6 max-w-[535px] text-[15px] leading-relaxed text-white/80 sm:text-[17px]">
+                {lead}
+              </p>
+
+              <div className="mt-8 flex flex-wrap gap-3">
+                <a href="#services" className="btn-red min-w-[190px]">
+                  View Our Services
+                  <ArrowRight className="h-4 w-4" />
+                </a>
+                <Link href="/locate-us" className="btn-ghost min-w-[170px] backdrop-blur">
+                  Find a Branch
+                  <MapPin className="h-4 w-4" />
+                </Link>
+              </div>
+
+              <ul
+                className="hero-assurance-rail mt-9 hidden w-[570px] grid-cols-3 overflow-hidden lg:grid xl:w-[650px]"
+                aria-label="Why customers trust HME"
+              >
+                {trustPoints.map(({ icon: Icon, title }) => (
+                  <li
+                    key={title}
+                    className="hero-assurance-item group relative flex min-h-[110px] min-w-0 flex-col items-center justify-center gap-3 px-[18px] py-4 text-center xl:px-5"
+                  >
+                    <span className="hero-assurance-seal grid h-11 w-11 flex-none place-items-center rounded-full">
+                      <Icon className="h-5 w-5 text-[#D5E9FF]" strokeWidth={1.9} />
+                    </span>
+                    <b className="hero-assurance-title block font-display text-[14px] font-extrabold capitalize leading-[1.15] tracking-[-0.025em] text-white xl:text-[15px]">
+                      {title}
+                    </b>
+                    <span
+                      className="absolute bottom-0 left-4 right-4 h-px origin-left scale-x-0 bg-gradient-to-r from-[#70B7FF] to-transparent transition-transform duration-300 group-hover:scale-x-100"
+                      aria-hidden="true"
+                    />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </>
+      )}
 
       <div className="absolute right-[2.5%] top-[148px] z-[8] hidden w-[245px] xl:block">
         <svg

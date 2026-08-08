@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { BadgePercent, Banknote, BookOpenText, BriefcaseBusiness, Building2, Contact, Copy, Eye, Globe2, LayoutTemplate, LoaderCircle, MapPin, Newspaper, PencilLine, Plus, SendHorizontal, Trash2, UploadCloud } from 'lucide-react'
 import type { CmsContentType } from '@/lib/cms-validation'
-import { heroImageSpec, homeHeroImageSpec, sectionImageSpec, type CmsImageSpec } from '@/lib/page-content'
+import { heroImageSpec, homeHeroImageSpec, homeHeroSlideImageSpec, sectionImageSpec, type CmsImageSpec } from '@/lib/page-content'
 import styles from './admin.module.css'
 
 type Props = {
@@ -231,6 +231,23 @@ function PagesEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
     }
   }
   const heroSpec = text(root.path) === '/' ? homeHeroImageSpec : heroImageSpec
+  const isHome = text(root.path) === '/'
+  const heroSlideRows: Entry[] = Array.isArray(hero.heroSlides) ? (hero.heroSlides as unknown[]).map(record) : []
+  const [slidePanel, setSlidePanel] = useState<{ index: number; mode: ItemPanelMode } | null>(null)
+  const commitHeroSlides = (slides: Entry[]) => updateHero('heroSlides', slides)
+  const updateHeroSlide = (index: number, key: string, value: unknown) =>
+    commitHeroSlides(heroSlideRows.map((row, rowIndex) => rowIndex === index ? { ...row, [key]: value } : row))
+  const addHeroSlide = () => {
+    commitHeroSlides([...heroSlideRows, { image: '', imageAlt: '' }])
+    setSlidePanel({ index: heroSlideRows.length, mode: 'edit' })
+  }
+  const removeHeroSlide = (index: number) => {
+    if (confirmRemove(`Slide ${index + 1}`)) {
+      commitHeroSlides(heroSlideRows.filter((_, rowIndex) => rowIndex !== index))
+      setSlidePanel(null)
+    }
+  }
+  const sectionsStepNumber = isHome ? 3 : 2
 
   return <div className={styles.guidedEditor}>
     <SectionTitle icon={<LayoutTemplate size={20} />} title={`Edit ${text(root.pageName) || 'website page'}`} description="Update the page one section at a time. Existing design, spacing and colours stay protected." />
@@ -242,10 +259,39 @@ function PagesEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
         <label className={styles.spanTwo}>Introductory message<textarea value={text(hero.lead)} onChange={(event) => updateHero('lead', event.target.value)} maxLength={700} disabled={disabled} /></label>
         <div className={styles.spanTwo}><label>Hero image</label><ImageUploadField value={text(hero.image)} alt={text(hero.imageAlt)} disabled={disabled} spec={heroSpec} onChange={(url) => updateHero('image', url)} /></div>
         {text(hero.image) && <label className={styles.spanTwo}>Image description<input value={text(hero.imageAlt)} onChange={(event) => updateHero('imageAlt', event.target.value)} maxLength={180} placeholder="Describe the people, place or activity shown" disabled={disabled} /><small>Required for accessibility and useful for search engines.</small></label>}
+        {isHome && <p className={styles.spanTwo}><small>If you add banner slides below, they replace this heading, text and photo on the homepage automatically — no need to hide anything here.</small></p>}
       </div>
     </section>
+    {isHome && <section className={styles.pageEditorBlock}>
+      <div className={styles.pageEditorBlockHead}><span>2</span><div><strong>Homepage banner slideshow</strong><small>Upload one or more promotional banners. When at least one is added, it automatically replaces the heading/photo above on the live homepage and rotates every few seconds. Leave empty to keep the default homepage design.</small></div></div>
+      <CollectionToolbar count={heroSlideRows.length} noun="slide" addLabel="Add banner slide" disabled={disabled} onAdd={addHeroSlide} />
+      <div className={styles.collectionList}>{heroSlideRows.map((row, index) => {
+        const mode = slidePanel?.index === index ? slidePanel.mode : null
+        return <section key={`slide-${index}`} className={`${styles.collectionItem} ${mode ? styles.collectionItemOpen : ''}`}>
+          <div className={styles.collectionSummary}>
+            <span className={styles.itemNumber}>{index + 1}</span>
+            <div className={styles.itemIdentity}>
+              <span>Banner slide</span>
+              <strong>{text(row.imageAlt) || `Slide ${index + 1}`}</strong>
+              <small>{text(row.image) ? 'Image uploaded' : 'No image yet'}</small>
+            </div>
+            <div className={styles.itemControls}>
+              <button type="button" className={mode === 'edit' ? styles.itemActionActive : styles.itemAction} onClick={() => setSlidePanel(mode === 'edit' ? null : { index, mode: 'edit' })}><PencilLine size={15} /> {mode === 'edit' ? 'Close editor' : 'Edit'}</button>
+              <button type="button" className={mode === 'preview' ? styles.itemActionActive : styles.itemAction} onClick={() => setSlidePanel(mode === 'preview' ? null : { index, mode: 'preview' })}><Eye size={15} /> Preview</button>
+              <button type="button" className={styles.itemIconDanger} title="Delete slide" onClick={() => removeHeroSlide(index)} disabled={disabled}><Trash2 size={15} /></button>
+            </div>
+          </div>
+          {mode === 'edit' && <div className={styles.collectionEditor}><div className={styles.formGrid}>
+            <div className={styles.spanTwo}><label>Banner image</label><ImageUploadField value={text(row.image)} alt={text(row.imageAlt)} disabled={disabled} spec={homeHeroSlideImageSpec} onChange={(url) => updateHeroSlide(index, 'image', url)} /></div>
+            <label className={styles.spanTwo}>Image description<input value={text(row.imageAlt)} onChange={(event) => updateHeroSlide(index, 'imageAlt', event.target.value)} maxLength={180} placeholder="Describe the offer or scene shown in this banner" disabled={disabled} /><small>Required for accessibility and useful for search engines.</small></label>
+          </div></div>}
+          {mode === 'preview' && <div className={styles.collectionPreview}><PreviewCard image={text(row.image)} imageAlt={text(row.imageAlt)} title={text(row.imageAlt) || `Slide ${index + 1}`} /></div>}
+        </section>
+      })}</div>
+      {heroSlideRows.length === 0 && <div className={styles.blankState}>No banner slides yet. The default homepage heading and photo stay visible.</div>}
+    </section>}
     <section className={styles.pageEditorBlock}>
-      <div className={styles.pageEditorBlockHead}><span>2</span><div><strong>Page sections and cards</strong><small>Built-in sections keep the website design protected. Edit each card as a separate item.</small></div></div>
+      <div className={styles.pageEditorBlockHead}><span>{sectionsStepNumber}</span><div><strong>Page sections and cards</strong><small>Built-in sections keep the website design protected. Edit each card as a separate item.</small></div></div>
       <CollectionToolbar count={rows.length} noun="section" addLabel="Add section" disabled={disabled} onAdd={addSection} />
       <div className={styles.collectionList}>{rows.map((row, index) => {
         const items = sectionItems(index)

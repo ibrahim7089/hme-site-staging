@@ -1,5 +1,5 @@
 export type CmsImageSpec = {
-  key: 'page-hero' | 'home-hero' | 'page-section'
+  key: 'page-hero' | 'home-hero' | 'page-section' | 'home-hero-slide'
   label: string
   width: number
   height: number
@@ -9,12 +9,18 @@ export type CmsImageSpec = {
   note: string
 }
 
+export type PageHeroSlide = {
+  image: string
+  imageAlt: string
+}
+
 export type PageHeroContent = {
   eyebrow: string
   title: string
   lead: string
   image: string
   imageAlt: string
+  heroSlides?: PageHeroSlide[]
 }
 
 export type PageSectionContent = {
@@ -76,6 +82,17 @@ export const homeHeroImageSpec: CmsImageSpec = {
   maxBytes: 2 * 1024 * 1024,
   formats: 'Transparent WebP preferred; transparent PNG accepted',
   note: 'Use a full or three-quarter body cut-out with a transparent background. Leave space around the head and hands.',
+}
+
+export const homeHeroSlideImageSpec: CmsImageSpec = {
+  key: 'home-hero-slide',
+  label: 'Home banner slide',
+  width: 1920,
+  height: 820,
+  ratio: '~2.3:1 wide banner',
+  maxBytes: 3 * 1024 * 1024,
+  formats: 'JPG or WebP preferred; PNG accepted',
+  note: 'Use a fully designed, self-contained banner (your own headline, logo and graphics baked into the image). It replaces the default homepage headline and photo while active. The whole image is shown without cropping on every screen size, so avoid placing important text right at the very edges.',
 }
 
 type PageDefinition = {
