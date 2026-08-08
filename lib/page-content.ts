@@ -80,7 +80,7 @@ export const homeHeroImageSpec: CmsImageSpec = {
   width: 1200,
   height: 1500,
   ratio: '4:5 portrait',
-  maxBytes: 2 * 1024 * 1024,
+  maxBytes: 5 * 1024 * 1024,
   formats: 'Transparent WebP preferred; transparent PNG accepted',
   note: 'Use a full or three-quarter body cut-out with a transparent background. Leave space around the head and hands.',
 }

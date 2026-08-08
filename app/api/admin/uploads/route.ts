@@ -3,21 +3,32 @@ import { put } from '@vercel/blob'
 import sharp from 'sharp'
 import { assertCmsOrigin, requireCmsPermission } from '@/lib/cms-auth'
 import { cmsError, cmsJson, cmsRequestId } from '@/lib/cms-http'
+import {
+  heroImageSpec,
+  homeHeroImageSpec,
+  homeHeroSlideImageSpec,
+  sectionImageSpec,
+  type CmsImageSpec,
+} from '@/lib/page-content'
 
 export const runtime = 'nodejs'
 
-const MAX_IMAGE_BYTES = 4 * 1024 * 1024
+// Fallback cap for uploads with no recognized slot; real limits come from
+// each spec's maxBytes below so the client-shown limit always matches what
+// the server actually enforces.
+const DEFAULT_MAX_IMAGE_BYTES = 4 * 1024 * 1024
 const allowedTypes = {
   'image/jpeg': 'jpg',
   'image/png': 'png',
   'image/webp': 'webp',
   'image/avif': 'avif',
 } as const
-const slotRequirements = {
-  'page-hero': { width: 1920, height: 1080, ratio: 16 / 9 },
-  'home-hero': { width: 1200, height: 1500, ratio: 4 / 5 },
-  'page-section': { width: 1200, height: 800, ratio: 3 / 2 },
-} as const
+const slotRequirements: Record<CmsImageSpec['key'], { width: number; height: number; ratio: number; maxBytes: number }> = {
+  'page-hero': { width: heroImageSpec.width, height: heroImageSpec.height, ratio: heroImageSpec.width / heroImageSpec.height, maxBytes: heroImageSpec.maxBytes },
+  'home-hero': { width: homeHeroImageSpec.width, height: homeHeroImageSpec.height, ratio: homeHeroImageSpec.width / homeHeroImageSpec.height, maxBytes: homeHeroImageSpec.maxBytes },
+  'page-section': { width: sectionImageSpec.width, height: sectionImageSpec.height, ratio: sectionImageSpec.width / sectionImageSpec.height, maxBytes: sectionImageSpec.maxBytes },
+  'home-hero-slide': { width: homeHeroSlideImageSpec.width, height: homeHeroSlideImageSpec.height, ratio: homeHeroSlideImageSpec.width / homeHeroSlideImageSpec.height, maxBytes: homeHeroSlideImageSpec.maxBytes },
+}
 
 function ascii(bytes: Uint8Array, start: number, length: number) {
   return String.fromCharCode(...bytes.slice(start, start + length))
@@ -59,9 +70,10 @@ export async function POST(request: Request) {
         code: 'UNSUPPORTED_IMAGE',
       }, 415, requestId)
     }
-    if (file.size <= 0 || file.size > MAX_IMAGE_BYTES) {
+    const maxBytes = (slot && slot in slotRequirements) ? slotRequirements[slot].maxBytes : DEFAULT_MAX_IMAGE_BYTES
+    if (file.size <= 0 || file.size > maxBytes) {
       return cmsJson({
-        error: 'Image must be smaller than 4 MB',
+        error: `Image must be smaller than ${Math.round(maxBytes / 1024 / 1024)} MB`,
         code: 'IMAGE_TOO_LARGE',
       }, 413, requestId)
     }
