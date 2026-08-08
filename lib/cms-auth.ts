@@ -19,6 +19,7 @@ export type CmsPermission =
   | 'enquiries.manage'
   | 'settings.manage'
   | 'users.manage'
+  | 'reviews.manage'
 
 export type CmsUser = {
   id: number
@@ -39,6 +40,7 @@ const rolePermissions: Record<CmsRole, CmsPermission[]> = {
     'enquiries.manage',
     'settings.manage',
     'users.manage',
+    'reviews.manage',
   ],
   'Website Editor': ['publishing.view', 'publishing.create', 'publishing.submit', 'enquiries.view', 'enquiries.manage'],
   'Website Checker': ['publishing.view', 'publishing.approve', 'publishing.publish', 'enquiries.view', 'enquiries.manage'],

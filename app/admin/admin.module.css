@@ -68,3 +68,12 @@
 
 @keyframes admin-spin{to{transform:rotate(360deg)}}
 @media(max-width:700px){.imageUpload{grid-template-columns:1fr}.imageRequirements>span{grid-template-columns:1fr}.newsPreviewGrid{grid-template-columns:1fr}}
+
+/* Google reviews */
+.reviewConnectBar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;border:1px solid #c9d9ee;border-radius:12px;background:#f4f8ff;padding:13px 16px;margin-bottom:16px;font-size:11px;color:#34435c}.reviewConnectBar code{background:#e4edfa;border-radius:5px;padding:2px 5px;font-size:10px}.reviewConnectActions{display:flex;gap:8px}
+.starRow{display:inline-flex;align-items:center;gap:1px;vertical-align:middle}.starFilled{color:#f5a524;fill:#f5a524}.starEmpty{color:#d6dfeb;fill:#d6dfeb}
+.reviewStatusBadge{font-style:normal;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;background:#edf0f5;color:#526078;border-radius:999px;padding:6px 9px;white-space:nowrap}
+.reviewCommentText{margin:14px 0;font-size:13px;line-height:1.65;color:#34435c;white-space:pre-wrap}
+.reviewPostedReply{border:1px solid #cfe3d8;border-radius:11px;background:#f2faf5;padding:12px 14px;margin-bottom:14px}.reviewPostedReply strong{font-size:10px;color:#17734b;text-transform:uppercase;letter-spacing:.04em}.reviewPostedReply p{margin:7px 0 5px;font-size:12px;line-height:1.6;color:#2c4436;white-space:pre-wrap}.reviewPostedReply small{color:#4c7462;font-size:9px}
+.replyTextarea{width:100%;min-height:120px;resize:vertical;border:1px solid #cfd9e7;border-radius:9px;background:white;color:var(--ink);padding:11px 12px;outline:none;font:400 12px/1.6 var(--font-body)}.replyTextarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px #1769db20}
+@media(max-width:650px){.reviewConnectBar{flex-direction:column;align-items:stretch}}
