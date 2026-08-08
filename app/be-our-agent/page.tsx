@@ -120,6 +120,7 @@ export default async function AgentPage() {
           alt={hero?.imageAlt || ""}
           aria-hidden={hero?.imageAlt ? undefined : true}
           priority
+          {...(hero?.image ? { width: 1122, height: 1402 } : {})}
           sizes="(max-width: 767px) 80vw, 55vw"
           className="absolute bottom-0 right-[-18%] h-[58%] w-auto object-contain object-bottom opacity-55 sm:right-[-8%] md:right-0 md:h-[78%] md:opacity-90 lg:right-[4%]"
         />

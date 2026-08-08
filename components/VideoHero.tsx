@@ -96,6 +96,7 @@ export default async function VideoHero() {
             alt={heroAlt}
             priority
             quality={82}
+            {...(hero?.image ? { width: 1200, height: 1500 } : {})}
             sizes="(max-width: 767px) 88vw, (max-width: 1279px) 54vw, 46vw"
             className="hero-person absolute bottom-0 right-[-18%] z-[4] h-[48%] w-auto max-w-none object-contain object-bottom sm:right-[-2%] sm:h-[51%] md:right-[-2%] md:h-[84%] lg:right-[2%] lg:h-[89%] xl:right-[6%] xl:h-[92%]"
           />
