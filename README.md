@@ -41,6 +41,17 @@ The admin "Google Reviews" tab and the homepage 5-star showcase pull reviews fro
 Google Business Profile (formerly Google My Business) across every branch location
 under one Google account, and can draft/post replies with AI help.
 
+> **Staging is already configured.** The `Review Bot` Google Cloud project
+> (owner: hasanimunawarahkl@gmail.com) has GBP API access approved, all three
+> APIs enabled, an OAuth client named "HME Website Reviews", the
+> `business.manage` + `userinfo.email` scopes registered, and its consent
+> screen published to production. The steps below are for setting this up
+> again from scratch (e.g. for the production site on its own domain).
+>
+> When pointing this at a new domain, add that domain's
+> `/api/admin/google-reviews/callback` URL to the OAuth client's authorized
+> redirect URIs and update `GOOGLE_OAUTH_REDIRECT_URI` to match.
+
 **1. Google Cloud project & API access (one-time, takes days — start early):**
 
 1. In [Google Cloud Console](https://console.cloud.google.com), create a project (or
