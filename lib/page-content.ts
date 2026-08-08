@@ -91,7 +91,7 @@ export const homeHeroSlideImageSpec: CmsImageSpec = {
   width: 1920,
   height: 820,
   ratio: '~2.3:1 wide banner',
-  maxBytes: 3 * 1024 * 1024,
+  maxBytes: 5 * 1024 * 1024,
   formats: 'JPG or WebP preferred; PNG accepted',
   note: 'Use a fully designed, self-contained banner (your own headline, logo and graphics baked into the image). It replaces the default homepage headline and photo while active. The whole image is shown without cropping on every screen size, so avoid placing important text right at the very edges.',
 }
