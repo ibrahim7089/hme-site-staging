@@ -238,7 +238,8 @@ function PagesEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
   const updateHeroSlide = (index: number, key: string, value: unknown) =>
     commitHeroSlides(heroSlideRows.map((row, rowIndex) => rowIndex === index ? { ...row, [key]: value } : row))
   const addHeroSlide = () => {
-    commitHeroSlides([...heroSlideRows, { image: '', imageAlt: '' }])
+    const id = crypto.randomUUID()
+    commitHeroSlides([...heroSlideRows, { id, image: '', imageAlt: '' }])
     setSlidePanel({ index: heroSlideRows.length, mode: 'edit' })
   }
   const removeHeroSlide = (index: number) => {
@@ -267,7 +268,7 @@ function PagesEditor({ payload, disabled, onChange }: Omit<Props, 'type'>) {
       <CollectionToolbar count={heroSlideRows.length} noun="slide" addLabel="Add banner slide" disabled={disabled} onAdd={addHeroSlide} />
       <div className={styles.collectionList}>{heroSlideRows.map((row, index) => {
         const mode = slidePanel?.index === index ? slidePanel.mode : null
-        return <section key={`slide-${index}`} className={`${styles.collectionItem} ${mode ? styles.collectionItemOpen : ''}`}>
+        return <section key={text(row.id) || `slide-${index}`} className={`${styles.collectionItem} ${mode ? styles.collectionItemOpen : ''}`}>
           <div className={styles.collectionSummary}>
             <span className={styles.itemNumber}>{index + 1}</span>
             <div className={styles.itemIdentity}>

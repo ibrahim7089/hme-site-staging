@@ -10,6 +10,7 @@ export type CmsImageSpec = {
 }
 
 export type PageHeroSlide = {
+  id?: string
   image: string
   imageAlt: string
 }

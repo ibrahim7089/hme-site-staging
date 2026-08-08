@@ -246,6 +246,7 @@ const pageSection = z.object({
 }).strict()
 
 const heroSlide = z.object({
+  id: z.string().trim().max(60).optional(),
   image: cmsImage.refine((value) => value.length > 0, 'Upload a slide image'),
   imageAlt: z.string().trim().min(1).max(180),
 }).strict()
