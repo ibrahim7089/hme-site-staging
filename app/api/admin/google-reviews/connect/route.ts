@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { NextResponse } from 'next/server'
 import { getCmsUser, permissionsForRole } from '@/lib/cms-auth'
 import { buildGoogleAuthUrl, isGoogleOAuthConfigured } from '@/lib/google-business'
+import { signOAuthState } from '@/lib/google-token-crypto'
 
 export const runtime = 'nodejs'
 
@@ -18,7 +19,10 @@ export async function GET(request: Request) {
     return NextResponse.redirect(redirectBase)
   }
 
-  const state = randomUUID()
+  // Bind this admin's id into the signed state so the callback can tell who
+  // started the flow — it cannot read the SameSite=Strict session cookie on
+  // Google's cross-site redirect back to us.
+  const state = signOAuthState(`${user.id}:${randomUUID()}`)
   const response = NextResponse.redirect(buildGoogleAuthUrl(state))
   response.cookies.set('hme_google_oauth_state', state, {
     httpOnly: true,

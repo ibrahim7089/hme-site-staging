@@ -153,15 +153,9 @@ export async function clearCmsSession() {
   })
 }
 
-export async function getCmsUser(): Promise<CmsUser | null> {
+export async function getCmsUserById(id: number): Promise<CmsUser | null> {
+  if (!Number.isInteger(id) || id <= 0) return null
   try {
-    const store = await cookies()
-    const token = store.get(CMS_SESSION_COOKIE)?.value
-    if (!token) return null
-    const verified = await jwtVerify(token, authSecret(), { algorithms: ['HS256'] })
-    const id = Number(verified.payload.sub)
-    if (!Number.isInteger(id) || id <= 0) return null
-
     const db = await ensureCmsSchema()
     const result = await db.execute({
       sql: 'SELECT id, name, email, role, status FROM cms_users WHERE id = ? LIMIT 1',
@@ -170,6 +164,18 @@ export async function getCmsUser(): Promise<CmsUser | null> {
     const row = result.rows[0] as Record<string, unknown> | undefined
     if (!row || String(row.status) !== 'ACTIVE') return null
     return rowToUser(row)
+  } catch {
+    return null
+  }
+}
+
+export async function getCmsUser(): Promise<CmsUser | null> {
+  try {
+    const store = await cookies()
+    const token = store.get(CMS_SESSION_COOKIE)?.value
+    if (!token) return null
+    const verified = await jwtVerify(token, authSecret(), { algorithms: ['HS256'] })
+    return await getCmsUserById(Number(verified.payload.sub))
   } catch {
     return null
   }
