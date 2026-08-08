@@ -101,9 +101,16 @@ export async function POST(request: Request) {
       .webp({ quality: 82, effort: 4, smartSubsample: true })
       .toBuffer()
 
+    // sharp's output buffer can be backed by memory the runtime's fetch()
+    // refuses to send ("SharedArrayBuffer is not allowed"). Copying into a
+    // fresh Uint8Array guarantees a plain, non-shared ArrayBuffer, then we
+    // wrap that same memory as a Buffer since put() requires one.
+    const freshBytes = new Uint8Array(optimized)
+    const uploadBuffer = Buffer.from(freshBytes.buffer, freshBytes.byteOffset, freshBytes.byteLength)
+
     const year = new Date().getUTCFullYear()
     const pathname = `cms/${year}/${randomUUID()}.webp`
-    const uploaded = await put(pathname, optimized, {
+    const uploaded = await put(pathname, uploadBuffer, {
       access: 'public',
       addRandomSuffix: false,
       contentType: 'image/webp',
