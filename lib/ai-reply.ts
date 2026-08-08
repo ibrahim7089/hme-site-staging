@@ -48,12 +48,25 @@ Rules:
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.6, maxOutputTokens: 200 },
+        // gemini-flash-latest resolves to a reasoning model that spends output
+        // tokens on internal thinking before emitting any reply text — measured
+        // between ~500 (5-star) and ~1000 (detailed complaint). The budget must
+        // clear that with headroom, or the visible reply comes back empty or
+        // cut off mid-sentence.
+        generationConfig: { temperature: 0.6, maxOutputTokens: 2500 },
       }),
     })
     if (!response.ok) return templateReply(review)
     const data = await response.json()
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text
+
+    // A truncated draft must never reach a customer — 5-star replies post to
+    // Google automatically, so half a sentence would go out publicly under the
+    // HME name. Anything short of a clean stop falls back to the template.
+    const candidate = data?.candidates?.[0]
+    if (candidate?.finishReason && candidate.finishReason !== 'STOP') {
+      return templateReply(review)
+    }
+    const text = candidate?.content?.parts?.[0]?.text
     const trimmed = typeof text === 'string' ? text.trim() : ''
     return trimmed || templateReply(review)
   } catch {
