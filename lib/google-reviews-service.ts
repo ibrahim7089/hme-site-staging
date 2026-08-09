@@ -50,6 +50,12 @@ export type SyncSummary = {
 // Vercel caps this function at 60s (maxDuration). Stop well short so there is
 // room to persist progress and return a response.
 const SYNC_BUDGET_MS = 45_000
+// Drafts run a few at a time: enough to get through a 5k-review backlog at a
+// reasonable pace, but far below Google's 300-updates-per-minute ceiling.
+const DRAFT_CONCURRENCY = 4
+// Star-only reviews skip the model and post almost instantly, so without a cap
+// one invocation could otherwise burn through the per-minute write quota.
+const MAX_POSTS_PER_RUN = 120
 
 async function upsertReview(db: Awaited<ReturnType<typeof ensureCmsSchema>>, params: {
   review: GoogleReview
@@ -214,54 +220,68 @@ export async function syncGoogleReviews(): Promise<SyncSummary> {
   if (scanComplete) await writeLocationCursor(db, '')
 
   // Drafting is the expensive half, so it runs on whatever time is left and
-  // leaves anything it cannot reach at NONE for the next invocation.
-  while (Date.now() < deadline) {
-    const next = await db.execute(`SELECT id, google_review_id, account_name, location_name, branch_name,
-      reviewer_name, rating, comment
-      FROM google_reviews WHERE reply_status = 'NONE' AND backlog = 0
-      ORDER BY review_created_at DESC LIMIT 1`)
-    const row = next.rows[0] as Record<string, unknown> | undefined
-    if (!row) break
-
-    const rating = Number(row.rating)
-    const rowId = Number(row.id)
-    const draft = await draftReviewReply({
-      branchName: String(row.branch_name || ''),
-      reviewerName: String(row.reviewer_name || ''),
-      rating,
-      comment: String(row.comment || ''),
+  // leaves anything it cannot reach at NONE for the next invocation. Reviews
+  // are taken in small parallel batches because there are thousands to work
+  // through and each model call costs seconds; `backlog ASC` keeps newly
+  // arrived reviews ahead of the historical ones.
+  let postsThisRun = 0
+  while (Date.now() < deadline && postsThisRun < MAX_POSTS_PER_RUN) {
+    const batch = await db.execute({
+      sql: `SELECT id, google_review_id, account_name, location_name, branch_name,
+        reviewer_name, rating, comment
+        FROM google_reviews WHERE reply_status = 'NONE'
+        ORDER BY backlog ASC, review_created_at DESC LIMIT ?`,
+      args: [DRAFT_CONCURRENCY],
     })
+    if (batch.rows.length === 0) break
 
-    if (rating === 5) {
-      try {
-        await postReviewReply(
-          toV4LocationPath(String(row.account_name), String(row.location_name)),
-          String(row.google_review_id),
-          draft,
-        )
-        await db.execute({
-          sql: `UPDATE google_reviews SET
-            reply_status = 'AUTO_REPLIED', ai_draft = ?, reply_text = ?,
-            reply_posted_at = datetime('now'), replied_by_name = 'AI auto-reply',
-            updated_at = datetime('now')
-            WHERE id = ?`,
-          args: [draft, draft, rowId],
-        })
-        summary.autoReplied += 1
-        continue
-      } catch (error) {
-        summary.errors.push(`Auto-reply failed for ${row.branch_name}: ${error instanceof Error ? error.message : 'failed'}`)
+    const outcomes = await Promise.all(batch.rows.map(async (raw) => {
+      const row = raw as unknown as Record<string, unknown>
+      const rating = Number(row.rating)
+      const rowId = Number(row.id)
+      const draft = await draftReviewReply({
+        branchName: String(row.branch_name || ''),
+        reviewerName: String(row.reviewer_name || ''),
+        rating,
+        comment: String(row.comment || ''),
+      })
+
+      if (rating === 5) {
+        try {
+          await postReviewReply(
+            toV4LocationPath(String(row.account_name), String(row.location_name)),
+            String(row.google_review_id),
+            draft,
+          )
+          await db.execute({
+            sql: `UPDATE google_reviews SET
+              reply_status = 'AUTO_REPLIED', ai_draft = ?, reply_text = ?,
+              reply_posted_at = datetime('now'), replied_by_name = 'AI auto-reply',
+              updated_at = datetime('now')
+              WHERE id = ?`,
+            args: [draft, draft, rowId],
+          })
+          return 'auto' as const
+        } catch (error) {
+          summary.errors.push(`Auto-reply failed for ${row.branch_name}: ${error instanceof Error ? error.message : 'failed'}`)
+        }
       }
-    }
 
-    await db.execute({
-      sql: `UPDATE google_reviews SET reply_status = 'SUGGESTED', ai_draft = ?, updated_at = datetime('now') WHERE id = ?`,
-      args: [draft, rowId],
-    })
-    summary.suggested += 1
+      await db.execute({
+        sql: `UPDATE google_reviews SET reply_status = 'SUGGESTED', ai_draft = ?, updated_at = datetime('now') WHERE id = ?`,
+        args: [draft, rowId],
+      })
+      return 'suggested' as const
+    }))
+
+    for (const outcome of outcomes) {
+      if (outcome === 'auto') summary.autoReplied += 1
+      else summary.suggested += 1
+    }
+    postsThisRun += outcomes.length
   }
 
-  const pending = await db.execute("SELECT COUNT(*) AS total FROM google_reviews WHERE reply_status = 'NONE' AND backlog = 0")
+  const pending = await db.execute("SELECT COUNT(*) AS total FROM google_reviews WHERE reply_status = 'NONE'")
   summary.pendingDrafts = Number((pending.rows[0] as Record<string, unknown>)?.total || 0)
   summary.done = scanComplete && summary.pendingDrafts === 0
   return summary

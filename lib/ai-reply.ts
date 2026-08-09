@@ -27,7 +27,10 @@ function templateReply({ branchName, reviewerName, rating, comment }: ReviewForR
 
 export async function draftReviewReply(review: ReviewForReply): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY?.trim()
-  if (!apiKey) return templateReply(review)
+  // A star rating with no written comment gives the model nothing to respond
+  // to and no language to match, so the template is equivalent — and skipping
+  // the call matters at backlog scale, where thousands of ratings have no text.
+  if (!apiKey || !review.comment.trim()) return templateReply(review)
 
   const prompt = `You are replying, as HME (a licensed Malaysian currency exchange and money transfer business), to a public Google review on one of our branches. Write a short, warm, professional reply (2-3 sentences max, no hashtags, no emojis, no markdown).
 
@@ -37,6 +40,7 @@ Star rating: ${review.rating} out of 5
 Review text: ${review.comment ? `"${review.comment}"` : '(no written comment, star rating only)'}
 
 Rules:
+- Reply in the SAME language the reviewer used. A Malay review gets a Malay reply, a Chinese review a Chinese reply, an English review an English reply. Google sometimes supplies both a translation and the original text — match the original language the customer actually wrote in, and reply only in that one language.
 - If 4-5 stars: thank them warmly and briefly, mention the branch name naturally.
 - If 3 stars or below: acknowledge their concern sincerely, apologise briefly, and invite them to contact info@hmeremit.com.my to resolve it. Do not get defensive or make excuses.
 - Sign off as "— HME Team".

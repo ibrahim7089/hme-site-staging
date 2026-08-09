@@ -184,12 +184,11 @@ export default function GoogleReviewsPanel() {
     }
   }
 
-  // NONE means the draft never got generated (a sync that ran out of time), so
-  // these still need a human — group them with the suggested ones rather than
-  // leaving them visible only under "All reviews". Backlog reviews (predating
-  // the connection) are deliberately never answered, so they stay out of here.
+  // NONE means the draft never got generated yet (a sync that ran out of time),
+  // so these still need a human — group them with the suggested ones rather
+  // than leaving them visible only under "All reviews".
   const needsReply = reviews.filter((review) => (
-    review.backlog !== 1 && (review.reply_status === 'SUGGESTED' || review.reply_status === 'NONE')
+    review.reply_status === 'SUGGESTED' || review.reply_status === 'NONE'
   ))
   const autoReplied = reviews.filter((review) => review.reply_status === 'AUTO_REPLIED')
   const visible = filter === 'needs-reply' ? needsReply : filter === 'auto-replied' ? autoReplied : reviews
