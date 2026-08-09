@@ -232,6 +232,7 @@ const schemaStatements = [
     replied_by_name TEXT NOT NULL DEFAULT '',
     featured_on_homepage INTEGER NOT NULL DEFAULT 1 CHECK(featured_on_homepage IN (0,1)),
     backlog INTEGER NOT NULL DEFAULT 0 CHECK(backlog IN (0,1)),
+    complaint_theme TEXT NOT NULL DEFAULT '',
     fetched_at TEXT NOT NULL DEFAULT (datetime('now')),
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now')),
@@ -449,6 +450,12 @@ async function ensureGoogleReviewSchema(db: Client) {
   if (!columns.rows.some((row) => String(row.name) === 'backlog')) {
     await db.execute('ALTER TABLE google_reviews ADD COLUMN backlog INTEGER NOT NULL DEFAULT 0')
   }
+  if (!columns.rows.some((row) => String(row.name) === 'complaint_theme')) {
+    await db.execute("ALTER TABLE google_reviews ADD COLUMN complaint_theme TEXT NOT NULL DEFAULT ''")
+  }
+  await db.execute(
+    "CREATE INDEX IF NOT EXISTS idx_google_reviews_theme ON google_reviews(complaint_theme) WHERE complaint_theme <> ''",
+  )
   await db.execute(
     'CREATE INDEX IF NOT EXISTS idx_google_reviews_backlog ON google_reviews(backlog, reply_status, review_created_at DESC)',
   )

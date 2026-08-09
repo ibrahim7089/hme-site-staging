@@ -2,7 +2,8 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { CheckCircle2, ChevronRight, Link2, RefreshCw, Send, Star, Unlink } from 'lucide-react'
+import { BarChart3, CheckCircle2, ChevronRight, Inbox, Link2, RefreshCw, Send, Star, Unlink } from 'lucide-react'
+import GoogleReviewsReports from './GoogleReviewsReports'
 import styles from './admin.module.css'
 
 type ReplyStatus = 'NONE' | 'SUGGESTED' | 'AUTO_REPLIED' | 'SENT'
@@ -72,6 +73,7 @@ export default function GoogleReviewsPanel() {
   const [configured, setConfigured] = useState(false)
   const [connected, setConnected] = useState(false)
   const [connectedEmail, setConnectedEmail] = useState('')
+  const [view, setView] = useState<'inbox' | 'reports'>('inbox')
   const [filter, setFilter] = useState<'needs-reply' | 'auto-replied' | 'all'>('needs-reply')
   const [selected, setSelected] = useState<ReviewRow | null>(null)
   const [draftText, setDraftText] = useState('')
@@ -122,7 +124,10 @@ export default function GoogleReviewsPanel() {
     const totals = { newReviews: 0, autoReplied: 0, suggested: 0, errors: [] as string[] }
     let done = false
     try {
-      for (let pass = 0; pass < 30 && !done; pass += 1) {
+      // Each pass is a ~45s server run. Roughly ten minutes of work per click
+      // keeps the page responsive; the backlog is large enough that it is
+      // finished across repeated clicks and the nightly job.
+      for (let pass = 0; pass < 12 && !done; pass += 1) {
         const summary = await api('/api/admin/google-reviews/sync', { method: 'POST' }) as SyncSummary
         totals.newReviews += summary.newReviews
         totals.autoReplied += summary.autoReplied
@@ -194,6 +199,12 @@ export default function GoogleReviewsPanel() {
   const visible = filter === 'needs-reply' ? needsReply : filter === 'auto-replied' ? autoReplied : reviews
 
   return <section className={styles.enquirySection}>
+    <div className={styles.reviewViewTabs} role="tablist" aria-label="Google reviews view">
+      <button role="tab" aria-selected={view === 'inbox'} className={view === 'inbox' ? styles.reviewViewActive : ''} onClick={() => setView('inbox')}><Inbox size={16} /> Reply inbox</button>
+      <button role="tab" aria-selected={view === 'reports'} className={view === 'reports' ? styles.reviewViewActive : ''} onClick={() => setView('reports')}><BarChart3 size={16} /> Reports</button>
+    </div>
+
+    {view === 'reports' ? <GoogleReviewsReports /> : <>
     <div className={styles.enquiryIntro}>
       <div>
         <p className={styles.kicker}>Google reviews</p>
@@ -284,5 +295,6 @@ export default function GoogleReviewsPanel() {
         )}
       </div>
     </div>
+    </>}
   </section>
 }

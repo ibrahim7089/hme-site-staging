@@ -11,7 +11,7 @@ import {
   toV4LocationPath,
   type GoogleReview,
 } from './google-business'
-import { draftReviewReply } from './ai-reply'
+import { classifyComplaint, draftReviewReply } from './ai-reply'
 
 export type StoredReview = {
   id: number
@@ -56,6 +56,11 @@ const DRAFT_CONCURRENCY = 4
 // Star-only reviews skip the model and post almost instantly, so without a cap
 // one invocation could otherwise burn through the per-minute write quota.
 const MAX_POSTS_PER_RUN = 120
+// Gemini's free tier allows 20 generate_content calls per minute. A run lasts
+// ~45s, and a sub-5-star review costs two calls (reply + complaint theme), so
+// this stays under the ceiling instead of collecting 429s. Reviews with no
+// written comment never reach the model and are not counted here.
+const MAX_MODEL_CALLS_PER_RUN = 14
 
 async function upsertReview(db: Awaited<ReturnType<typeof ensureCmsSchema>>, params: {
   review: GoogleReview
@@ -225,26 +230,60 @@ export async function syncGoogleReviews(): Promise<SyncSummary> {
   // through and each model call costs seconds; `backlog ASC` keeps newly
   // arrived reviews ahead of the historical ones.
   let postsThisRun = 0
+  let modelCallsThisRun = 0
+  let deferred = 0
+  // Star-only reviews cost no model calls, so they keep flowing after the
+  // model budget is spent; anything needing text is left for the next run.
+  const skipIds: number[] = []
   while (Date.now() < deadline && postsThisRun < MAX_POSTS_PER_RUN) {
+    const exclusion = skipIds.length ? `AND id NOT IN (${skipIds.join(',')})` : ''
+    // Once the model budget is spent, only star-only reviews are eligible —
+    // they are answered from the template by design and cost no model calls.
+    const budgetSpent = modelCallsThisRun >= MAX_MODEL_CALLS_PER_RUN
+    const textFilter = budgetSpent ? "AND trim(comment) = ''" : ''
     const batch = await db.execute({
       sql: `SELECT id, google_review_id, account_name, location_name, branch_name,
         reviewer_name, rating, comment
-        FROM google_reviews WHERE reply_status = 'NONE'
+        FROM google_reviews WHERE reply_status = 'NONE' ${exclusion} ${textFilter}
         ORDER BY backlog ASC, review_created_at DESC LIMIT ?`,
       args: [DRAFT_CONCURRENCY],
     })
     if (batch.rows.length === 0) break
 
+    for (const raw of batch.rows) {
+      const row = raw as unknown as Record<string, unknown>
+      if (String(row.comment || '').trim()) {
+        // reply draft, plus a complaint classification for sub-5-star reviews
+        modelCallsThisRun += Number(row.rating) < 5 ? 2 : 1
+      }
+    }
+
     const outcomes = await Promise.all(batch.rows.map(async (raw) => {
       const row = raw as unknown as Record<string, unknown>
       const rating = Number(row.rating)
       const rowId = Number(row.id)
-      const draft = await draftReviewReply({
+      const forReply = {
         branchName: String(row.branch_name || ''),
         reviewerName: String(row.reviewer_name || ''),
         rating,
         comment: String(row.comment || ''),
-      })
+      }
+      // Only sub-5-star reviews carry a complaint worth categorising, and the
+      // classification rides along with the draft so there is no separate pass.
+      const [draft, theme] = await Promise.all([
+        draftReviewReply(forReply),
+        rating < 5 ? classifyComplaint(forReply) : Promise.resolve(''),
+      ])
+      // The model was unavailable (almost always the per-minute cap). Leave the
+      // review untouched so a later run can write it a proper reply, rather
+      // than posting a generic template to someone who wrote real feedback.
+      if (draft === null) return 'deferred' as const
+      if (theme) {
+        await db.execute({
+          sql: 'UPDATE google_reviews SET complaint_theme = ? WHERE id = ?',
+          args: [theme, rowId],
+        })
+      }
 
       if (rating === 5) {
         try {
@@ -274,11 +313,20 @@ export async function syncGoogleReviews(): Promise<SyncSummary> {
       return 'suggested' as const
     }))
 
-    for (const outcome of outcomes) {
+    for (const [position, outcome] of outcomes.entries()) {
       if (outcome === 'auto') summary.autoReplied += 1
-      else summary.suggested += 1
+      else if (outcome === 'suggested') summary.suggested += 1
+      else {
+        // Left untouched for a later run — don't pick it up again this run.
+        deferred += 1
+        skipIds.push(Number((batch.rows[position] as unknown as Record<string, unknown>).id))
+      }
     }
     postsThisRun += outcomes.length
+  }
+
+  if (deferred > 0) {
+    summary.errors.push(`${deferred} repl${deferred === 1 ? 'y' : 'ies'} deferred — the AI limit was reached. Run the sync again shortly to finish them.`)
   }
 
   const pending = await db.execute("SELECT COUNT(*) AS total FROM google_reviews WHERE reply_status = 'NONE'")
@@ -326,6 +374,87 @@ export async function listGoogleReviews(filter: { replyStatus?: string; rating?:
     args,
   })
   return result.rows as unknown as StoredReview[]
+}
+
+export type ReviewReports = {
+  totals: { reviews: number; branches: number; averageRating: number; unanswered: number; positive: number; negative: number }
+  periods: Array<{ label: string; reviews: number; averageRating: number }>
+  branches: Array<{ branchName: string; reviews: number; averageRating: number; positive: number; negative: number; unanswered: number }>
+  themes: Array<{ theme: string; count: number }>
+}
+
+const UNANSWERED = "reply_status IN ('NONE','SUGGESTED')"
+
+// review_created_at holds an ISO-8601 timestamp, which sorts and prefixes
+// correctly as text, so periods are matched on the leading date substring
+// rather than SQLite's date functions (which would need the 'T'/'Z' stripped).
+const PERIODS: Array<{ label: string; predicate: string }> = [
+  { label: 'Last 7 days', predicate: "substr(review_created_at,1,10) >= date('now','-7 days')" },
+  { label: 'This month', predicate: "substr(review_created_at,1,7) = strftime('%Y-%m','now')" },
+  { label: 'Last month', predicate: "substr(review_created_at,1,7) = strftime('%Y-%m','now','-1 month')" },
+  { label: 'This year', predicate: "substr(review_created_at,1,4) = strftime('%Y','now')" },
+  { label: 'Last year', predicate: "substr(review_created_at,1,4) = strftime('%Y','now','-1 year')" },
+]
+
+export async function getReviewReports(): Promise<ReviewReports> {
+  const db = await ensureCmsSchema()
+
+  const totalsRow = (await db.execute(`SELECT
+    COUNT(*) AS reviews,
+    COUNT(DISTINCT branch_name) AS branches,
+    AVG(rating) AS average_rating,
+    SUM(CASE WHEN ${UNANSWERED} THEN 1 ELSE 0 END) AS unanswered,
+    SUM(CASE WHEN rating >= 4 THEN 1 ELSE 0 END) AS positive,
+    SUM(CASE WHEN rating <= 3 THEN 1 ELSE 0 END) AS negative
+    FROM google_reviews`)).rows[0] as Record<string, unknown> | undefined
+
+  const periods = []
+  for (const period of PERIODS) {
+    const row = (await db.execute(
+      `SELECT COUNT(*) AS reviews, AVG(rating) AS average_rating FROM google_reviews WHERE ${period.predicate}`,
+    )).rows[0] as Record<string, unknown> | undefined
+    periods.push({
+      label: period.label,
+      reviews: Number(row?.reviews || 0),
+      averageRating: Number(row?.average_rating || 0),
+    })
+  }
+
+  const branchRows = (await db.execute(`SELECT branch_name,
+    COUNT(*) AS reviews,
+    AVG(rating) AS average_rating,
+    SUM(CASE WHEN rating >= 4 THEN 1 ELSE 0 END) AS positive,
+    SUM(CASE WHEN rating <= 3 THEN 1 ELSE 0 END) AS negative,
+    SUM(CASE WHEN ${UNANSWERED} THEN 1 ELSE 0 END) AS unanswered
+    FROM google_reviews GROUP BY branch_name ORDER BY reviews DESC`)).rows
+
+  const themeRows = (await db.execute(`SELECT complaint_theme, COUNT(*) AS total
+    FROM google_reviews WHERE complaint_theme <> ''
+    GROUP BY complaint_theme ORDER BY total DESC`)).rows
+
+  return {
+    totals: {
+      reviews: Number(totalsRow?.reviews || 0),
+      branches: Number(totalsRow?.branches || 0),
+      averageRating: Number(totalsRow?.average_rating || 0),
+      unanswered: Number(totalsRow?.unanswered || 0),
+      positive: Number(totalsRow?.positive || 0),
+      negative: Number(totalsRow?.negative || 0),
+    },
+    periods,
+    branches: branchRows.map((row) => ({
+      branchName: String(row.branch_name || 'Unknown branch'),
+      reviews: Number(row.reviews || 0),
+      averageRating: Number(row.average_rating || 0),
+      positive: Number(row.positive || 0),
+      negative: Number(row.negative || 0),
+      unanswered: Number(row.unanswered || 0),
+    })),
+    themes: themeRows.map((row) => ({
+      theme: String(row.complaint_theme || 'Other'),
+      count: Number(row.total || 0),
+    })),
+  }
 }
 
 export async function setReviewFeatured(reviewRowId: number, featured: boolean) {
