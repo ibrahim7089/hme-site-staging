@@ -80,6 +80,8 @@ export default function GoogleReviewsPanel() {
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState('')
   const [error, setError] = useState('')
+  const [alertEmails, setAlertEmails] = useState('')
+  const [savingEmails, setSavingEmails] = useState(false)
 
   function flash(text: string) {
     setNotice(text)
@@ -100,6 +102,28 @@ export default function GoogleReviewsPanel() {
   }, [])
 
   useEffect(() => { void load() }, [load])
+
+  useEffect(() => {
+    void api('/api/admin/google-reviews/alert-emails')
+      .then((result: { emails: string[] }) => setAlertEmails((result.emails || []).join(', ')))
+      .catch(() => setAlertEmails(''))
+  }, [])
+
+  async function saveAlertEmails() {
+    setSavingEmails(true)
+    try {
+      const result = await api('/api/admin/google-reviews/alert-emails', {
+        method: 'PUT',
+        body: JSON.stringify({ emails: alertEmails }),
+      }) as { emails: string[] }
+      setAlertEmails(result.emails.join(', '))
+      flash(result.emails.length
+        ? `Alerts will go to ${result.emails.length} address${result.emails.length === 1 ? '' : 'es'}`
+        : 'Review alerts are off — no valid addresses saved')
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Could not save alert addresses')
+    } finally { setSavingEmails(false) }
+  }
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -238,6 +262,20 @@ export default function GoogleReviewsPanel() {
           <a className={styles.primaryButton} href="/api/admin/google-reviews/connect"><Link2 size={15} /> Connect Google Business Profile</a>
         </>
       )}
+    </div>
+
+    <div className={styles.reviewAlertBar}>
+      <div>
+        <strong>Email alerts</strong>
+        <small>Who gets notified when new reviews arrive. Separate addresses with commas. Leave empty to turn alerts off.</small>
+      </div>
+      <input
+        value={alertEmails}
+        onChange={(event) => setAlertEmails(event.target.value)}
+        placeholder="admin@hmeremit.com.my, manager@hmeremit.com.my"
+        aria-label="Review alert email addresses"
+      />
+      <button className={styles.primaryButton} onClick={saveAlertEmails} disabled={savingEmails}>Save</button>
     </div>
 
     <div className={styles.enquiryWorkspace}>

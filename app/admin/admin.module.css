@@ -78,6 +78,9 @@
 .replyTextarea{width:100%;min-height:120px;resize:vertical;border:1px solid #cfd9e7;border-radius:9px;background:white;color:var(--ink);padding:11px 12px;outline:none;font:400 12px/1.6 var(--font-body)}.replyTextarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px #1769db20}
 @media(max-width:650px){.reviewConnectBar{flex-direction:column;align-items:stretch}}
 
+.reviewAlertBar{display:grid;grid-template-columns:minmax(240px,.9fr) minmax(260px,1.4fr) auto;gap:12px;align-items:center;border:1px solid #d7e3f1;border-radius:12px;background:#fff;padding:13px 16px;margin-bottom:16px}.reviewAlertBar>div{display:grid;gap:2px}.reviewAlertBar strong{font:800 12px var(--font-display);color:var(--navy)}.reviewAlertBar small{color:var(--muted);font-size:9px;line-height:1.45}.reviewAlertBar input{width:100%;font-size:11px!important}.reviewAlertBar button{height:38px;white-space:nowrap}
+@media(max-width:850px){.reviewAlertBar{grid-template-columns:1fr}}
+
 /* Google reviews reports */
 .reviewViewTabs{display:flex;gap:4px;background:#e8edf5;padding:4px;border-radius:12px;width:max-content;margin-bottom:16px}.reviewViewTabs button{border:0;background:transparent;padding:9px 16px;border-radius:9px;color:#586881;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:7px}.reviewViewActive{background:#fff!important;color:var(--navy)!important;box-shadow:0 2px 7px #1e365317}
 .reportsPage{display:grid;gap:16px}.reportsHead{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}.reportsHead h2{margin:2px 0 0;font:800 23px var(--font-display);letter-spacing:-.03em}

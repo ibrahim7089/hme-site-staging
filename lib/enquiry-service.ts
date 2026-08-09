@@ -245,7 +245,7 @@ function escapeHtml(value: string) {
   })[character] || character)
 }
 
-async function sendEmail(input: {
+export async function sendEmail(input: {
   to: string
   replyTo?: string
   subject: string

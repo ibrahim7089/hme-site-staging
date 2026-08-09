@@ -12,6 +12,7 @@ import {
   type GoogleReview,
 } from './google-business'
 import { classifyComplaint, draftReviewReply } from './ai-reply'
+import { sendReviewAlert, type ReviewAlertReview } from './review-alerts'
 
 export type StoredReview = {
   id: number
@@ -232,6 +233,7 @@ export async function syncGoogleReviews(): Promise<SyncSummary> {
   let postsThisRun = 0
   let modelCallsThisRun = 0
   let deferred = 0
+  const alerts: ReviewAlertReview[] = []
   // Star-only reviews cost no model calls, so they keep flowing after the
   // model budget is spent; anything needing text is left for the next run.
   const skipIds: number[] = []
@@ -243,7 +245,7 @@ export async function syncGoogleReviews(): Promise<SyncSummary> {
     const textFilter = budgetSpent ? "AND trim(comment) = ''" : ''
     const batch = await db.execute({
       sql: `SELECT id, google_review_id, account_name, location_name, branch_name,
-        reviewer_name, rating, comment
+        reviewer_name, rating, comment, backlog
         FROM google_reviews WHERE reply_status = 'NONE' ${exclusion} ${textFilter}
         ORDER BY backlog ASC, review_created_at DESC LIMIT ?`,
       args: [DRAFT_CONCURRENCY],
@@ -314,12 +316,23 @@ export async function syncGoogleReviews(): Promise<SyncSummary> {
     }))
 
     for (const [position, outcome] of outcomes.entries()) {
+      const row = batch.rows[position] as unknown as Record<string, unknown>
       if (outcome === 'auto') summary.autoReplied += 1
       else if (outcome === 'suggested') summary.suggested += 1
       else {
         // Left untouched for a later run — don't pick it up again this run.
         deferred += 1
-        skipIds.push(Number((batch.rows[position] as unknown as Record<string, unknown>).id))
+        skipIds.push(Number(row.id))
+        continue
+      }
+      if (Number(row.backlog) !== 1) {
+        alerts.push({
+          branchName: String(row.branch_name || ''),
+          reviewerName: String(row.reviewer_name || ''),
+          rating: Number(row.rating),
+          comment: String(row.comment || ''),
+          autoReplied: outcome === 'auto',
+        })
       }
     }
     postsThisRun += outcomes.length
@@ -328,6 +341,10 @@ export async function syncGoogleReviews(): Promise<SyncSummary> {
   if (deferred > 0) {
     summary.errors.push(`${deferred} repl${deferred === 1 ? 'y' : 'ies'} deferred — the AI limit was reached. Run the sync again shortly to finish them.`)
   }
+
+  // Alert on genuinely new arrivals only. The historical backlog is not news,
+  // and mailing thousands of old reviews would bury the ones that matter.
+  if (alerts.length > 0) await sendReviewAlert(alerts)
 
   const pending = await db.execute("SELECT COUNT(*) AS total FROM google_reviews WHERE reply_status = 'NONE'")
   summary.pendingDrafts = Number((pending.rows[0] as Record<string, unknown>)?.total || 0)
@@ -468,11 +485,19 @@ export async function setReviewFeatured(reviewRowId: number, featured: boolean) 
 export async function listFiveStarReviewsForHomepage(limit = 9) {
   try {
     const db = await ensureCmsSchema()
+    // Ordering purely by recency lets whichever branch is busiest fill the
+    // whole section. Ranking each branch's reviews separately and taking every
+    // branch's newest first spreads the selection across the network, then
+    // backfills with each branch's next-newest only if there is space left.
     const result = await db.execute({
       sql: `SELECT reviewer_name, reviewer_photo_url, comment, branch_name, review_created_at
-        FROM google_reviews
-        WHERE rating = 5 AND featured_on_homepage = 1 AND comment <> ''
-        ORDER BY review_created_at DESC
+        FROM (
+          SELECT reviewer_name, reviewer_photo_url, comment, branch_name, review_created_at,
+            ROW_NUMBER() OVER (PARTITION BY branch_name ORDER BY review_created_at DESC) AS branch_rank
+          FROM google_reviews
+          WHERE rating = 5 AND featured_on_homepage = 1 AND trim(comment) <> ''
+        )
+        ORDER BY branch_rank ASC, review_created_at DESC
         LIMIT ?`,
       args: [limit],
     })

@@ -2,6 +2,14 @@ import { Star } from "lucide-react";
 import SectionHeading from "./SectionHeading";
 import { listFiveStarReviewsForHomepage } from "@/lib/google-reviews-service";
 
+// Google returns non-English reviews as
+// "(Translated by Google) <english>\n\n(Original)\n<original>". Printed as-is
+// that scaffolding shows up on the page, so keep just the readable translation.
+function readableComment(comment: string) {
+  const translated = comment.match(/\(Translated by Google\)\s*([\s\S]*?)\s*\(Original\)/)
+  return (translated ? translated[1] : comment).trim();
+}
+
 function initials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "G";
@@ -33,7 +41,7 @@ export default async function GoogleReviewsShowcase() {
                 ))}
               </div>
               <blockquote className="flex-1 text-[14px] leading-relaxed text-slate2">
-                &ldquo;{review.comment}&rdquo;
+                &ldquo;{readableComment(review.comment)}&rdquo;
               </blockquote>
               <figcaption className="flex items-center gap-3 border-t border-line pt-4">
                 <span className="grid h-10 w-10 flex-none place-items-center rounded-full bg-brand-bluesoft text-[13px] font-bold text-brand-blue">
