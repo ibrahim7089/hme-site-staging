@@ -1,5 +1,5 @@
-/* eslint-disable @next/next/no-img-element */
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { Building2, Users, ShieldCheck, Star, Target, Eye, Gem, ArrowRight } from "lucide-react";
 import { getPublishedPageContent } from "@/lib/cms";
@@ -116,9 +116,13 @@ export default async function AboutPage() {
 
               {/* Photo card */}
               <div className="relative overflow-hidden rounded-2xl shadow-deep">
-                <img
+                <Image
                   src={hero?.image || "/images/about-hero.jpg"}
                   alt={hero?.imageAlt || "HME LG-K08A branch counter"}
+                  width={2000}
+                  height={1500}
+                  priority
+                  sizes="(max-width: 1023px) 100vw, 50vw"
                   className="h-[300px] w-full object-cover sm:h-[380px] lg:h-[500px]"
                 />
               </div>
@@ -135,9 +139,12 @@ export default async function AboutPage() {
           <div className="flex gap-0">
             <div className="w-1 flex-none self-stretch rounded-l-full bg-brand-red" />
             <div className="overflow-hidden rounded-r-2xl shadow-deep">
-              <img
+              <Image
                 src="/images/about-who-we-are.jpg"
                 alt="HME branch exterior"
+                width={2000}
+                height={1500}
+                sizes="(max-width: 1023px) 100vw, 50vw"
                 className="h-full w-full object-cover"
               />
             </div>
@@ -195,9 +202,12 @@ export default async function AboutPage() {
 
           {/* Photo right — with gradient overlay */}
           <div className="scroll-reveal relative overflow-hidden rounded-2xl shadow-deep">
-            <img
+            <Image
               src="/images/about-growth.jpg"
               alt="HME branch opening celebration"
+              width={2000}
+              height={1500}
+              sizes="(max-width: 1023px) 100vw, 50vw"
               className="h-full w-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-navy-deep/30 to-transparent" />
