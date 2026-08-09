@@ -231,6 +231,7 @@ const schemaStatements = [
     replied_by_user_id INTEGER DEFAULT NULL,
     replied_by_name TEXT NOT NULL DEFAULT '',
     featured_on_homepage INTEGER NOT NULL DEFAULT 1 CHECK(featured_on_homepage IN (0,1)),
+    backlog INTEGER NOT NULL DEFAULT 0 CHECK(backlog IN (0,1)),
     fetched_at TEXT NOT NULL DEFAULT (datetime('now')),
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now')),
@@ -443,6 +444,16 @@ async function migrateCmsItemsContentTypes(db: Client) {
   }
 }
 
+async function ensureGoogleReviewSchema(db: Client) {
+  const columns = await db.execute('PRAGMA table_info(google_reviews)')
+  if (!columns.rows.some((row) => String(row.name) === 'backlog')) {
+    await db.execute('ALTER TABLE google_reviews ADD COLUMN backlog INTEGER NOT NULL DEFAULT 0')
+  }
+  await db.execute(
+    'CREATE INDEX IF NOT EXISTS idx_google_reviews_backlog ON google_reviews(backlog, reply_status, review_created_at DESC)',
+  )
+}
+
 async function seedFirstAdmin(db: Client) {
   const existing = await db.execute('SELECT COUNT(*) AS total FROM cms_users')
   const total = Number(existing.rows[0]?.total || 0)
@@ -474,6 +485,7 @@ export async function ensureCmsSchema() {
       await migrateCmsItemsContentTypes(db)
       await ensureEnquiryCategorySchema(db)
       await ensureEnquiryDeletionSchema(db)
+      await ensureGoogleReviewSchema(db)
       await seedFirstAdmin(db)
     })().catch((error) => {
       globalThis.hmeCmsSchemaPromise = undefined

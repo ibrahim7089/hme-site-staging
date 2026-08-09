@@ -15,6 +15,7 @@ import { draftReviewReply } from './ai-reply'
 
 export type StoredReview = {
   id: number
+  backlog: number
   google_review_id: string
   account_name: string
   location_name: string
@@ -55,23 +56,34 @@ async function upsertReview(db: Awaited<ReturnType<typeof ensureCmsSchema>>, par
   accountName: string
   locationName: string
   branchName: string
+  autoReplyCutoff: string
 }) {
-  const { review, accountName, locationName, branchName } = params
+  const { review, accountName, locationName, branchName, autoReplyCutoff } = params
   const rating = starRatingToNumber[review.starRating] || 0
+  // Reviews predating the connection are historical: they are stored so the
+  // reporting covers the full history, but never drafted or auto-answered.
+  // Mass-replying to years of old reviews would be spam, not service.
+  const isBacklog = Boolean(autoReplyCutoff && review.createTime < autoReplyCutoff)
   const existing = await db.execute({
     sql: 'SELECT id, reply_status FROM google_reviews WHERE google_review_id = ? LIMIT 1',
     args: [review.reviewId],
   })
   const existingRow = existing.rows[0] as Record<string, unknown> | undefined
 
+  // A reply already on Google — written by staff in the Google interface, or
+  // by an earlier run — is authoritative. Posting uses PUT, which replaces
+  // whatever is there, so these must be recorded as already answered and left
+  // alone; drafting over them would silently destroy a real person's reply.
+  const googleReply = review.reviewReply?.comment?.trim() || ''
+
   if (existingRow) {
-    // Keep existing reply workflow state untouched; just refresh review content
-    // in case the reviewer edited their text, and record Google's own reply
-    // if one already exists there (e.g. someone replied directly in Google).
+    const currentStatus = String(existingRow.reply_status || 'NONE')
+    const adoptGoogleReply = googleReply && (currentStatus === 'NONE' || currentStatus === 'SUGGESTED')
     await db.execute({
       sql: `UPDATE google_reviews SET
         reviewer_name = ?, reviewer_photo_url = ?, rating = ?, comment = ?,
         review_updated_at = ?, fetched_at = datetime('now'), updated_at = datetime('now')
+        ${adoptGoogleReply ? `, reply_status = 'SENT', reply_text = ?, reply_posted_at = ?, replied_by_name = 'Replied on Google'` : ''}
         WHERE id = ?`,
       args: [
         review.reviewer?.displayName || 'A Google user',
@@ -79,6 +91,7 @@ async function upsertReview(db: Awaited<ReturnType<typeof ensureCmsSchema>>, par
         rating,
         review.comment || '',
         review.updateTime,
+        ...(adoptGoogleReply ? [googleReply, review.reviewReply?.updateTime || ''] : []),
         Number(existingRow.id),
       ],
     })
@@ -86,7 +99,7 @@ async function upsertReview(db: Awaited<ReturnType<typeof ensureCmsSchema>>, par
       id: Number(existingRow.id),
       isNew: false,
       rating,
-      replyStatus: String(existingRow.reply_status || 'NONE'),
+      replyStatus: adoptGoogleReply ? 'SENT' : currentStatus,
     }
   }
 
@@ -94,17 +107,28 @@ async function upsertReview(db: Awaited<ReturnType<typeof ensureCmsSchema>>, par
     sql: `INSERT INTO google_reviews (
       google_review_id, account_name, location_name, branch_name,
       reviewer_name, reviewer_photo_url, rating, comment,
-      review_created_at, review_updated_at, reply_status
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'NONE')`,
+      review_created_at, review_updated_at, reply_status,
+      reply_text, reply_posted_at, replied_by_name, backlog
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     args: [
       review.reviewId, accountName, locationName, branchName,
       review.reviewer?.displayName || 'A Google user',
       review.reviewer?.profilePhotoUrl || '',
       rating, review.comment || '',
       review.createTime, review.updateTime,
+      googleReply ? 'SENT' : 'NONE',
+      googleReply,
+      googleReply ? (review.reviewReply?.updateTime || null) : null,
+      googleReply ? 'Replied on Google' : '',
+      isBacklog ? 1 : 0,
     ],
   })
-  return { id: Number(result.lastInsertRowid), isNew: true, rating, replyStatus: 'NONE' }
+  return {
+    id: Number(result.lastInsertRowid),
+    isNew: true,
+    rating,
+    replyStatus: googleReply ? 'SENT' : 'NONE',
+  }
 }
 
 type SyncDb = Awaited<ReturnType<typeof ensureCmsSchema>>
@@ -143,6 +167,12 @@ export async function syncGoogleReviews(): Promise<SyncSummary> {
     autoReplied: 0, suggested: 0, pendingDrafts: 0, done: false, errors: [],
   }
 
+  // Only reviews left after the account was connected are answered. Everything
+  // older is kept for reporting but never replied to.
+  const connected = await db.execute('SELECT connected_at FROM google_oauth_tokens WHERE id = 1 LIMIT 1')
+  const connectedAt = String((connected.rows[0] as Record<string, unknown>)?.connected_at || '')
+  const autoReplyCutoff = connectedAt ? `${connectedAt.replace(' ', 'T')}Z` : ''
+
   const targets: Array<{ accountName: string; locationName: string; branchName: string }> = []
   for (const account of await listAllAccounts()) {
     try {
@@ -171,7 +201,7 @@ export async function syncGoogleReviews(): Promise<SyncSummary> {
       summary.locationsScanned += 1
       for (const review of reviews) {
         summary.reviewsSeen += 1
-        const { isNew } = await upsertReview(db, { review, ...target })
+        const { isNew } = await upsertReview(db, { review, ...target, autoReplyCutoff })
         if (isNew) summary.newReviews += 1
       }
     } catch (error) {
@@ -188,7 +218,7 @@ export async function syncGoogleReviews(): Promise<SyncSummary> {
   while (Date.now() < deadline) {
     const next = await db.execute(`SELECT id, google_review_id, account_name, location_name, branch_name,
       reviewer_name, rating, comment
-      FROM google_reviews WHERE reply_status = 'NONE'
+      FROM google_reviews WHERE reply_status = 'NONE' AND backlog = 0
       ORDER BY review_created_at DESC LIMIT 1`)
     const row = next.rows[0] as Record<string, unknown> | undefined
     if (!row) break
@@ -231,7 +261,7 @@ export async function syncGoogleReviews(): Promise<SyncSummary> {
     summary.suggested += 1
   }
 
-  const pending = await db.execute("SELECT COUNT(*) AS total FROM google_reviews WHERE reply_status = 'NONE'")
+  const pending = await db.execute("SELECT COUNT(*) AS total FROM google_reviews WHERE reply_status = 'NONE' AND backlog = 0")
   summary.pendingDrafts = Number((pending.rows[0] as Record<string, unknown>)?.total || 0)
   summary.done = scanComplete && summary.pendingDrafts === 0
   return summary
