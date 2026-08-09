@@ -20,7 +20,16 @@ type ReviewRow = {
   replied_by_name: string
   featured_on_homepage: number
 }
-type SyncSummary = { newReviews: number; autoReplied: number; suggested: number; errors: string[] }
+type SyncSummary = {
+  locationsScanned: number
+  locationsTotal: number
+  newReviews: number
+  autoReplied: number
+  suggested: number
+  pendingDrafts: number
+  done: boolean
+  errors: string[]
+}
 
 const oauthErrorMessages: Record<string, string> = {
   not_configured: "Google Business Profile isn't configured on the server yet (missing OAuth environment variables).",
@@ -104,12 +113,28 @@ export default function GoogleReviewsPanel() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // One request cannot cover every branch — the server works to a time budget
+  // and reports done:false when it stopped early, so keep calling until it
+  // has been all the way through the account.
   async function sync() {
     setBusy(true); setError('')
+    const totals = { newReviews: 0, autoReplied: 0, suggested: 0, errors: [] as string[] }
+    let done = false
     try {
-      const summary = await api('/api/admin/google-reviews/sync', { method: 'POST' }) as SyncSummary
-      flash(`Synced: ${summary.newReviews} new review(s) — ${summary.autoReplied} auto-replied, ${summary.suggested} waiting for your reply${summary.errors.length ? ` (${summary.errors.length} location error(s))` : ''}`)
-      await load()
+      for (let pass = 0; pass < 30 && !done; pass += 1) {
+        const summary = await api('/api/admin/google-reviews/sync', { method: 'POST' }) as SyncSummary
+        totals.newReviews += summary.newReviews
+        totals.autoReplied += summary.autoReplied
+        totals.suggested += summary.suggested
+        totals.errors.push(...summary.errors)
+        done = summary.done
+        if (!done) {
+          setNotice(`Working through your branches — ${summary.locationsScanned} of ${summary.locationsTotal} scanned this pass, ${summary.pendingDrafts} repl${summary.pendingDrafts === 1 ? 'y' : 'ies'} still to draft…`)
+        }
+        await load()
+      }
+      flash(`${done ? 'Sync complete' : 'Sync paused'}: ${totals.newReviews} new review(s) — ${totals.autoReplied} auto-replied, ${totals.suggested} waiting for you${totals.errors.length ? ` · ${totals.errors.length} error(s)` : ''}`)
+      if (totals.errors.length) setError(totals.errors.slice(0, 5).join('\n'))
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Sync failed')
     } finally { setBusy(false) }

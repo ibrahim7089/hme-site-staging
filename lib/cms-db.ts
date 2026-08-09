@@ -236,6 +236,11 @@ const schemaStatements = [
     updated_at TEXT NOT NULL DEFAULT (datetime('now')),
     FOREIGN KEY(replied_by_user_id) REFERENCES cms_users(id)
   )`,
+  `CREATE TABLE IF NOT EXISTS google_sync_progress (
+    id INTEGER PRIMARY KEY CHECK(id = 1),
+    location_cursor TEXT NOT NULL DEFAULT '',
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`,
   'CREATE INDEX IF NOT EXISTS idx_google_reviews_rating ON google_reviews(rating, reply_status, review_created_at DESC)',
   'CREATE INDEX IF NOT EXISTS idx_google_reviews_status ON google_reviews(reply_status, review_created_at DESC)',
   'CREATE INDEX IF NOT EXISTS idx_google_reviews_featured ON google_reviews(featured_on_homepage, rating, review_created_at DESC)',
