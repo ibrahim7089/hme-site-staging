@@ -158,7 +158,10 @@ export default function GoogleReviewsPanel() {
     }
   }
 
-  const needsReply = reviews.filter((review) => review.reply_status === 'SUGGESTED')
+  // NONE means the draft never got generated (a sync that ran out of time), so
+  // these still need a human — group them with the suggested ones rather than
+  // leaving them visible only under "All reviews".
+  const needsReply = reviews.filter((review) => review.reply_status === 'SUGGESTED' || review.reply_status === 'NONE')
   const autoReplied = reviews.filter((review) => review.reply_status === 'AUTO_REPLIED')
   const visible = filter === 'needs-reply' ? needsReply : filter === 'auto-replied' ? autoReplied : reviews
 

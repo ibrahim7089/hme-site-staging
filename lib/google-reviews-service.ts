@@ -74,7 +74,12 @@ async function upsertReview(db: Awaited<ReturnType<typeof ensureCmsSchema>>, par
         Number(existingRow.id),
       ],
     })
-    return { id: Number(existingRow.id), isNew: false, rating }
+    return {
+      id: Number(existingRow.id),
+      isNew: false,
+      rating,
+      replyStatus: String(existingRow.reply_status || 'NONE'),
+    }
   }
 
   const result = await db.execute({
@@ -91,7 +96,7 @@ async function upsertReview(db: Awaited<ReturnType<typeof ensureCmsSchema>>, par
       review.createTime, review.updateTime,
     ],
   })
-  return { id: Number(result.lastInsertRowid), isNew: true, rating }
+  return { id: Number(result.lastInsertRowid), isNew: true, rating, replyStatus: 'NONE' }
 }
 
 export async function syncGoogleReviews(): Promise<SyncSummary> {
@@ -121,14 +126,19 @@ export async function syncGoogleReviews(): Promise<SyncSummary> {
 
       for (const review of reviews) {
         summary.reviewsSeen += 1
-        const { id, isNew, rating } = await upsertReview(db, {
+        const { id, isNew, rating, replyStatus } = await upsertReview(db, {
           review,
           accountName: account.name,
           locationName: location.name,
           branchName: location.title || location.name,
         })
-        if (!isNew) continue
-        summary.newReviews += 1
+        // Reviews left at NONE were stored but never drafted — the previous
+        // run ran out of function time mid-way. They are no longer "new", so
+        // without this they would be skipped on every future sync and stay
+        // stranded with no reply forever. Picking them back up makes a sync
+        // that times out resumable by simply running it again.
+        if (!isNew && replyStatus !== 'NONE') continue
+        if (isNew) summary.newReviews += 1
 
         const draft = await draftReviewReply({
           branchName: location.title || location.name,
