@@ -39,7 +39,18 @@ const nextConfig = {
     remotePatterns: [{ protocol: "https", hostname: "*.public.blob.vercel-storage.com" }],
   },
   async headers() {
-    return [{ source: "/(.*)", headers: securityHeaders }];
+    return [
+      { source: "/(.*)", headers: securityHeaders },
+      {
+        // Staging and preview deployments serve the same pages as the live
+        // site and robots.txt allows crawling, so without this they compete
+        // with hmeremit.com.my in search as duplicate content. The real domain
+        // is unaffected.
+        source: "/(.*)",
+        has: [{ type: "host", value: ".*\\.vercel\\.app" }],
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      },
+    ];
   },
 };
 
