@@ -145,7 +145,11 @@ export default async function AboutPage() {
                 width={2000}
                 height={1500}
                 sizes="(max-width: 1023px) 100vw, 50vw"
-                className="h-full w-full object-cover"
+                // h-full collapsed to zero height here: next/image carries an
+                // intrinsic aspect ratio, so height:100% against an auto-height
+                // parent resolves to nothing. Sizing from the width keeps the
+                // picture visible at its natural 4:3.
+                className="h-auto w-full object-cover"
               />
             </div>
           </div>
@@ -208,7 +212,7 @@ export default async function AboutPage() {
               width={2000}
               height={1500}
               sizes="(max-width: 1023px) 100vw, 50vw"
-              className="h-full w-full object-cover"
+              className="h-auto w-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-navy-deep/30 to-transparent" />
           </div>
