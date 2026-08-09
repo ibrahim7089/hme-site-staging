@@ -33,7 +33,11 @@ export default async function GoogleReviewsShowcase() {
           {reviews.map((review, index) => (
             <figure
               key={`${review.reviewer_name}-${index}`}
-              className="flex flex-col gap-4 rounded-card border border-line bg-white p-6 shadow-soft"
+              // min-w-0 is required: a grid item defaults to min-width:auto, so
+              // the truncated (non-wrapping) branch line in the caption sets a
+              // ~315px floor that widened the track past the viewport and made
+              // the whole page scroll sideways on phones.
+              className="flex min-w-0 flex-col gap-4 rounded-card border border-line bg-white p-6 shadow-soft"
             >
               <div className="flex items-center gap-1" aria-label="5 out of 5 stars">
                 {Array.from({ length: 5 }).map((_, starIndex) => (
