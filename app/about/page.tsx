@@ -138,7 +138,11 @@ export default async function AboutPage() {
           {/* Photo left — red accent strip + deep shadow */}
           <div className="flex gap-0">
             <div className="w-1 flex-none self-stretch rounded-l-full bg-brand-red" />
-            <div className="overflow-hidden rounded-r-2xl shadow-deep">
+            {/* flex-1 is what gives this column a width. Without it the item is
+                sized by its content, and the image inside asks for 100% of that
+                same width — a circular constraint the browser settles at zero,
+                so the photo disappeared entirely. */}
+            <div className="min-w-0 flex-1 overflow-hidden rounded-r-2xl shadow-deep">
               <Image
                 src="/images/about-who-we-are.jpg"
                 alt="HME branch exterior"
