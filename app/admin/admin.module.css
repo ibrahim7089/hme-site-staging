@@ -69,6 +69,14 @@
 @keyframes admin-spin{to{transform:rotate(360deg)}}
 @media(max-width:700px){.imageUpload{grid-template-columns:1fr}.imageRequirements>span{grid-template-columns:1fr}.newsPreviewGrid{grid-template-columns:1fr}}
 
+/* Website change requests */
+.requestToolbar{display:flex;gap:8px;margin-bottom:16px}
+.requestForm{display:grid;grid-template-columns:1fr 1fr;gap:14px;border:1px solid #c9d9ee;border-radius:14px;background:#fff;padding:20px;margin-bottom:16px;box-shadow:0 5px 20px #19375e0a}.requestForm label{display:grid;gap:6px;color:#34435c;font-size:12px;font-weight:700}.requestForm label span{font-weight:500;color:var(--muted)}.requestForm input,.requestForm select{width:100%;height:40px;border:1px solid #cfd9e7;border-radius:9px;padding:0 11px;font-size:12px}.requestForm textarea{min-height:120px;resize:vertical;border:1px solid #cfd9e7;border-radius:9px;padding:10px 11px;font:400 12px/1.6 var(--font-body);outline:none}.requestForm textarea:focus,.requestForm input:focus,.requestForm select:focus{border-color:var(--blue);box-shadow:0 0 0 3px #1769db20}
+.requestImages{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}.requestImage{position:relative;width:120px;height:88px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#eef2f8;display:block}.requestImage img{object-fit:cover}.requestImage button{position:absolute;top:4px;right:4px;display:grid;place-items:center;width:20px;height:20px;border:0;border-radius:6px;background:#fffffff0;color:#a41128;cursor:pointer;box-shadow:0 2px 6px #10284930}
+.requestUpload{display:grid!important;place-items:center;gap:4px!important;width:120px;height:88px;border:1px dashed #9db7dc;border-radius:10px;background:#f6faff;color:var(--blue);font-size:10px!important;font-weight:800!important;cursor:pointer}.requestUpload input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.requestStatusNEW,.requestStatusIN_PROGRESS,.requestStatusDONE,.requestStatusREJECTED{font-style:normal;font-size:8px;font-weight:800;border-radius:999px;padding:5px 7px;white-space:nowrap;text-transform:uppercase;letter-spacing:.04em}.requestStatusNEW{background:#e8f1ff;color:#155ebd}.requestStatusIN_PROGRESS{background:#fff2ce;color:#805a00}.requestStatusDONE{background:#e5f7ee;color:#147248}.requestStatusREJECTED{background:#f0f2f5;color:#687488}
+@media(max-width:700px){.requestForm{grid-template-columns:1fr}}
+
 /* Google reviews */
 .reviewConnectBar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;border:1px solid #c9d9ee;border-radius:12px;background:#f4f8ff;padding:13px 16px;margin-bottom:16px;font-size:11px;color:#34435c}.reviewConnectBar code{background:#e4edfa;border-radius:5px;padding:2px 5px;font-size:10px}.reviewConnectActions{display:flex;gap:8px}
 .starRow{display:inline-flex;align-items:center;gap:1px;vertical-align:middle}.starFilled{color:#f5a524;fill:#f5a524}.starEmpty{color:#d6dfeb;fill:#d6dfeb}

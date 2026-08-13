@@ -20,6 +20,8 @@ export type CmsPermission =
   | 'settings.manage'
   | 'users.manage'
   | 'reviews.manage'
+  | 'requests.view'
+  | 'requests.manage'
 
 export type CmsUser = {
   id: number
@@ -41,9 +43,13 @@ const rolePermissions: Record<CmsRole, CmsPermission[]> = {
     'settings.manage',
     'users.manage',
     'reviews.manage',
+    'requests.view',
+    'requests.manage',
   ],
-  'Website Editor': ['publishing.view', 'publishing.create', 'publishing.submit', 'enquiries.view', 'enquiries.manage'],
-  'Website Checker': ['publishing.view', 'publishing.approve', 'publishing.publish', 'enquiries.view', 'enquiries.manage'],
+  // Everyone with a login can raise and read change requests — that is the
+  // point of the log. Only an Admin closes or rejects them.
+  'Website Editor': ['publishing.view', 'publishing.create', 'publishing.submit', 'enquiries.view', 'enquiries.manage', 'requests.view'],
+  'Website Checker': ['publishing.view', 'publishing.approve', 'publishing.publish', 'enquiries.view', 'enquiries.manage', 'requests.view'],
 }
 
 export class CmsAuthError extends Error {

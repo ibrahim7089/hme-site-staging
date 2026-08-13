@@ -19,5 +19,6 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   if (requested === 'enquiries' && permissions.includes('enquiries.view')) initialSection = 'enquiries'
   if (requested === 'users' && permissions.includes('users.manage')) initialSection = 'users'
   if (requested === 'reviews' && permissions.includes('reviews.manage')) initialSection = 'reviews'
+  if (requested === 'requests' && permissions.includes('requests.view')) initialSection = 'requests'
   return <AdminDashboard user={user} permissions={permissions} initialSection={initialSection} />
 }
