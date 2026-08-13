@@ -9,7 +9,7 @@ import {
   ShieldCheck,
   UsersRound,
 } from "lucide-react";
-import heroPerson from "@/public/images/hero-person-v2.webp";
+import heroPerson from "@/public/images/hero-person-v3.webp";
 import { getPublishedPageContent } from "@/lib/cms";
 import HeroSlideshow from "@/components/HeroSlideshow";
 
