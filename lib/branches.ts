@@ -54,12 +54,12 @@ export const branches: Branch[] = [
   {
     name: "NZ KLCC Jalan Ampang",
     state: "Kuala Lumpur",
-    address: "NZ Curry House @ KLCC, Lot 42, Jalan Ampang, Kampung Baru, 50450 Kuala Lumpur, W.P Kuala Lumpur",
+    address: "HME Currency Exchange @ NZ Curry House KLCC, Lot 42, Jalan Ampang, Kampung Baru, 50450 Kuala Lumpur",
     phone: "+60 173013811",
     whatsapp: "https://wa.me/60173013811",
     hours: "Mon–Sun (Daily)",
     services: ["Money Transfer", "Currency Exchange"],
-    mapsUrl: "https://www.google.com/maps/search/?api=1&query=NZ%20Curry%20House%20%40%20KLCC%2C%20Lot%2042%2C%20Jalan%20Ampang%2C%20Kampung%20Baru%2C%2050450%20Kuala%20Lumpur%2C%20W.P%20Kuala%20Lumpur&query_place_id=ChIJp9Ayw9Y3zDERrmdaCNh1-XA",
+    mapsUrl: "https://www.google.com/maps/search/?api=1&query=HME%20Currency%20Exchange%20%40%20NZ%20Curry%20House%20KLCC%2C%20Lot%2042%2C%20Jalan%20Ampang%2C%20Kampung%20Baru%2C%2050450%20Kuala%20Lumpur&query_place_id=ChIJp9Ayw9Y3zDERrmdaCNh1-XA",
   },
   {
     name: "Bukit Bintang",
