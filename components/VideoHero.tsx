@@ -98,9 +98,9 @@ export default async function VideoHero() {
         unoptimized={usesDefaultPerson}
         {...(!usesDefaultPerson ? { width: 1200, height: 1500 } : {})}
         sizes="(max-width: 767px) 88vw, (max-width: 1279px) 43vw, 39vw"
-        className={`hero-person absolute bottom-0 z-[4] w-auto max-w-none object-contain object-bottom ${
+        className={`hero-person-static absolute bottom-0 z-[4] w-auto max-w-none object-contain object-bottom ${
           hasSlides
-            ? "right-1/2 h-[46%] translate-x-1/2 sm:h-[50%] md:right-[-3%] md:h-[78%] md:translate-x-0 lg:right-[1%] lg:h-[84%] xl:right-[5%] xl:h-[88%]"
+            ? "left-1/2 h-[46%] -translate-x-1/2 sm:h-[50%] md:left-auto md:right-[-3%] md:h-[78%] md:translate-x-0 lg:right-[1%] lg:h-[84%] xl:right-[5%] xl:h-[88%]"
             : "right-[-18%] h-[48%] sm:right-[-2%] sm:h-[51%] md:right-[-2%] md:h-[84%] lg:right-[2%] lg:h-[89%] xl:right-[6%] xl:h-[92%]"
         }`}
       />

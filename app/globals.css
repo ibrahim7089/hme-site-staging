@@ -284,6 +284,11 @@
   filter: drop-shadow(-18px 20px 30px rgba(7, 30, 68, 0.2));
 }
 
+/* The homepage representative must remain completely still. */
+.hero-person-static {
+  filter: drop-shadow(-18px 20px 30px rgba(7, 30, 68, 0.2));
+}
+
 .hero-network {
   animation: network-drift 12s ease-in-out infinite alternate;
   will-change: transform;
