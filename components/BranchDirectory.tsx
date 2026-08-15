@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { Banknote, Clock3, MapPin, MapPinned, Navigation, Phone } from "lucide-react";
 import { branchZones, type Branch } from "@/lib/branches";
@@ -233,13 +234,29 @@ export default function BranchDirectory({
                   isSelected ? "border-brand-blue shadow-soft" : "border-line"
                 }`}
               >
-                <div className="mb-2 flex items-start justify-between gap-3">
-                  <h3 className="font-display text-base font-bold text-navy">{branch.name}</h3>
-                  <span className="whitespace-nowrap rounded-full bg-brand-bluesoft px-2.5 py-1 text-[11px] font-bold text-brand-blue">
-                    {branch.state}
-                  </span>
+                <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-start">
+                  {branch.photo && (
+                    // On a phone the card is too narrow to take a thumbnail beside the
+                    // name without squeezing it into a column, so the photo goes on top.
+                    <Image
+                      src={branch.photo}
+                      alt={`HME ${branch.name} branch`}
+                      width={320}
+                      height={180}
+                      sizes="(min-width: 640px) 120px, 100vw"
+                      className="h-28 w-full flex-none rounded-[8px] border border-line object-cover sm:h-[68px] sm:w-[120px]"
+                    />
+                  )}
+                  <div className="flex min-w-0 flex-1 flex-col gap-2">
+                    <div className="flex items-start justify-between gap-3">
+                      <h3 className="font-display text-base font-bold text-navy">{branch.name}</h3>
+                      <span className="whitespace-nowrap rounded-full bg-brand-bluesoft px-2.5 py-1 text-[11px] font-bold text-brand-blue">
+                        {branch.state}
+                      </span>
+                    </div>
+                    <p className="text-[13px] leading-relaxed text-slate2">{branch.address}</p>
+                  </div>
                 </div>
-                <p className="text-[13px] leading-relaxed text-slate2">{branch.address}</p>
                 <div className="mt-3 grid gap-1.5 text-[12.5px] text-slate2">
                   <span className="flex items-center gap-2"><Clock3 className="h-3.5 w-3.5 flex-none" />{branch.hours}</span>
                   <span className="flex items-center gap-2">

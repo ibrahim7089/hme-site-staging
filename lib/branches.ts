@@ -7,6 +7,8 @@ export type Branch = {
   hours: string;
   services: string[];
   mapsUrl: string;
+  /** Storefront photo from the branch's Google Business Profile, if it has one. */
+  photo?: string;
 };
 
 /**
@@ -60,6 +62,7 @@ export const branches: Branch[] = [
     hours: "Mon–Sun (Daily)",
     services: ["Money Transfer", "Currency Exchange"],
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=HME%20Currency%20Exchange%20%40%20NZ%20Curry%20House%20KLCC%2C%20Lot%2042%2C%20Jalan%20Ampang%2C%20Kampung%20Baru%2C%2050450%20Kuala%20Lumpur&query_place_id=ChIJp9Ayw9Y3zDERrmdaCNh1-XA",
+    photo: "/images/branches/nz-klcc-jalan-ampang.webp",
   },
   {
     name: "Bukit Bintang",
@@ -70,6 +73,7 @@ export const branches: Branch[] = [
     hours: "Mon–Sun (Daily)",
     services: ["Money Transfer", "Currency Exchange"],
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=Hotel%20Ambassador%2C%2044%2C%20Jalan%20Sultan%20Ismail%2C%2050250%20Kuala%20Lumpur&query_place_id=ChIJgRegc103zDERsB2FstJIQ6E",
+    photo: "/images/branches/bukit-bintang.webp",
   },
   {
     name: "Giant Setapak",
@@ -80,6 +84,7 @@ export const branches: Branch[] = [
     hours: "Mon–Sun (Daily)",
     services: ["Money Transfer", "Currency Exchange"],
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=Lot%20G07%2C%20Giant%20Hypermarket%20Setapak%2C%20No.%205%2C%20Jalan%20Kilang%20Off%20Jalan%20Genting%20Kelang%2C%20Taman%20Danau%20Kota%2C%2053300%20Setapak%2C%20Kuala%20Lumpur&query_place_id=ChIJUde3kIA5zDERosmeph9rhrw",
+    photo: "/images/branches/giant-setapak.webp",
   },
   {
     name: "Menara Kuala Lumpur",
@@ -90,6 +95,7 @@ export const branches: Branch[] = [
     hours: "Mon–Sun (Daily)",
     services: ["Money Transfer", "Currency Exchange"],
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=Menara%20Kuala%20Lumpur%2C%20No.%202%20Jalan%20Puncak%20Off%20Jalan%20P.Ramlee%2C%2050250%20Kuala%20Lumpur&query_place_id=ChIJB0pY2_xJzDERvftfa6RORy0",
+    photo: "/images/branches/menara-kuala-lumpur.webp",
   },
   {
     name: "Rampai Business Park",
@@ -100,6 +106,7 @@ export const branches: Branch[] = [
     hours: "Mon–Sun (Daily)",
     services: ["Money Transfer", "Currency Exchange"],
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=Hasani%20Books%2C%202%20Jalan%20Rampai%20Niaga%204%2C%20Rampai%20Business%20Park%2C%20Setapak%2C%2053300%20Kuala%20Lumpur&query_place_id=ChIJYdxTFws5zDER8XB1EiJ9jDE",
+    photo: "/images/branches/rampai-business-park.webp",
   },
   {
     name: "Management & Operations Center",
@@ -110,6 +117,7 @@ export const branches: Branch[] = [
     hours: "Mon–Sat",
     services: ["Corporate Office"],
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=33%2C33-1%20and%2035%2C35-1%20(Ground%20and%20First%20Floor)%2C%20Jalan%20Seri%20Rejang%203%2C%20Pusat%20Industri%20Sri%20Rampai%2C%2053300%20Setapak%2C%20Kuala%20Lumpur%2C%20Wilayah%20Persekutuan%20Kuala%20Lumpur&query_place_id=ChIJXbEzz4g5zDERpFs3US-JHt0",
+    photo: "/images/branches/management-operations-center.webp",
   },
   {
     name: "Rk Success SDN BHD",
@@ -130,6 +138,7 @@ export const branches: Branch[] = [
     hours: "Mon–Sun (Daily)",
     services: ["Money Transfer", "Currency Exchange"],
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=Petronas%20Service%20Station%2C%20Lot%20PT%203906%20KLIA%201%2C%20INBOUND%2C%20Jalan%20Terminal%20KLIA%2C%2064000%20Sepang%2C%20Selangor&query_place_id=ChIJCZ5vUGi_zTERQst0D4_rZEM",
+    photo: "/images/branches/petronas-klia.webp",
   },
   {
     name: "Mitsui Outlet Park",
@@ -140,6 +149,7 @@ export const branches: Branch[] = [
     hours: "Mon–Sun (Daily)",
     services: ["Money Transfer", "Currency Exchange"],
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=Kiosk%209%2C%20Ground%20Floor%2C%20Mitsui%20Outlet%20Park%20KLIA%20Sepang%2C%20Persiaran%20Komersial%2C%2064000%20KLIA%20Sepang%2C%20Selangor&query_place_id=ChIJ6VlNkHO_zTERJVkPCwpRs6g",
+    photo: "/images/branches/mitsui-outlet-park.webp",
   },
   {
     name: "Shell KLIA",
@@ -150,6 +160,7 @@ export const branches: Branch[] = [
     hours: "Mon–Sun (Daily)",
     services: ["Money Transfer", "Currency Exchange"],
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=Shell%20Service%20Station%20(Site%20ID%202441)%2C%20Lot%201%20(PT3)%2C%20Jalan%20Lapangan%20Terbang%20KLIA%2C%2064000%20Sepang%2C%20Selangor&query_place_id=ChIJrWuTu4-_zTERwP18yBlCAoY",
+    photo: "/images/branches/shell-klia.webp",
   },
   {
     name: "YBH World Link SDN BHD",
@@ -200,6 +211,7 @@ export const branches: Branch[] = [
     hours: "Mon–Sun (Daily)",
     services: ["Money Transfer", "Currency Exchange"],
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=A3%20Jalan%20Kampung%20Baru%2C%2008000%20Sungai%20Petani%2C%20Kedah&query_place_id=ChIJBbheqNUpSzARe225ToJIjd4",
+    photo: "/images/branches/a3-hadapan-central-square.webp",
   },
   {
     name: "Amanjaya",
@@ -220,6 +232,7 @@ export const branches: Branch[] = [
     hours: "Mon–Sun (Daily)",
     services: ["Money Transfer", "Currency Exchange"],
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=1%2C%20Taman%20Seri%20Astana%2C%20Fasa%201%2C%20Jalan%20Langgar%2C%2005460%20Alor%20Setar%2C%20Kedah&query_place_id=ChIJR2T4mipbSzARNGXlCWJ2RbI",
+    photo: "/images/branches/astana.webp",
   },
   {
     name: "Ban Bee",
@@ -230,6 +243,7 @@ export const branches: Branch[] = [
     hours: "Mon–Sun (Daily)",
     services: ["Money Transfer", "Currency Exchange"],
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=No.%2025C%20Bangunan%20Ban%20Bee%2C%20Jalan%20Kampung%20Baru%2C%2008000%20Sungai%20Petani%2C%20Kedah%20(HQ)&query_place_id=ChIJnRoxC9UpSzAR5OIUugAe6Q0",
+    photo: "/images/branches/ban-bee.webp",
   },
   {
     name: "Central Square",
@@ -240,6 +254,7 @@ export const branches: Branch[] = [
     hours: "Mon–Sun (Daily)",
     services: ["Money Transfer", "Currency Exchange"],
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=Lot%20GF-42%2C%20Ground%20Floor%2C%20Central%20Square%2C%20Jalan%20Kampung%20Baru%2C%2008000%20Sungai%20Petani%2C%20Kedah&query_place_id=ChIJ-4JzNX0pSzARWjjungYhtzA",
+    photo: "/images/branches/central-square.webp",
   },
   {
     name: "Changlun",
@@ -250,6 +265,7 @@ export const branches: Branch[] = [
     hours: "Mon–Sun (Daily)",
     services: ["Money Transfer", "Currency Exchange"],
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=Petronas%20Service%20Station%2C%20Lot%201993%20E1%2C%20Changlun%2C%2006010%20Changlun%2C%20Kedah&query_place_id=ChIJyfncb6KlTDARb8bSvCPW-uE",
+    photo: "/images/branches/changlun.webp",
   },
   {
     name: "Gurun",
@@ -260,6 +276,7 @@ export const branches: Branch[] = [
     hours: "Mon–Sun (Daily)",
     services: ["Money Transfer", "Currency Exchange"],
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=Lot%2011%2C%20Jerai%20Plaza%2C%20Taman%20Jerai%20Maju%2C%2008300%20Gurun%2C%20Kedah&query_place_id=ChIJJbCq-QExSzARvy1G7hIhyX8",
+    photo: "/images/branches/gurun.webp",
   },
   {
     name: "Jitra",
@@ -270,6 +287,7 @@ export const branches: Branch[] = [
     hours: "Mon–Sun (Daily)",
     services: ["Money Transfer", "Currency Exchange"],
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=No.%20250A%2C%20Jalan%20PJ%202%2F2%2C%20Pekan%20Jitra%202%2C%20Jalan%20Jitra%2C%20Kampung%20Tok%20Kesop%2C%2006000%20Jitra%2C%20Kedah&query_place_id=ChIJ9WKQTr1ZSzARgwXCy2K1KJw",
+    photo: "/images/branches/jitra.webp",
   },
   {
     name: "Kuah Langkawi",
@@ -280,6 +298,7 @@ export const branches: Branch[] = [
     hours: "Mon–Sun (Daily)",
     services: ["Money Transfer", "Currency Exchange"],
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=No%202%2C%20Jalan%20Persiaran%20Putra%2C%20Kuah%2C%2007000%20Langkawi%2C%20Kedah&query_place_id=ChIJkwbHlYyBSzAR0t-4W4oL3ag",
+    photo: "/images/branches/kuah-langkawi.webp",
   },
   {
     name: "Kulim",
@@ -320,6 +339,7 @@ export const branches: Branch[] = [
     hours: "Mon–Sun (Daily)",
     services: ["Money Transfer", "Currency Exchange"],
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=Lot%20G-75%2C%20AEON%20Seri%20Manjung%20Shopping%20Centre%2C%20Pusat%20Perniagaan%20Manjung%20Point%203%2C%2032040%20Seri%20Manjung%2C%20Perak&query_place_id=ChIJHTyUjF0syzERkhNHH_yFhrk",
+    photo: "/images/branches/aeon-seri-manjung.webp",
   },
   {
     name: "Ayer Tawar",
@@ -330,6 +350,7 @@ export const branches: Branch[] = [
     hours: "Mon–Sun (Daily)",
     services: ["Money Transfer", "Currency Exchange"],
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=No.%20301%2C%20Jalan%20Besar%2C%2032400%20Ayer%20Tawar%2C%20Perak&query_place_id=ChIJESlXnzUoyzERFyqhpG-cECg",
+    photo: "/images/branches/ayer-tawar.webp",
   },
   {
     name: "Batu Gajah",
@@ -340,6 +361,7 @@ export const branches: Branch[] = [
     hours: "Mon–Sun (Daily)",
     services: ["Money Transfer", "Currency Exchange"],
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=TF%20Value%20Mart%2C%20Lot%20No.%206%20%26%207%2C%20Jalan%20Baharu%20Bandar%20Baru%2C%20Batu%20Gajah%2C%2030200%20Batu%20Gajah%2C%20Perak&query_place_id=ChIJKwnZ4wfnyjER_aHIyBisu3k",
+    photo: "/images/branches/batu-gajah.webp",
   },
   {
     name: "Ipoh",
@@ -350,6 +372,7 @@ export const branches: Branch[] = [
     hours: "Mon–Sun (Daily)",
     services: ["Money Transfer", "Currency Exchange"],
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=No.%2042%20Jalan%20Dato%20Onn%20Jaafar%2C%20Kampung%20Jawa%2C%2030300%20Ipoh%20Perak&query_place_id=ChIJ703z2WLsyjERvYudAvBbO58",
+    photo: "/images/branches/ipoh.webp",
   },
   {
     name: "Lekir",
@@ -360,6 +383,7 @@ export const branches: Branch[] = [
     hours: "Mon–Sun (Daily)",
     services: ["Money Transfer", "Currency Exchange"],
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=Jalan%205%2C%20No.%2018%2C%20Kampung%20Batu%20Sepuluh%20Lekir%2C%2032000%20Sitiawan%2C%20Perak&query_place_id=ChIJtUNJ87ExyzER-8T4Mv89PRk",
+    photo: "/images/branches/lekir.webp",
   },
   {
     name: "Pantai Remis",
@@ -370,6 +394,7 @@ export const branches: Branch[] = [
     hours: "Mon–Sun (Daily)",
     services: ["Money Transfer", "Currency Exchange"],
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=No.%2056%2C%20Jalan%20Damar%20Laut%2C%2034900%20Pantai%20Remis%2C%20Perak&query_place_id=ChIJF1OJM9HSyjERKCOSU3hZIpw",
+    photo: "/images/branches/pantai-remis.webp",
   },
   {
     name: "Sitiawan",
@@ -380,6 +405,7 @@ export const branches: Branch[] = [
     hours: "Mon–Sun (Daily)",
     services: ["Money Transfer", "Currency Exchange"],
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=Lot%2020%2C%20Tingkat%20Bawah%20Bangunan%20LUTH%2C%20Jalan%20Lumut%2C%2032000%20Sitiawan%2C%20Perak&query_place_id=ChIJUW12Tt0syzEROiD37tlE1R0",
+    photo: "/images/branches/sitiawan.webp",
   },
   {
     name: "Tambun",
@@ -390,6 +416,7 @@ export const branches: Branch[] = [
     hours: "Mon–Sun (Daily)",
     services: ["Money Transfer", "Currency Exchange"],
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=No.%2046%20Ground%20Floor%2C%20Persiaran%20SCI%202%2F1%2C%20Sunway%20City%20Ipoh%2C%2031150%20Ipoh%2C%20Perak&query_place_id=ChIJE6MB1ELtyjERqnS_-e6OjKg",
+    photo: "/images/branches/tambun.webp",
   },
   {
     name: "Tasek",
@@ -400,6 +427,7 @@ export const branches: Branch[] = [
     hours: "Mon–Sun (Daily)",
     services: ["Money Transfer", "Currency Exchange"],
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=ECONSAVE%20Tasek%20TS%2C%20Unit%20TS07%2C%20Lot%20111983%20Jalan%20Kuala%20Kangsar%2C%2031200%20Ipoh%2C%20Perak&query_place_id=ChIJU9S8_C2TyjER7FU24sIy9V0",
+    photo: "/images/branches/tasek.webp",
   },
   {
     name: "FWJ Network SDN BHD",
@@ -440,6 +468,7 @@ export const branches: Branch[] = [
     hours: "Mon–Sun (Daily)",
     services: ["Money Transfer", "Currency Exchange"],
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=No.%20G08%2C%20Ground%20Floor%2C%20Aeon%20Big%20Shopping%20Centre%2C%20No.%201%20Tingkat%20Bukit%20Minyak%209%2C%20Taman%20Bukit%20Minyak%2C%2014000%20Seberang%20Perai%20Tengah%2C%20Pulau%20Pinang&query_place_id=ChIJ4xa2XqfJSjARUXQ6BGtg7yE",
+    photo: "/images/branches/bukit-minyak.webp",
   },
   {
     name: "Design Village",
@@ -450,6 +479,7 @@ export const branches: Branch[] = [
     hours: "Mon–Sun (Daily)",
     services: ["Money Transfer", "Currency Exchange"],
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=K-08A%2C%20Design%20Village%20Outlet%20Mall%2C%20Jalan%20Cassia%20Barat%202%2C%2014110%20Bandar%20Cassia%2C%20Pulau%20Pinang&query_place_id=ChIJuQEToxS5SjAR20ZD7ZKE3AQ",
+    photo: "/images/branches/design-village.webp",
   },
   {
     name: "Gurney Walk",
@@ -460,6 +490,7 @@ export const branches: Branch[] = [
     hours: "Mon–Sun (Daily)",
     services: ["Money Transfer", "Currency Exchange"],
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=Gurney%20Walk%2C%20No%2018%2C%20Persiaran%20Gurney%2C%2010250%20Georgetown%2C%20Pulau%20Pinang&query_place_id=ChIJ05VHJnPDSjAR71nRoHtMK_M",
+    photo: "/images/branches/gurney-walk.webp",
   },
   {
     name: "Juru",
@@ -470,6 +501,7 @@ export const branches: Branch[] = [
     hours: "Mon–Sun (Daily)",
     services: ["Money Transfer", "Currency Exchange"],
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=1640%20Jalan%20Perusahaan%20Bukit%20Tengah%2C%20Taman%20Pelangi%2C%2013600%20Bukit%20Mertajam%2C%20Pulau%20Pinang&query_place_id=ChIJGbnmgqLHSjAR5F7y-9TPylg",
+    photo: "/images/branches/juru.webp",
   },
   {
     name: "Prangin Mall",
@@ -490,6 +522,7 @@ export const branches: Branch[] = [
     hours: "Mon–Sun (Daily)",
     services: ["Money Transfer", "Currency Exchange"],
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=No.%2017%20Jalan%20Besar%2C%20Taman%20Tempua%2C%2014100%20Simpang%20Ampat%2C%20Pulau%20Pinang&query_place_id=ChIJ2W43_nu3SjARDW8Ay1aXqpI",
+    photo: "/images/branches/simpang-ampat.webp",
   },
   {
     name: "Sunway Carnival",
@@ -500,6 +533,7 @@ export const branches: Branch[] = [
     hours: "Mon–Sun (Daily)",
     services: ["Money Transfer", "Currency Exchange"],
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=B-K01%20Sunway%20Carnival%20Mall%2C%203068%20Jalan%20Todak%2C%20Pusat%20Bandar%20Seberang%20Jaya%2C%2013700%20Seberang%20Jaya%2C%20Pulau%20Pinang&query_place_id=ChIJA2SuDijFSjARi_K-NLboSQ4",
+    photo: "/images/branches/sunway-carnival.webp",
   },
   {
     name: "Sunway Carnival 2",
@@ -510,6 +544,7 @@ export const branches: Branch[] = [
     hours: "Mon–Sun (Daily)",
     services: ["Money Transfer", "Currency Exchange"],
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=LG-K08A%20Sunway%20Carnival%20Mall%2C%20Jalan%20Todak%2C%20Pusat%20Bandar%20Seberang%20Jaya%2C%2013700%20Seberang%20Jaya%2C%20Pulau%20Pinang&query_place_id=ChIJ5XoCzr_FSjAROV0vTSXFzIc",
+    photo: "/images/branches/sunway-carnival-2.webp",
   },
   {
     name: "Pekan Nanas",
@@ -520,6 +555,7 @@ export const branches: Branch[] = [
     hours: "Mon–Sun (Daily)",
     services: ["Money Transfer", "Currency Exchange"],
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=Econsave%20Pekan%20Nanas%2C%20Lot%202665%20%26%202666%2C%2081500%20Pekan%20Nanas%2C%20Johor&query_place_id=ChIJuUTlmTSf0DERmql_m677Gp0",
+    photo: "/images/branches/pekan-nanas.webp",
   },
   {
     name: "Taman Daya",
@@ -530,6 +566,7 @@ export const branches: Branch[] = [
     hours: "Mon–Sun (Daily)",
     services: ["Money Transfer", "Currency Exchange"],
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=Econsave%20Taman%20Daya%2C%20PTD%20124006%2C%20Jalan%20Nipah%2C%20Taman%20Daya%2C%2081100%20Johor%20Bahru%2C%20Johor&query_place_id=ChIJDVtTK25t2jER7pWKiRMAddk",
+    photo: "/images/branches/taman-daya.webp",
   },
   {
     name: "Scy Mobile Tele SDN BHD",
