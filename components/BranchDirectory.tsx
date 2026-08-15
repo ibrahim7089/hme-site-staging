@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Banknote, Clock3, MapPin, MapPinned, Navigation, Phone } from "lucide-react";
-import type { Branch } from "@/lib/branches";
+import { branchZones, type Branch } from "@/lib/branches";
 
 const serviceTypes = ["Money Transfer", "Currency Exchange", "Agents", "Corporate Office"];
 
@@ -13,11 +13,20 @@ export default function BranchDirectory({
   const [state, setState] = useState("All States");
   const [service, setService] = useState("All Services");
   const [query, setQuery] = useState("");
+  const [zone, setZone] = useState<string | null>(null);
   const [selected, setSelected] = useState(0);
   const [mapVisible, setMapVisible] = useState(false);
   const states = useMemo(() => Array.from(new Set(branches.map((branch) => branch.state))).sort(), [branches]);
 
   const filtered = useMemo(() => {
+    const activeZone = branchZones.find((entry) => entry.id === zone);
+    if (activeZone) {
+      // A zone is an explicit pick, so it overrides the preview limit —
+      // otherwise choosing one on the homepage would silently hide branches.
+      return activeZone.branchNames
+        .map((name) => branches.find((branch) => branch.name === name))
+        .filter((branch): branch is Branch => Boolean(branch));
+    }
     if (limit) return branches.slice(0, limit);
     return branches.filter((branch) => {
       if (state !== "All States" && branch.state !== state) return false;
@@ -28,7 +37,18 @@ export default function BranchDirectory({
       }
       return true;
     });
-  }, [branches, limit, state, service, query]);
+  }, [branches, limit, state, service, query, zone]);
+
+  function chooseZone(id: string) {
+    // Selecting a zone clears the other filters so the result cannot come back
+    // empty because of a state left set from an earlier search.
+    setZone((current) => {
+      const next = current === id ? null : id;
+      if (next) { setState("All States"); setService("All Services"); setQuery(""); }
+      return next;
+    });
+    setSelected(0);
+  }
 
   const activeIndex = Math.min(selected, Math.max(filtered.length - 1, 0));
   const active = filtered[activeIndex];
@@ -133,6 +153,40 @@ export default function BranchDirectory({
         )}
       </div>
       <div className="order-1 flex min-w-0 flex-col gap-3.5 lg:order-2">
+        {/* Shown above the dropdowns, and on the homepage preview too, because
+            these are the two areas visitors most often need at a glance. */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="mr-0.5 text-[11px] font-bold uppercase tracking-wider text-mist">Quick find</span>
+          {branchZones.map((entry) => {
+            const active = zone === entry.id;
+            return (
+              <button
+                key={entry.id}
+                type="button"
+                onClick={() => chooseZone(entry.id)}
+                aria-pressed={active}
+                title={entry.description}
+                className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-[12.5px] font-bold transition ${
+                  active
+                    ? "border-brand-blue bg-brand-blue text-white shadow-cta"
+                    : "border-line bg-white text-navy hover:border-brand-blue hover:text-brand-blue"
+                }`}
+              >
+                <MapPinned className="h-3.5 w-3.5" />
+                {entry.label}
+              </button>
+            );
+          })}
+          {zone && (
+            <button
+              type="button"
+              onClick={() => { setZone(null); setSelected(0); }}
+              className="text-[12px] font-semibold text-slate2 underline underline-offset-2 hover:text-brand-blue"
+            >
+              Clear
+            </button>
+          )}
+        </div>
         {!limit && (
           <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-[0.9fr_1fr_1.4fr]">
             <select

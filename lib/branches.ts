@@ -9,6 +9,35 @@ export type Branch = {
   mapsUrl: string;
 };
 
+/**
+ * Quick-pick groups shown as buttons beside the locator, for the two areas
+ * visitors most often arrive in. Branches are listed by name because the
+ * grouping is editorial — "near the airport" is not something the state or
+ * address fields can answer.
+ */
+export type BranchZone = {
+  id: string;
+  label: string;
+  description: string;
+  branchNames: string[];
+};
+
+export const branchZones: BranchZone[] = [
+  {
+    id: "klia",
+    label: "Nearby KLIA Airport",
+    description: "Exchange on arrival or before you fly",
+    // "Ampang" is the NZ Curry House @ KLCC counter, kept under its existing name.
+    branchNames: ["Petronas KLIA", "Shell KLIA", "Mitsui Outlet Park"],
+  },
+  {
+    id: "kl-city",
+    label: "KL City Centre",
+    description: "In the heart of Kuala Lumpur",
+    branchNames: ["Ampang", "Bukit Bintang", "Menara Kuala Lumpur"],
+  },
+];
+
 export const states = [
   "Kuala Lumpur",
   "Selangor",
