@@ -67,7 +67,7 @@ export default function HeroSlideshow({ slides }: { slides: PageHeroSlide[] }) {
             fill
             priority={index === 0}
             sizes="(max-width: 767px) 94vw, (max-width: 1279px) 59vw, 61vw"
-            className="object-cover"
+            className="object-contain"
           />
         </div>
       ))}
