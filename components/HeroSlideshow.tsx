@@ -32,7 +32,7 @@ export default function HeroSlideshow({ slides }: { slides: PageHeroSlide[] }) {
   return (
     <div
       ref={wrapRef}
-      className="relative aspect-[96/41] w-full overflow-hidden rounded-2xl border border-white/20 bg-white shadow-[0_24px_70px_rgba(4,24,57,0.32)] sm:rounded-[22px]"
+      className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-white/30 bg-[#071f46] shadow-[0_28px_80px_rgba(2,17,43,0.42)] ring-1 ring-[#75b8ff]/10 sm:rounded-[22px] md:aspect-[96/41]"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onTouchStart={(event) => { touchStartX.current = event.touches[0]?.clientX ?? null }}
@@ -63,21 +63,30 @@ export default function HeroSlideshow({ slides }: { slides: PageHeroSlide[] }) {
         >
           <Image
             src={slide.image}
+            alt=""
+            fill
+            aria-hidden="true"
+            sizes="(max-width: 767px) 94vw, (max-width: 1279px) 59vw, 61vw"
+            className="scale-110 object-cover opacity-35 blur-2xl saturate-75"
+          />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(5,28,64,0.7),rgba(9,45,93,0.28)_35%,rgba(9,45,93,0.28)_65%,rgba(5,28,64,0.7))]" aria-hidden="true" />
+          <Image
+            src={slide.image}
             alt={slide.imageAlt}
             fill
             priority={index === 0}
             sizes="(max-width: 767px) 94vw, (max-width: 1279px) 59vw, 61vw"
-            className="object-contain"
+            className="object-contain drop-shadow-[0_16px_28px_rgba(0,15,38,0.3)]"
           />
         </div>
       ))}
 
       {count > 1 && (
         <>
-          <button type="button" onClick={showPrevious} aria-label="Show previous banner" className="absolute left-2 top-1/2 z-[2] grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-navy-deep/65 text-white shadow-lg backdrop-blur-sm transition hover:bg-navy-deep/85 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:left-4 sm:h-12 sm:w-12">
+          <button type="button" onClick={showPrevious} aria-label="Show previous banner" className="absolute left-2 top-1/2 z-[2] grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full border border-white/30 bg-navy-deep/70 text-white shadow-lg backdrop-blur-sm transition hover:bg-navy-deep/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:left-4 sm:h-10 sm:w-10">
             <ChevronLeft className="h-6 w-6" />
           </button>
-          <button type="button" onClick={showNext} aria-label="Show next banner" className="absolute right-2 top-1/2 z-[2] grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-navy-deep/65 text-white shadow-lg backdrop-blur-sm transition hover:bg-navy-deep/85 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:right-4 sm:h-12 sm:w-12">
+          <button type="button" onClick={showNext} aria-label="Show next banner" className="absolute right-2 top-1/2 z-[2] grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full border border-white/30 bg-navy-deep/70 text-white shadow-lg backdrop-blur-sm transition hover:bg-navy-deep/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:right-4 sm:h-10 sm:w-10">
             <ChevronRight className="h-6 w-6" />
           </button>
           <div className="absolute bottom-3 left-1/2 z-[2] flex -translate-x-1/2 gap-2 rounded-full bg-navy-deep/55 px-3 py-2 backdrop-blur-sm" role="tablist" aria-label="Choose a banner">
