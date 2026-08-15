@@ -591,14 +591,4 @@ export const branches: Branch[] = [
     services: ["Agents", "Money Transfer"],
     mapsUrl: "https://www.google.com/maps/search/?api=1&query=No.+38%2C+Pasar+Bau%2C+Jalan+Temenggong+Salau%2C+94000+Bau%2C+Sarawak",
   },
-  {
-    name: "Taiping",
-    state: "Perak",
-    address: "No. 90, Tingkat Bawah, 34000 Taiping, Perak",
-    phone: "+60 1158715271",
-    whatsapp: "https://wa.me/601158715271",
-    hours: "Mon–Sun (Daily)",
-    services: ["Money Transfer", "Currency Exchange"],
-    mapsUrl: "https://www.google.com/maps/search/?api=1&query=No.%2090%2C%20Tingkat%20Bawah%2C%2034000%20Taiping%2C%20Perak&query_place_id=ChIJf4DdQAKvyjERjlIFW73roxI",
-  },
 ];
