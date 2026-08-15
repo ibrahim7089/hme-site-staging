@@ -242,7 +242,10 @@ export default function BranchDirectory({
                 <p className="text-[13px] leading-relaxed text-slate2">{branch.address}</p>
                 <div className="mt-3 grid gap-1.5 text-[12.5px] text-slate2">
                   <span className="flex items-center gap-2"><Clock3 className="h-3.5 w-3.5 flex-none" />{branch.hours}</span>
-                  <span className="flex items-center gap-2"><Phone className="h-3.5 w-3.5 flex-none" />{branch.phone}</span>
+                  <span className="flex items-center gap-2">
+                    <Phone className="h-3.5 w-3.5 flex-none" />
+                    <a href={`tel:${branch.phone.replace(/\s/g, "")}`} className="hover:text-brand-blue">{branch.phone}</a>
+                  </span>
                   <span className="flex items-start gap-2"><Banknote className="mt-0.5 h-3.5 w-3.5 flex-none" />{branch.services.join(" / ")}</span>
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2 border-t border-line pt-4">
@@ -256,10 +259,12 @@ export default function BranchDirectory({
                   >
                     <MapPin className="h-3.5 w-3.5" /> {isSelected && mapVisible ? "Shown on Map" : "Show on Map"}
                   </button>
-                  <a href={branch.whatsapp} target="_blank" rel="noreferrer"
-                    className="rounded-[9px] bg-[#EAF7F0] px-3.5 py-2 font-display text-[12.5px] font-bold text-[#147A45]">
-                    WhatsApp
-                  </a>
+                  {branch.whatsapp && (
+                    <a href={branch.whatsapp} target="_blank" rel="noreferrer"
+                      className="rounded-[9px] bg-[#EAF7F0] px-3.5 py-2 font-display text-[12.5px] font-bold text-[#147A45]">
+                      WhatsApp
+                    </a>
+                  )}
                   <a href={branch.mapsUrl} target="_blank" rel="noopener noreferrer"
                     className="rounded-[9px] border-[1.5px] border-line px-3.5 py-2 font-display text-[12.5px] font-bold text-navy hover:border-brand-blue hover:text-brand-blue">
                     Directions
