@@ -27,7 +27,7 @@ export default function HeroSlideshow({ slides }: { slides: PageHeroSlide[] }) {
   return (
     <div
       ref={wrapRef}
-      className="absolute inset-0 z-[3] overflow-hidden bg-navy-deep"
+      className="relative aspect-[96/41] w-full overflow-hidden rounded-2xl border border-white/20 bg-white shadow-[0_24px_70px_rgba(4,24,57,0.32)] sm:rounded-[22px]"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       role="region"
@@ -46,14 +46,14 @@ export default function HeroSlideshow({ slides }: { slides: PageHeroSlide[] }) {
             alt={slide.imageAlt}
             fill
             priority={index === 0}
-            sizes="100vw"
-            className="object-contain"
+            sizes="(max-width: 767px) 94vw, (max-width: 1279px) 59vw, 61vw"
+            className="object-cover"
           />
         </div>
       ))}
 
       {count > 1 && (
-        <div className="absolute bottom-4 left-1/2 z-[1] flex -translate-x-1/2 gap-2" role="tablist" aria-label="Choose a banner">
+        <div className="absolute bottom-3 left-1/2 z-[1] flex -translate-x-1/2 gap-2 rounded-full bg-navy-deep/45 px-3 py-2 backdrop-blur-sm" role="tablist" aria-label="Choose a banner">
           {slides.map((slide, index) => (
             <button
               key={`dot-${index}`}

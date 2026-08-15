@@ -34,7 +34,7 @@ const nextConfig = {
     formats: ["image/avif", "image/webp"],
     deviceSizes: [360, 480, 640, 750, 828, 1080, 1200, 1600],
     imageSizes: [32, 48, 64, 96, 128, 256, 384],
-    qualities: [70, 75, 82],
+    qualities: [70, 75, 82, 95],
     minimumCacheTTL: 2592000,
     remotePatterns: [{ protocol: "https", hostname: "*.public.blob.vercel-storage.com" }],
   },

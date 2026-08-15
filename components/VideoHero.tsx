@@ -51,58 +51,66 @@ export default async function VideoHero() {
   const hero = managed?.hero;
   const title = hero?.title || "Money moves. Trust stays";
   const lead = hero?.lead || "Exchange foreign currency and send money overseas through HME's nationwide network of 50+ locations.";
-  const heroImage = hero?.image || heroPerson;
-  const heroAlt = hero?.imageAlt || "HME representative holding foreign currency notes";
+  const usesDefaultPerson = !hero?.image || hero.image === "/images/hero-person-v4.webp";
+  const heroImage = usesDefaultPerson ? heroPerson : hero.image;
+  const heroAlt = usesDefaultPerson
+    ? "HME representative holding foreign currency notes"
+    : hero?.imageAlt || "HME representative holding foreign currency notes";
   const heroSlides = (hero?.heroSlides || []).filter((slide) => slide.image);
   const hasSlides = heroSlides.length > 0;
 
   return (
     <section className="hero-stage relative isolate min-h-[800px] overflow-hidden bg-navy-deep text-white sm:min-h-[820px] md:min-h-[max(700px,100svh)] xl:min-h-[max(720px,100svh)]">
-      {hasSlides ? (
-        <HeroSlideshow slides={heroSlides} />
-      ) : (
-        <>
-          <div className="hero-grid absolute inset-0 opacity-35" aria-hidden="true" />
-          <div className="hero-premium-glow absolute inset-0" aria-hidden="true" />
-          <div className="hero-wave hero-wave-back" aria-hidden="true" />
-          <div className="hero-wave hero-wave-front" aria-hidden="true" />
+      <div className="hero-grid absolute inset-0 opacity-35" aria-hidden="true" />
+      <div className="hero-premium-glow absolute inset-0" aria-hidden="true" />
+      <div className="hero-wave hero-wave-back" aria-hidden="true" />
+      <div className="hero-wave hero-wave-front" aria-hidden="true" />
 
-          <svg
-            aria-hidden="true"
-            className="hero-network absolute left-[31%] top-[2%] z-[1] hidden h-[72%] w-[54%] opacity-25 md:block"
-            viewBox="0 0 760 520"
-            fill="none"
-          >
-            <path d="M36 315C178 65 502 42 714 162" stroke="#BBD7FF" strokeWidth="1.2" />
-            <path d="M28 355C206 135 490 119 730 232" stroke="#BBD7FF" strokeWidth="1" />
-            <path d="M85 404C245 222 497 206 708 302" stroke="#BBD7FF" strokeWidth="0.8" />
-            <path d="M169 54C294 145 365 265 388 474" stroke="#BBD7FF" strokeWidth="0.8" />
-            <path d="M392 25C431 147 432 302 384 482" stroke="#BBD7FF" strokeWidth="0.8" />
-            <path d="M597 72C493 164 427 285 386 479" stroke="#BBD7FF" strokeWidth="0.8" />
-            {[
-              [36, 315],
-              [169, 54],
-              [388, 474],
-              [597, 72],
-              [714, 162],
-              [730, 232],
-            ].map(([cx, cy]) => (
-              <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="4" fill="#E7F1FF" />
-            ))}
-          </svg>
+      <svg
+        aria-hidden="true"
+        className="hero-network absolute left-[31%] top-[2%] z-[1] hidden h-[72%] w-[54%] opacity-25 md:block"
+        viewBox="0 0 760 520"
+        fill="none"
+      >
+        <path d="M36 315C178 65 502 42 714 162" stroke="#BBD7FF" strokeWidth="1.2" />
+        <path d="M28 355C206 135 490 119 730 232" stroke="#BBD7FF" strokeWidth="1" />
+        <path d="M85 404C245 222 497 206 708 302" stroke="#BBD7FF" strokeWidth="0.8" />
+        <path d="M169 54C294 145 365 265 388 474" stroke="#BBD7FF" strokeWidth="0.8" />
+        <path d="M392 25C431 147 432 302 384 482" stroke="#BBD7FF" strokeWidth="0.8" />
+        <path d="M597 72C493 164 427 285 386 479" stroke="#BBD7FF" strokeWidth="0.8" />
+        {[
+          [36, 315],
+          [169, 54],
+          [388, 474],
+          [597, 72],
+          [714, 162],
+          [730, 232],
+        ].map(([cx, cy]) => (
+          <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="4" fill="#E7F1FF" />
+        ))}
+      </svg>
 
-          <Image
-            src={heroImage}
-            alt={heroAlt}
-            priority
-            quality={82}
-            {...(hero?.image ? { width: 1200, height: 1500 } : {})}
-            sizes="(max-width: 767px) 88vw, (max-width: 1279px) 54vw, 46vw"
-            className="hero-person absolute bottom-0 right-[-18%] z-[4] h-[48%] w-auto max-w-none object-contain object-bottom sm:right-[-2%] sm:h-[51%] md:right-[-2%] md:h-[84%] lg:right-[2%] lg:h-[89%] xl:right-[6%] xl:h-[92%]"
-          />
+      <Image
+        src={heroImage}
+        alt={heroAlt}
+        priority
+        quality={95}
+        {...(!usesDefaultPerson ? { width: 1200, height: 1500 } : {})}
+        sizes="(max-width: 767px) 88vw, (max-width: 1279px) 43vw, 39vw"
+        className={`hero-person absolute bottom-0 z-[4] w-auto max-w-none object-contain object-bottom ${
+          hasSlides
+            ? "right-[-20%] h-[46%] sm:right-[-4%] sm:h-[50%] md:right-[-3%] md:h-[78%] lg:right-[1%] lg:h-[84%] xl:right-[5%] xl:h-[88%]"
+            : "right-[-18%] h-[48%] sm:right-[-2%] sm:h-[51%] md:right-[-2%] md:h-[84%] lg:right-[2%] lg:h-[89%] xl:right-[6%] xl:h-[92%]"
+        }`}
+      />
 
-          <div className="wrap relative z-10 flex min-h-[800px] items-start pb-[400px] pt-[132px] sm:min-h-[820px] sm:pb-[420px] md:min-h-[max(700px,100svh)] md:items-center md:pb-[148px] md:pt-[110px] xl:min-h-[max(720px,100svh)]">
-            <div className="hero-copy max-w-[640px] md:w-[51%] lg:w-[50%]">
+      <div className={`wrap relative z-10 flex min-h-[800px] items-start pt-[126px] sm:min-h-[820px] md:min-h-[max(700px,100svh)] md:items-center md:pt-[96px] xl:min-h-[max(720px,100svh)] ${hasSlides ? "pb-[390px] sm:pb-[420px] md:pb-[120px]" : "pb-[400px] sm:pb-[420px] md:pb-[148px]"}`}>
+        {hasSlides ? (
+          <div className="w-full md:w-[59%] lg:w-[61%] xl:w-[62%]">
+            <HeroSlideshow slides={heroSlides} />
+          </div>
+        ) : (
+          <div className="hero-copy max-w-[640px] md:w-[51%] lg:w-[50%]">
               <h1 className="hero-headline max-w-[9.5ch] whitespace-pre-line text-[clamp(45px,6.2vw,76px)] font-extrabold leading-[0.98] tracking-[-0.055em] [word-spacing:0.06em]">{title}</h1>
               <p className="mt-6 max-w-[535px] text-[15px] leading-relaxed text-white/80 sm:text-[17px]">
                 {lead}
@@ -141,10 +149,9 @@ export default async function VideoHero() {
                   </li>
                 ))}
               </ul>
-            </div>
           </div>
-        </>
-      )}
+        )}
+      </div>
 
       <div className="absolute right-[2.5%] top-[148px] z-[8] hidden w-[245px] xl:block">
         <svg
