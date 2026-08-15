@@ -2,7 +2,8 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { BarChart3, CheckCircle2, ChevronRight, Inbox, Link2, RefreshCw, Send, Star, Unlink } from 'lucide-react'
+import { BarChart3, CheckCircle2, ChevronRight, Link2, RefreshCw, Star, Store, Unlink } from 'lucide-react'
+import BranchReviewBoard from './BranchReviewBoard'
 import GoogleReviewsReports from './GoogleReviewsReports'
 import styles from './admin.module.css'
 
@@ -15,7 +16,6 @@ type ReviewRow = {
   comment: string
   review_created_at: string
   reply_status: ReplyStatus
-  ai_draft: string
   reply_text: string
   reply_posted_at: string | null
   replied_by_name: string
@@ -26,9 +26,6 @@ type SyncSummary = {
   locationsScanned: number
   locationsTotal: number
   newReviews: number
-  autoReplied: number
-  suggested: number
-  pendingDrafts: number
   done: boolean
   errors: string[]
 }
@@ -73,10 +70,9 @@ export default function GoogleReviewsPanel() {
   const [configured, setConfigured] = useState(false)
   const [connected, setConnected] = useState(false)
   const [connectedEmail, setConnectedEmail] = useState('')
-  const [view, setView] = useState<'inbox' | 'reports'>('inbox')
-  const [filter, setFilter] = useState<'needs-reply' | 'auto-replied' | 'all'>('needs-reply')
+  const [view, setView] = useState<'branches' | 'reviews' | 'reports'>('branches')
+  const [filter, setFilter] = useState<'all' | 'replied' | 'unreplied' | 'low'>('all')
   const [selected, setSelected] = useState<ReviewRow | null>(null)
-  const [draftText, setDraftText] = useState('')
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState('')
   const [error, setError] = useState('')
@@ -145,25 +141,20 @@ export default function GoogleReviewsPanel() {
   // has been all the way through the account.
   async function sync() {
     setBusy(true); setError('')
-    const totals = { newReviews: 0, autoReplied: 0, suggested: 0, errors: [] as string[] }
+    const totals = { newReviews: 0, errors: [] as string[] }
     let done = false
     try {
-      // Each pass is a ~45s server run. Roughly ten minutes of work per click
-      // keeps the page responsive; the backlog is large enough that it is
-      // finished across repeated clicks and the nightly job.
       for (let pass = 0; pass < 12 && !done; pass += 1) {
         const summary = await api('/api/admin/google-reviews/sync', { method: 'POST' }) as SyncSummary
         totals.newReviews += summary.newReviews
-        totals.autoReplied += summary.autoReplied
-        totals.suggested += summary.suggested
         totals.errors.push(...summary.errors)
         done = summary.done
         if (!done) {
-          setNotice(`Working through your branches — ${summary.locationsScanned} of ${summary.locationsTotal} scanned this pass, ${summary.pendingDrafts} repl${summary.pendingDrafts === 1 ? 'y' : 'ies'} still to draft…`)
+          setNotice(`Reading your branches — ${summary.locationsScanned} of ${summary.locationsTotal} scanned this pass…`)
         }
         await load()
       }
-      flash(`${done ? 'Sync complete' : 'Sync paused'}: ${totals.newReviews} new review(s) — ${totals.autoReplied} auto-replied, ${totals.suggested} waiting for you${totals.errors.length ? ` · ${totals.errors.length} error(s)` : ''}`)
+      flash(`${done ? 'Sync complete' : 'Sync paused'}: ${totals.newReviews} new review(s)${totals.errors.length ? ` · ${totals.errors.length} error(s)` : ''}`)
       if (totals.errors.length) setError(totals.errors.slice(0, 5).join('\n'))
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Sync failed')
@@ -171,7 +162,7 @@ export default function GoogleReviewsPanel() {
   }
 
   async function disconnect() {
-    if (!window.confirm('Disconnect this Google account? Reviews already synced stay here, but nothing new will sync or auto-reply until you reconnect.')) return
+    if (!window.confirm('Disconnect this Google account? Reviews already synced stay here, but nothing new will sync until you reconnect.')) return
     setBusy(true); setError('')
     try {
       await api('/api/admin/google-reviews/disconnect', { method: 'POST' })
@@ -180,26 +171,6 @@ export default function GoogleReviewsPanel() {
       await load()
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Failed to disconnect')
-    } finally { setBusy(false) }
-  }
-
-  function selectReview(review: ReviewRow) {
-    setSelected(review)
-    setDraftText(review.reply_text || review.ai_draft || '')
-  }
-
-  async function sendReply() {
-    if (!selected) return
-    const text = draftText.trim()
-    if (!text) return
-    setBusy(true); setError('')
-    try {
-      await api(`/api/admin/google-reviews/${selected.id}/reply`, { method: 'POST', body: JSON.stringify({ text }) })
-      flash('Reply posted to Google')
-      setSelected(null)
-      await load()
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Failed to send reply')
     } finally { setBusy(false) }
   }
 
@@ -213,33 +184,20 @@ export default function GoogleReviewsPanel() {
     }
   }
 
-  // NONE means the draft never got generated yet (a sync that ran out of time),
-  // so these still need a human — group them with the suggested ones rather
-  // than leaving them visible only under "All reviews".
-  const needsReply = reviews.filter((review) => (
-    review.reply_status === 'SUGGESTED' || review.reply_status === 'NONE'
-  ))
-  const autoReplied = reviews.filter((review) => review.reply_status === 'AUTO_REPLIED')
-  const visible = filter === 'needs-reply' ? needsReply : filter === 'auto-replied' ? autoReplied : reviews
+  const isReplied = (review: ReviewRow) => review.reply_status === 'SENT' || review.reply_status === 'AUTO_REPLIED'
+  const replied = reviews.filter(isReplied)
+  const unreplied = reviews.filter((review) => !isReplied(review))
+  const lowRated = reviews.filter((review) => review.rating <= 3)
+  const visible = filter === 'replied' ? replied
+    : filter === 'unreplied' ? unreplied
+      : filter === 'low' ? lowRated
+        : reviews
 
   return <section className={styles.enquirySection}>
     <div className={styles.reviewViewTabs} role="tablist" aria-label="Google reviews view">
-      <button role="tab" aria-selected={view === 'inbox'} className={view === 'inbox' ? styles.reviewViewActive : ''} onClick={() => setView('inbox')}><Inbox size={16} /> Reply inbox</button>
+      <button role="tab" aria-selected={view === 'branches'} className={view === 'branches' ? styles.reviewViewActive : ''} onClick={() => setView('branches')}><Store size={16} /> Branches</button>
+      <button role="tab" aria-selected={view === 'reviews'} className={view === 'reviews' ? styles.reviewViewActive : ''} onClick={() => setView('reviews')}><Star size={16} /> Reviews</button>
       <button role="tab" aria-selected={view === 'reports'} className={view === 'reports' ? styles.reviewViewActive : ''} onClick={() => setView('reports')}><BarChart3 size={16} /> Reports</button>
-    </div>
-
-    {view === 'reports' ? <GoogleReviewsReports /> : <>
-    <div className={styles.enquiryIntro}>
-      <div>
-        <p className={styles.kicker}>Google reviews</p>
-        <h2>Reply to customer reviews across all branches</h2>
-        <p>5-star reviews get an AI-drafted reply posted automatically — check &quot;Recent auto-replies&quot; to glance over them. 4 stars and below always wait for your approval before anything is posted.</p>
-      </div>
-      <div className={styles.enquirySummary}>
-        <button className={filter === 'needs-reply' ? styles.summaryActive : ''} onClick={() => setFilter('needs-reply')}><span><b>{needsReply.length}</b><small>Needs your reply</small></span></button>
-        <button className={filter === 'auto-replied' ? styles.summaryActive : ''} onClick={() => setFilter('auto-replied')}><span><b>{autoReplied.length}</b><small>Recent auto-replies</small></span></button>
-        <button className={filter === 'all' ? styles.summaryActive : ''} onClick={() => setFilter('all')}><span><b>{reviews.length}</b><small>All reviews</small></span></button>
-      </div>
     </div>
 
     {notice && <div className={styles.success}><CheckCircle2 size={18} /> {notice}</div>}
@@ -264,6 +222,21 @@ export default function GoogleReviewsPanel() {
       )}
     </div>
 
+    {view === 'branches' ? <BranchReviewBoard /> : view === 'reports' ? <GoogleReviewsReports /> : <>
+    <div className={styles.enquiryIntro}>
+      <div>
+        <p className={styles.kicker}>Google reviews</p>
+        <h2>Every review across all branches</h2>
+        <p>Read-only. Replies are written by your own reply bot on Google — this page mirrors them so you can see what has been answered, and never posts anything itself.</p>
+      </div>
+      <div className={styles.enquirySummary}>
+        <button className={filter === 'all' ? styles.summaryActive : ''} onClick={() => setFilter('all')}><span><b>{reviews.length}</b><small>All reviews</small></span></button>
+        <button className={filter === 'low' ? styles.summaryActive : ''} onClick={() => setFilter('low')}><span><b>{lowRated.length}</b><small>3 stars or below</small></span></button>
+        <button className={filter === 'replied' ? styles.summaryActive : ''} onClick={() => setFilter('replied')}><span><b>{replied.length}</b><small>Replied on Google</small></span></button>
+        <button className={filter === 'unreplied' ? styles.summaryActive : ''} onClick={() => setFilter('unreplied')}><span><b>{unreplied.length}</b><small>No reply yet</small></span></button>
+      </div>
+    </div>
+
     <div className={styles.reviewAlertBar}>
       <div>
         <strong>Email alerts</strong>
@@ -282,7 +255,7 @@ export default function GoogleReviewsPanel() {
       <div className={styles.enquiryList}>
         {visible.length === 0 && <div className={styles.empty}>Nothing here yet.{connected && '\nClick "Sync now" to pull the latest reviews.'}</div>}
         {visible.map((review) => (
-          <button key={review.id} className={selected?.id === review.id ? styles.enquiryItemActive : styles.enquiryItem} onClick={() => selectReview(review)}>
+          <button key={review.id} className={selected?.id === review.id ? styles.enquiryItemActive : styles.enquiryItem} onClick={() => setSelected(review)}>
             <span className={styles.enquiryItemIcon}><Star size={16} /></span>
             <span className={styles.enquiryItemText}>
               <small>{review.branch_name || 'HME'}</small>
@@ -297,38 +270,33 @@ export default function GoogleReviewsPanel() {
 
       <div className={styles.enquiryDetail}>
         {!selected ? (
-          <div className={styles.enquiryBlank}><Star size={40} /><h3>Select a review</h3><p>Choose one from the list to read it in full and reply.</p></div>
+          <div className={styles.enquiryBlank}><Star size={40} /><h3>Select a review</h3><p>Choose one from the list to read it in full.</p></div>
         ) : (
           <>
             <div className={styles.enquiryDetailHead}>
               <div><h2>{selected.reviewer_name}</h2><span>{selected.branch_name || 'HME'} · <Stars rating={selected.rating} /> · {formatDate(selected.review_created_at)}</span></div>
-              <em className={styles.reviewStatusBadge}>{selected.reply_status.replace('_', ' ')}</em>
+              <em className={styles.reviewStatusBadge}>{isReplied(selected) ? 'Replied' : 'No reply'}</em>
             </div>
 
             <p className={styles.reviewCommentText}>{selected.comment || <i>No written comment — star rating only.</i>}</p>
 
             {selected.rating === 5 && <label className={styles.switchLabel}>
               <input type="checkbox" checked={selected.featured_on_homepage === 1} onChange={(event) => toggleFeatured(selected, event.target.checked)} />
-              Show this review on the homepage
+              Allow this review to appear on the homepage
             </label>}
 
-            {(selected.reply_status === 'SENT' || selected.reply_status === 'AUTO_REPLIED') && (
+            {isReplied(selected) ? (
               <div className={styles.reviewPostedReply}>
-                <strong>{selected.reply_status === 'AUTO_REPLIED' ? 'AI auto-reply (already posted)' : `Reply sent by ${selected.replied_by_name}`}</strong>
+                <strong>Reply on Google</strong>
                 <p>{selected.reply_text}</p>
-                <small>Posted {formatDate(selected.reply_posted_at)} — you can edit and re-send below if needed.</small>
+                <small>Posted {formatDate(selected.reply_posted_at)}. To change it, edit the reply in Google Business Profile — this page only mirrors what is there.</small>
+              </div>
+            ) : (
+              <div className={styles.reviewPostedReply}>
+                <strong>No reply on Google yet</strong>
+                <small>Replies are posted by your own reply bot. This site does not write them.</small>
               </div>
             )}
-
-            <label className={styles.fullField}>
-              {selected.reply_status === 'NONE' ? 'Write a reply' : selected.reply_status === 'SUGGESTED' ? 'AI-suggested reply — edit if needed' : 'Edit reply'}
-              <textarea className={styles.replyTextarea} value={draftText} onChange={(event) => setDraftText(event.target.value)} maxLength={4000} />
-            </label>
-            <div className={styles.actions}>
-              <button className={styles.approveButton} onClick={sendReply} disabled={busy || !draftText.trim()}>
-                <Send size={16} /> {selected.reply_status === 'SUGGESTED' ? 'Send this reply' : selected.reply_status === 'NONE' ? 'Post reply' : 'Update reply'}
-              </button>
-            </div>
           </>
         )}
       </div>

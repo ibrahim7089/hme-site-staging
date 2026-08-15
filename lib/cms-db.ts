@@ -272,6 +272,21 @@ const schemaStatements = [
   )`,
   'CREATE INDEX IF NOT EXISTS idx_website_requests_queue ON website_requests(status, updated_at DESC)',
   'CREATE INDEX IF NOT EXISTS idx_website_request_events_item ON website_request_events(request_id, created_at DESC)',
+  // One cached AI summary per branch. Keyed by location rather than branch name
+  // because Google's listing titles change and the location id does not.
+  `CREATE TABLE IF NOT EXISTS branch_review_summaries (
+    location_name TEXT PRIMARY KEY,
+    branch_name TEXT NOT NULL DEFAULT '',
+    summary TEXT NOT NULL DEFAULT '',
+    praise TEXT NOT NULL DEFAULT '[]' CHECK(json_valid(praise)),
+    issues TEXT NOT NULL DEFAULT '[]' CHECK(json_valid(issues)),
+    sentiment TEXT NOT NULL DEFAULT '',
+    -- Review count when this was written, so it can be refreshed once new ones land.
+    reviews_at_generation INTEGER NOT NULL DEFAULT 0,
+    generated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`,
+  'CREATE INDEX IF NOT EXISTS idx_google_reviews_branch ON google_reviews(location_name, review_created_at DESC)',
+  'CREATE INDEX IF NOT EXISTS idx_google_reviews_homepage ON google_reviews(rating, featured_on_homepage, review_created_at DESC)',
   `CREATE TABLE IF NOT EXISTS google_sync_progress (
     id INTEGER PRIMARY KEY CHECK(id = 1),
     location_cursor TEXT NOT NULL DEFAULT '',

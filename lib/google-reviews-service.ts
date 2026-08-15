@@ -1,18 +1,16 @@
 import 'server-only'
 
 import { ensureCmsSchema } from './cms-db'
-import type { CmsUser } from './cms-auth'
 import {
   listAllAccounts,
   listAllLocations,
   listAllReviews,
-  postReviewReply,
   starRatingToNumber,
   toV4LocationPath,
   type GoogleReview,
 } from './google-business'
-import { classifyComplaint, draftReviewReply } from './ai-reply'
 import { sendReviewAlert, type ReviewAlertReview } from './review-alerts'
+import { summariseBranchReviews } from './review-summary'
 
 export type StoredReview = {
   id: number
@@ -28,7 +26,6 @@ export type StoredReview = {
   review_created_at: string
   review_updated_at: string
   reply_status: 'NONE' | 'SUGGESTED' | 'AUTO_REPLIED' | 'SENT'
-  ai_draft: string
   reply_text: string
   reply_posted_at: string | null
   replied_by_name: string
@@ -40,9 +37,6 @@ export type SyncSummary = {
   locationsTotal: number
   reviewsSeen: number
   newReviews: number
-  autoReplied: number
-  suggested: number
-  pendingDrafts: number
   /** False when the run hit its time budget and must be called again to continue. */
   done: boolean
   errors: string[]
@@ -51,46 +45,35 @@ export type SyncSummary = {
 // Vercel caps this function at 60s (maxDuration). Stop well short so there is
 // room to persist progress and return a response.
 const SYNC_BUDGET_MS = 45_000
-// Drafts run a few at a time: enough to get through a 5k-review backlog at a
-// reasonable pace, but far below Google's 300-updates-per-minute ceiling.
-const DRAFT_CONCURRENCY = 4
-// Star-only reviews skip the model and post almost instantly, so without a cap
-// one invocation could otherwise burn through the per-minute write quota.
-const MAX_POSTS_PER_RUN = 120
-// Gemini's free tier allows 20 generate_content calls per minute. A run lasts
-// ~45s, and a sub-5-star review costs two calls (reply + complaint theme), so
-// this stays under the ceiling instead of collecting 429s. Reviews with no
-// written comment never reach the model and are not counted here.
-const MAX_MODEL_CALLS_PER_RUN = 14
 
 async function upsertReview(db: Awaited<ReturnType<typeof ensureCmsSchema>>, params: {
   review: GoogleReview
   accountName: string
   locationName: string
   branchName: string
-  autoReplyCutoff: string
+  backlogCutoff: string
 }) {
-  const { review, accountName, locationName, branchName, autoReplyCutoff } = params
+  const { review, accountName, locationName, branchName, backlogCutoff } = params
   const rating = starRatingToNumber[review.starRating] || 0
-  // Reviews predating the connection are historical: they are stored so the
-  // reporting covers the full history, but never drafted or auto-answered.
-  // Mass-replying to years of old reviews would be spam, not service.
-  const isBacklog = Boolean(autoReplyCutoff && review.createTime < autoReplyCutoff)
+  // Reviews predating the connection are historical. They are stored so the
+  // reporting covers the full history, but they are not treated as news and
+  // never trigger an alert.
+  const isBacklog = Boolean(backlogCutoff && review.createTime < backlogCutoff)
   const existing = await db.execute({
     sql: 'SELECT id, reply_status FROM google_reviews WHERE google_review_id = ? LIMIT 1',
     args: [review.reviewId],
   })
   const existingRow = existing.rows[0] as Record<string, unknown> | undefined
 
-  // A reply already on Google — written by staff in the Google interface, or
-  // by an earlier run — is authoritative. Posting uses PUT, which replaces
-  // whatever is there, so these must be recorded as already answered and left
-  // alone; drafting over them would silently destroy a real person's reply.
+  // Replies are written elsewhere — by staff in the Google interface, or by the
+  // owner's own reply bot. This site never writes them; it mirrors whatever is
+  // on Google so the dashboard can show which reviews have been answered.
   const googleReply = review.reviewReply?.comment?.trim() || ''
 
   if (existingRow) {
-    const currentStatus = String(existingRow.reply_status || 'NONE')
-    const adoptGoogleReply = googleReply && (currentStatus === 'NONE' || currentStatus === 'SUGGESTED')
+    // Always mirror what is on Google: if the reply bot rewrites a reply, or a
+    // reply is added later, the dashboard should reflect the current text.
+    const adoptGoogleReply = Boolean(googleReply)
     await db.execute({
       sql: `UPDATE google_reviews SET
         reviewer_name = ?, reviewer_photo_url = ?, rating = ?, comment = ?,
@@ -110,8 +93,8 @@ async function upsertReview(db: Awaited<ReturnType<typeof ensureCmsSchema>>, par
     return {
       id: Number(existingRow.id),
       isNew: false,
+      isBacklog,
       rating,
-      replyStatus: adoptGoogleReply ? 'SENT' : currentStatus,
     }
   }
 
@@ -138,8 +121,8 @@ async function upsertReview(db: Awaited<ReturnType<typeof ensureCmsSchema>>, par
   return {
     id: Number(result.lastInsertRowid),
     isNew: true,
+    isBacklog,
     rating,
-    replyStatus: googleReply ? 'SENT' : 'NONE',
   }
 }
 
@@ -160,30 +143,29 @@ async function writeLocationCursor(db: SyncDb, cursor: string) {
 }
 
 /**
- * Pulls reviews for every location on every connected account, then drafts and
- * (for 5-star) posts replies.
+ * Pulls reviews for every location on every connected account into the local
+ * database. This is read-only against Google: it never writes a reply. Replies
+ * are handled outside this site, and mirroring them here is only so the
+ * dashboard can show which reviews have been answered.
  *
- * The work does not fit in one function invocation — the account has ~41
- * locations and each AI draft costs seconds — so this is split into a fast
- * scan pass and a slow drafting pass, both bounded by SYNC_BUDGET_MS and both
- * resumable. Scanning records a location cursor so the next call continues
- * from the branch after the last completed one instead of restarting at the
- * first; drafting simply picks up whatever is still NONE. Callers should keep
- * invoking until `done` is true.
+ * ~41 locations do not fit in one function invocation, so the scan is bounded
+ * by SYNC_BUDGET_MS and resumable: it records a location cursor and the next
+ * call continues from the branch after the last completed one. Callers should
+ * keep invoking until `done` is true.
  */
 export async function syncGoogleReviews(): Promise<SyncSummary> {
   const db = await ensureCmsSchema()
   const deadline = Date.now() + SYNC_BUDGET_MS
   const summary: SyncSummary = {
     locationsScanned: 0, locationsTotal: 0, reviewsSeen: 0, newReviews: 0,
-    autoReplied: 0, suggested: 0, pendingDrafts: 0, done: false, errors: [],
+    done: false, errors: [],
   }
 
-  // Only reviews left after the account was connected are answered. Everything
-  // older is kept for reporting but never replied to.
+  // Reviews older than the connection are historical: kept for reporting, but
+  // not announced as new arrivals.
   const connected = await db.execute('SELECT connected_at FROM google_oauth_tokens WHERE id = 1 LIMIT 1')
   const connectedAt = String((connected.rows[0] as Record<string, unknown>)?.connected_at || '')
-  const autoReplyCutoff = connectedAt ? `${connectedAt.replace(' ', 'T')}Z` : ''
+  const backlogCutoff = connectedAt ? `${connectedAt.replace(' ', 'T')}Z` : ''
 
   const targets: Array<{ accountName: string; locationName: string; branchName: string }> = []
   for (const account of await listAllAccounts()) {
@@ -205,6 +187,8 @@ export async function syncGoogleReviews(): Promise<SyncSummary> {
   const resumeAt = cursor ? targets.findIndex((target) => target.locationName === cursor) + 1 : 0
   let index = Math.max(0, resumeAt)
 
+  const alerts: ReviewAlertReview[] = []
+
   for (; index < targets.length; index++) {
     if (Date.now() > deadline) break
     const target = targets[index]
@@ -213,8 +197,19 @@ export async function syncGoogleReviews(): Promise<SyncSummary> {
       summary.locationsScanned += 1
       for (const review of reviews) {
         summary.reviewsSeen += 1
-        const { isNew } = await upsertReview(db, { review, ...target, autoReplyCutoff })
-        if (isNew) summary.newReviews += 1
+        const { isNew, isBacklog, rating } = await upsertReview(db, { review, ...target, backlogCutoff })
+        if (!isNew) continue
+        summary.newReviews += 1
+        // Alert on genuinely new arrivals only. The historical backlog is not
+        // news, and mailing thousands of old reviews would bury what matters.
+        if (!isBacklog) {
+          alerts.push({
+            branchName: target.branchName,
+            reviewerName: review.reviewer?.displayName || 'A Google user',
+            rating,
+            comment: review.comment || '',
+          })
+        }
       }
     } catch (error) {
       summary.errors.push(`Reviews for ${target.branchName}: ${error instanceof Error ? error.message : 'failed'}`)
@@ -225,152 +220,9 @@ export async function syncGoogleReviews(): Promise<SyncSummary> {
   const scanComplete = index >= targets.length
   if (scanComplete) await writeLocationCursor(db, '')
 
-  // Drafting is the expensive half, so it runs on whatever time is left and
-  // leaves anything it cannot reach at NONE for the next invocation. Reviews
-  // are taken in small parallel batches because there are thousands to work
-  // through and each model call costs seconds; `backlog ASC` keeps newly
-  // arrived reviews ahead of the historical ones.
-  let postsThisRun = 0
-  let modelCallsThisRun = 0
-  let deferred = 0
-  const alerts: ReviewAlertReview[] = []
-  // Star-only reviews cost no model calls, so they keep flowing after the
-  // model budget is spent; anything needing text is left for the next run.
-  const skipIds: number[] = []
-  while (Date.now() < deadline && postsThisRun < MAX_POSTS_PER_RUN) {
-    const exclusion = skipIds.length ? `AND id NOT IN (${skipIds.join(',')})` : ''
-    // Once the model budget is spent, only star-only reviews are eligible —
-    // they are answered from the template by design and cost no model calls.
-    const budgetSpent = modelCallsThisRun >= MAX_MODEL_CALLS_PER_RUN
-    const textFilter = budgetSpent ? "AND trim(comment) = ''" : ''
-    const batch = await db.execute({
-      sql: `SELECT id, google_review_id, account_name, location_name, branch_name,
-        reviewer_name, rating, comment, backlog
-        FROM google_reviews WHERE reply_status = 'NONE' ${exclusion} ${textFilter}
-        ORDER BY backlog ASC, review_created_at DESC LIMIT ?`,
-      args: [DRAFT_CONCURRENCY],
-    })
-    if (batch.rows.length === 0) break
-
-    for (const raw of batch.rows) {
-      const row = raw as unknown as Record<string, unknown>
-      if (String(row.comment || '').trim()) {
-        // reply draft, plus a complaint classification for sub-5-star reviews
-        modelCallsThisRun += Number(row.rating) < 5 ? 2 : 1
-      }
-    }
-
-    const outcomes = await Promise.all(batch.rows.map(async (raw) => {
-      const row = raw as unknown as Record<string, unknown>
-      const rating = Number(row.rating)
-      const rowId = Number(row.id)
-      const forReply = {
-        branchName: String(row.branch_name || ''),
-        reviewerName: String(row.reviewer_name || ''),
-        rating,
-        comment: String(row.comment || ''),
-      }
-      // Only sub-5-star reviews carry a complaint worth categorising, and the
-      // classification rides along with the draft so there is no separate pass.
-      const [draft, theme] = await Promise.all([
-        draftReviewReply(forReply),
-        rating < 5 ? classifyComplaint(forReply) : Promise.resolve(''),
-      ])
-      // The model was unavailable (almost always the per-minute cap). Leave the
-      // review untouched so a later run can write it a proper reply, rather
-      // than posting a generic template to someone who wrote real feedback.
-      if (draft === null) return 'deferred' as const
-      if (theme) {
-        await db.execute({
-          sql: 'UPDATE google_reviews SET complaint_theme = ? WHERE id = ?',
-          args: [theme, rowId],
-        })
-      }
-
-      if (rating === 5) {
-        try {
-          await postReviewReply(
-            toV4LocationPath(String(row.account_name), String(row.location_name)),
-            String(row.google_review_id),
-            draft,
-          )
-          await db.execute({
-            sql: `UPDATE google_reviews SET
-              reply_status = 'AUTO_REPLIED', ai_draft = ?, reply_text = ?,
-              reply_posted_at = datetime('now'), replied_by_name = 'AI auto-reply',
-              updated_at = datetime('now')
-              WHERE id = ?`,
-            args: [draft, draft, rowId],
-          })
-          return 'auto' as const
-        } catch (error) {
-          summary.errors.push(`Auto-reply failed for ${row.branch_name}: ${error instanceof Error ? error.message : 'failed'}`)
-        }
-      }
-
-      await db.execute({
-        sql: `UPDATE google_reviews SET reply_status = 'SUGGESTED', ai_draft = ?, updated_at = datetime('now') WHERE id = ?`,
-        args: [draft, rowId],
-      })
-      return 'suggested' as const
-    }))
-
-    for (const [position, outcome] of outcomes.entries()) {
-      const row = batch.rows[position] as unknown as Record<string, unknown>
-      if (outcome === 'auto') summary.autoReplied += 1
-      else if (outcome === 'suggested') summary.suggested += 1
-      else {
-        // Left untouched for a later run — don't pick it up again this run.
-        deferred += 1
-        skipIds.push(Number(row.id))
-        continue
-      }
-      if (Number(row.backlog) !== 1) {
-        alerts.push({
-          branchName: String(row.branch_name || ''),
-          reviewerName: String(row.reviewer_name || ''),
-          rating: Number(row.rating),
-          comment: String(row.comment || ''),
-          autoReplied: outcome === 'auto',
-        })
-      }
-    }
-    postsThisRun += outcomes.length
-  }
-
-  if (deferred > 0) {
-    summary.errors.push(`${deferred} repl${deferred === 1 ? 'y' : 'ies'} deferred — the AI limit was reached. Run the sync again shortly to finish them.`)
-  }
-
-  // Alert on genuinely new arrivals only. The historical backlog is not news,
-  // and mailing thousands of old reviews would bury the ones that matter.
   if (alerts.length > 0) await sendReviewAlert(alerts)
-
-  const pending = await db.execute("SELECT COUNT(*) AS total FROM google_reviews WHERE reply_status = 'NONE'")
-  summary.pendingDrafts = Number((pending.rows[0] as Record<string, unknown>)?.total || 0)
-  summary.done = scanComplete && summary.pendingDrafts === 0
+  summary.done = scanComplete
   return summary
-}
-
-export async function sendReviewReply(reviewRowId: number, finalText: string, user: CmsUser) {
-  const db = await ensureCmsSchema()
-  const result = await db.execute({
-    sql: 'SELECT * FROM google_reviews WHERE id = ? LIMIT 1',
-    args: [reviewRowId],
-  })
-  const row = result.rows[0] as Record<string, unknown> | undefined
-  if (!row) throw new Error('Review not found')
-
-  const v4Path = toV4LocationPath(String(row.account_name), String(row.location_name))
-  await postReviewReply(v4Path, String(row.google_review_id), finalText)
-
-  await db.execute({
-    sql: `UPDATE google_reviews SET
-      reply_status = 'SENT', reply_text = ?, reply_posted_at = datetime('now'),
-      replied_by_user_id = ?, replied_by_name = ?, updated_at = datetime('now')
-      WHERE id = ?`,
-    args: [finalText, user.id, user.name, reviewRowId],
-  })
 }
 
 export async function listGoogleReviews(filter: { replyStatus?: string; rating?: number } = {}) {
@@ -474,6 +326,144 @@ export async function getReviewReports(): Promise<ReviewReports> {
   }
 }
 
+export type BranchStanding = {
+  locationName: string
+  branchName: string
+  reviews: number
+  averageRating: number
+  stars: { 1: number; 2: number; 3: number; 4: number; 5: number }
+  replied: number
+  latestReviewAt: string
+  summary: string
+  praise: string[]
+  issues: string[]
+  sentiment: string
+  summaryGeneratedAt: string
+  /** True when reviews have arrived since the summary was written. */
+  summaryStale: boolean
+}
+
+const REPLIED = "reply_status IN ('SENT','AUTO_REPLIED')"
+
+/**
+ * Every branch that has reviews, best-rated first. Ties break on review count,
+ * so a 5.0 from 80 people outranks a 5.0 from two.
+ */
+export async function getBranchStandings(): Promise<BranchStanding[]> {
+  const db = await ensureCmsSchema()
+  const rows = (await db.execute(`SELECT
+    r.location_name,
+    MAX(r.branch_name) AS branch_name,
+    COUNT(*) AS reviews,
+    AVG(r.rating) AS average_rating,
+    SUM(CASE WHEN r.rating = 1 THEN 1 ELSE 0 END) AS s1,
+    SUM(CASE WHEN r.rating = 2 THEN 1 ELSE 0 END) AS s2,
+    SUM(CASE WHEN r.rating = 3 THEN 1 ELSE 0 END) AS s3,
+    SUM(CASE WHEN r.rating = 4 THEN 1 ELSE 0 END) AS s4,
+    SUM(CASE WHEN r.rating = 5 THEN 1 ELSE 0 END) AS s5,
+    SUM(CASE WHEN ${REPLIED} THEN 1 ELSE 0 END) AS replied,
+    MAX(r.review_created_at) AS latest_review_at,
+    MAX(s.summary) AS summary,
+    MAX(s.praise) AS praise,
+    MAX(s.issues) AS issues,
+    MAX(s.sentiment) AS sentiment,
+    MAX(s.generated_at) AS generated_at,
+    MAX(s.reviews_at_generation) AS reviews_at_generation
+    FROM google_reviews r
+    LEFT JOIN branch_review_summaries s ON s.location_name = r.location_name
+    GROUP BY r.location_name
+    ORDER BY average_rating DESC, reviews DESC`)).rows
+
+  const parseList = (value: unknown) => {
+    try {
+      const parsed = JSON.parse(String(value || '[]'))
+      return Array.isArray(parsed) ? parsed.map(String) : []
+    } catch { return [] }
+  }
+
+  return rows.map((row) => {
+    const reviews = Number(row.reviews || 0)
+    return {
+      locationName: String(row.location_name || ''),
+      branchName: String(row.branch_name || 'Unknown branch'),
+      reviews,
+      averageRating: Number(row.average_rating || 0),
+      stars: {
+        1: Number(row.s1 || 0), 2: Number(row.s2 || 0), 3: Number(row.s3 || 0),
+        4: Number(row.s4 || 0), 5: Number(row.s5 || 0),
+      },
+      replied: Number(row.replied || 0),
+      latestReviewAt: String(row.latest_review_at || ''),
+      summary: String(row.summary || ''),
+      praise: parseList(row.praise),
+      issues: parseList(row.issues),
+      sentiment: String(row.sentiment || ''),
+      summaryGeneratedAt: String(row.generated_at || ''),
+      summaryStale: Boolean(row.generated_at) && Number(row.reviews_at_generation || 0) < reviews,
+    }
+  })
+}
+
+// Gemini's free tier allows 20 generate_content calls per minute and one
+// summary is one call, so a run stays well under the ceiling and the rest are
+// picked up next time.
+const MAX_SUMMARIES_PER_RUN = 12
+
+/**
+ * Writes AI summaries for branches that have none, or whose reviews have moved
+ * on since the last one. Branches whose model call fails are left with their
+ * previous summary intact rather than being blanked.
+ */
+export async function generateBranchSummaries(options: { force?: boolean } = {}) {
+  const db = await ensureCmsSchema()
+  const standings = await getBranchStandings()
+  const stale = standings.filter((branch) => (
+    options.force || !branch.summary || branch.summaryStale
+  )).slice(0, MAX_SUMMARIES_PER_RUN)
+
+  let written = 0
+  let deferred = 0
+  for (const branch of stale) {
+    const reviewRows = (await db.execute({
+      sql: `SELECT rating, comment, review_created_at FROM google_reviews
+        WHERE location_name = ? ORDER BY review_created_at DESC LIMIT 200`,
+      args: [branch.locationName],
+    })).rows
+
+    const summary = await summariseBranchReviews({
+      branchName: branch.branchName,
+      averageRating: branch.averageRating,
+      reviews: reviewRows.map((row) => ({
+        rating: Number(row.rating || 0),
+        comment: String(row.comment || ''),
+        createdAt: String(row.review_created_at || ''),
+      })),
+    })
+    if (!summary) { deferred += 1; continue }
+
+    await db.execute({
+      sql: `INSERT INTO branch_review_summaries
+        (location_name, branch_name, summary, praise, issues, sentiment, reviews_at_generation, generated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
+        ON CONFLICT(location_name) DO UPDATE SET
+          branch_name = excluded.branch_name, summary = excluded.summary,
+          praise = excluded.praise, issues = excluded.issues,
+          sentiment = excluded.sentiment,
+          reviews_at_generation = excluded.reviews_at_generation,
+          generated_at = excluded.generated_at`,
+      args: [
+        branch.locationName, branch.branchName, summary.summary,
+        JSON.stringify(summary.praise), JSON.stringify(summary.issues),
+        summary.sentiment, branch.reviews,
+      ],
+    })
+    written += 1
+  }
+
+  const remaining = standings.filter((branch) => !branch.summary || branch.summaryStale).length
+  return { written, deferred, remaining: Math.max(0, remaining - written) }
+}
+
 export async function setReviewFeatured(reviewRowId: number, featured: boolean) {
   const db = await ensureCmsSchema()
   await db.execute({
@@ -482,13 +472,33 @@ export async function setReviewFeatured(reviewRowId: number, featured: boolean) 
   })
 }
 
-export async function listFiveStarReviewsForHomepage(limit = 9) {
+export type HomepageReview = {
+  reviewer_name: string
+  reviewer_photo_url: string
+  comment: string
+  branch_name: string
+  review_created_at: string
+}
+
+// How many of the newest 5-star reviews are eligible to appear. The section
+// shows a slice of this pool and the slice moves over time, so a visitor
+// coming back does not see the same quotes — but everything shown is still
+// recent, rather than dredging up something from years ago.
+const HOMEPAGE_POOL_SIZE = 60
+// How often the selection moves on.
+const ROTATION_MINUTES = 30
+
+/**
+ * The latest 5-star reviews, spread across branches and rotated over time.
+ *
+ * Ordering purely by recency lets whichever branch is busiest fill the whole
+ * section, so each branch's reviews are ranked separately and every branch's
+ * newest is taken first. The starting point then advances on a clock so the
+ * quotes keep changing between visits instead of showing the same few.
+ */
+export async function listFiveStarReviewsForHomepage(limit = 9): Promise<HomepageReview[]> {
   try {
     const db = await ensureCmsSchema()
-    // Ordering purely by recency lets whichever branch is busiest fill the
-    // whole section. Ranking each branch's reviews separately and taking every
-    // branch's newest first spreads the selection across the network, then
-    // backfills with each branch's next-newest only if there is space left.
     const result = await db.execute({
       sql: `SELECT reviewer_name, reviewer_photo_url, comment, branch_name, review_created_at
         FROM (
@@ -499,15 +509,16 @@ export async function listFiveStarReviewsForHomepage(limit = 9) {
         )
         ORDER BY branch_rank ASC, review_created_at DESC
         LIMIT ?`,
-      args: [limit],
+      args: [HOMEPAGE_POOL_SIZE],
     })
-    return result.rows as unknown as Array<{
-      reviewer_name: string
-      reviewer_photo_url: string
-      comment: string
-      branch_name: string
-      review_created_at: string
-    }>
+    const pool = result.rows as unknown as HomepageReview[]
+    if (pool.length <= limit) return pool
+
+    // Rotate through the pool a slice at a time. Stepping by `limit` means
+    // consecutive rotations share no reviews at all until the pool wraps.
+    const tick = Math.floor(Date.now() / (ROTATION_MINUTES * 60_000))
+    const start = (tick * limit) % pool.length
+    return Array.from({ length: limit }, (_, offset) => pool[(start + offset) % pool.length])
   } catch {
     // CMS not configured, or table not ready yet — homepage should degrade
     // gracefully rather than break.

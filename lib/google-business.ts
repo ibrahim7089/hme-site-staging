@@ -222,16 +222,6 @@ export async function listAllReviews(v4LocationPath: string) {
   return reviews
 }
 
-export async function postReviewReply(v4LocationPath: string, reviewId: string, comment: string) {
-  const token = await getAccessToken()
-  const response = await fetch(`${REVIEWS_API}/${v4LocationPath}/reviews/${reviewId}/reply`, {
-    method: 'PUT',
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ comment }),
-  })
-  const data = await response.json().catch(() => ({}))
-  if (!response.ok) {
-    throw new GoogleBusinessError(data?.error?.message || `Failed to post reply (${response.status})`)
-  }
-  return data
-}
+// There is deliberately no reply-posting function here. Replies to Google
+// reviews are written by the owner's own reply bot; this site is read-only
+// against the review API so the two can never contradict each other.

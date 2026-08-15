@@ -12,7 +12,6 @@ export type ReviewAlertReview = {
   reviewerName: string
   rating: number
   comment: string
-  autoReplied: boolean
 }
 
 function escapeHtml(value: string) {
@@ -71,14 +70,16 @@ export async function sendReviewAlert(reviews: ReviewAlertReview[]) {
   const recipients = await getReviewAlertEmails()
   if (recipients.length === 0) return
 
-  const needingReply = reviews.filter((review) => !review.autoReplied)
-  const subject = needingReply.length > 0
-    ? `${needingReply.length} Google review${needingReply.length === 1 ? '' : 's'} need${needingReply.length === 1 ? 's' : ''} your reply`
+  // Replies are handled outside this site, so the alert flags what deserves a
+  // look rather than what is waiting to be answered.
+  const lowRated = reviews.filter((review) => review.rating <= 3)
+  const subject = lowRated.length > 0
+    ? `${lowRated.length} Google review${lowRated.length === 1 ? '' : 's'} rated 3 stars or below`
     : `${reviews.length} new Google review${reviews.length === 1 ? '' : 's'}`
 
   const line = (review: ReviewAlertReview) => {
     const stars = `${review.rating}/5`
-    const status = review.autoReplied ? 'auto-replied' : 'awaiting your reply'
+    const status = review.rating <= 3 ? 'needs attention' : 'positive'
     const comment = review.comment.trim() ? review.comment.trim().slice(0, 220) : '(no written comment)'
     return { stars, status, comment, branch: review.branchName || 'HME', name: review.reviewerName || 'A Google user' }
   }
@@ -90,7 +91,7 @@ export async function sendReviewAlert(reviews: ReviewAlertReview[]) {
       const parts = line(review)
       return `${parts.stars} - ${parts.branch} - ${parts.name} (${parts.status})\n${parts.comment}\n`
     }),
-    'Open the admin panel to reply: https://hme-site-staging.vercel.app/admin?section=reviews',
+    'View the reviews dashboard: https://hme-site-staging.vercel.app/admin?section=reviews',
   ].join('\n')
 
   const html = `<div style="font-family:system-ui,sans-serif;color:#0f1722;line-height:1.6">
@@ -103,7 +104,7 @@ ${reviews.map((review) => {
 <p style="margin:8px 0 0;font-size:13px">${escapeHtml(parts.comment)}</p>
 </div>`
 }).join('')}
-<p style="font-size:13px"><a href="https://hme-site-staging.vercel.app/admin?section=reviews">Open the admin panel to reply</a></p>
+<p style="font-size:13px"><a href="https://hme-site-staging.vercel.app/admin?section=reviews">View the reviews dashboard</a></p>
 </div>`
 
   for (const to of recipients) {
