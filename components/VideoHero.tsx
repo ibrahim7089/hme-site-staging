@@ -9,7 +9,7 @@ import {
   ShieldCheck,
   UsersRound,
 } from "lucide-react";
-import heroPerson from "@/public/images/hero-person-v5.webp";
+import heroPerson from "@/public/images/hero-person-v6.webp";
 import { getPublishedPageContent } from "@/lib/cms";
 import HeroSlideshow from "@/components/HeroSlideshow";
 
@@ -51,7 +51,7 @@ export default async function VideoHero() {
   const hero = managed?.hero;
   const title = hero?.title || "Money moves. Trust stays";
   const lead = hero?.lead || "Exchange foreign currency and send money overseas through HME's nationwide network of 50+ locations.";
-  const usesDefaultPerson = !hero?.image || ["/images/hero-person-v4.webp", "/images/hero-person-v5.webp"].includes(hero.image);
+  const usesDefaultPerson = !hero?.image || ["/images/hero-person-v4.webp", "/images/hero-person-v5.webp", "/images/hero-person-v6.webp"].includes(hero.image);
   const heroImage = usesDefaultPerson ? heroPerson : hero.image;
   const heroAlt = usesDefaultPerson
     ? "HME representative holding foreign currency notes"
@@ -60,7 +60,7 @@ export default async function VideoHero() {
   const hasSlides = heroSlides.length > 0;
 
   return (
-    <section className="hero-stage relative isolate min-h-[800px] overflow-hidden bg-navy-deep text-white sm:min-h-[820px] md:min-h-[max(700px,100svh)] xl:min-h-[max(720px,100svh)]">
+    <section className={`hero-stage relative isolate overflow-hidden bg-navy-deep text-white ${hasSlides ? "min-h-[870px] sm:min-h-[900px]" : "min-h-[800px] sm:min-h-[820px]"} md:min-h-[max(700px,100svh)] xl:min-h-[max(720px,100svh)]`}>
       <div className="hero-grid absolute inset-0 opacity-35" aria-hidden="true" />
       <div className="hero-premium-glow absolute inset-0" aria-hidden="true" />
       <div className="hero-wave hero-wave-back" aria-hidden="true" />
@@ -100,12 +100,12 @@ export default async function VideoHero() {
         sizes="(max-width: 767px) 88vw, (max-width: 1279px) 43vw, 39vw"
         className={`hero-person-static absolute bottom-0 z-[4] w-auto max-w-none object-contain object-bottom ${
           hasSlides
-            ? "left-1/2 h-[46%] -translate-x-1/2 sm:h-[50%] md:left-auto md:right-[-8%] md:h-[78%] md:translate-x-0 lg:right-[-5%] lg:h-[84%] xl:right-[-2%] xl:h-[88%] 2xl:right-0"
+            ? "left-1/2 h-[44%] -translate-x-1/2 sm:h-[47%] md:left-auto md:right-[-11%] md:h-[78%] md:translate-x-0 lg:right-[-8%] lg:h-[84%] xl:right-[-5%] xl:h-[88%] 2xl:right-[-3%]"
             : "right-[-18%] h-[48%] sm:right-[-2%] sm:h-[51%] md:right-[-2%] md:h-[84%] lg:right-[2%] lg:h-[89%] xl:right-[6%] xl:h-[92%]"
         }`}
       />
 
-      <div className={`${hasSlides ? "relative z-10 flex w-full px-4 sm:px-6 md:px-0" : "wrap relative z-10 flex"} min-h-[800px] items-start pt-[126px] sm:min-h-[820px] md:min-h-[max(700px,100svh)] md:items-center md:pt-[96px] xl:min-h-[max(720px,100svh)] ${hasSlides ? "pb-[390px] sm:pb-[420px] md:pb-[120px]" : "pb-[400px] sm:pb-[420px] md:pb-[148px]"}`}>
+      <div className={`${hasSlides ? "relative z-10 flex min-h-[870px] w-full px-4 sm:min-h-[900px] sm:px-6 md:px-0" : "wrap relative z-10 flex min-h-[800px] sm:min-h-[820px]"} items-start pt-[126px] md:min-h-[max(700px,100svh)] md:items-center md:pt-[96px] xl:min-h-[max(720px,100svh)] ${hasSlides ? "pb-[390px] sm:pb-[420px] md:pb-[120px]" : "pb-[400px] sm:pb-[420px] md:pb-[148px]"}`}>
         {hasSlides ? (
           <div className="w-full md:ml-[2.5vw] md:w-[59vw] lg:w-[61vw] xl:w-[62vw]">
             <HeroSlideshow slides={heroSlides} />

@@ -6,6 +6,7 @@ import ReachUsBand from "@/components/ReachUsBand";
 import BranchLocatorPreview from "@/components/BranchLocatorPreview";
 import GoogleReviewsShowcase from "@/components/GoogleReviewsShowcase";
 import FAQSection from "@/components/FAQSection";
+import NationwideCoverage from "@/components/NationwideCoverage";
 
 export const metadata: Metadata = {
   title: "HME | Currency Exchange & International Money Transfer Malaysia",
@@ -23,6 +24,7 @@ export default function HomePage() {
       <VideoHero />
       <HMEStory />
       <ServiceCards />
+      <NationwideCoverage />
       <BranchLocatorPreview limit={3} />
       <GoogleReviewsShowcase />
       <FAQSection limit={4} />
