@@ -484,7 +484,12 @@ export type HomepageReview = {
 // shows a slice of this pool and the slice moves over time, so a visitor
 // coming back does not see the same quotes — but everything shown is still
 // recent, rather than dredging up something from years ago.
-const HOMEPAGE_POOL_SIZE = 60
+//
+// Sized against the network: ~40 branches contribute their newest reviews
+// first, so 240 is roughly each branch's six most recent. At nine on screen
+// that is a ~13 hour cycle before anything repeats, which is long enough that
+// a visitor returning the same day sees different quotes.
+const HOMEPAGE_POOL_SIZE = 240
 // How often the selection moves on.
 const ROTATION_MINUTES = 30
 
