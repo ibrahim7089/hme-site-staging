@@ -1,6 +1,10 @@
 import 'server-only'
 
-const GEMINI_MODEL = 'gemini-flash-latest'
+// Pinned deliberately rather than using the "latest" alias. That alias moved to
+// a reasoning model whose free tier allows only 20 requests per DAY, which will
+// not summarise 40 branches. This one answers in ~1.5s on a generous free
+// quota, and summarising reviews does not need a reasoning model.
+const GEMINI_MODEL = 'gemini-3.5-flash-lite'
 const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`
 
 export type BranchSummary = {
@@ -91,10 +95,9 @@ Rules:
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        // gemini-flash-latest resolves to a reasoning model that spends output
-        // tokens thinking before it emits anything. The budget must clear that
-        // with headroom or the JSON comes back truncated and unparseable.
-        generationConfig: { temperature: 0.3, maxOutputTokens: 3000, responseMimeType: 'application/json' },
+        // A summary runs to roughly 200 tokens; the headroom is there so a
+        // wordy answer still finishes cleanly rather than being cut mid-JSON.
+        generationConfig: { temperature: 0.3, maxOutputTokens: 1200, responseMimeType: 'application/json' },
       }),
     })
     if (!response.ok) return null
