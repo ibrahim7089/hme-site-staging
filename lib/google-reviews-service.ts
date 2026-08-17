@@ -46,24 +46,24 @@ export type SyncSummary = {
 // room to persist progress and return a response.
 const SYNC_BUDGET_MS = 45_000
 
+/** What is already stored for a review, keyed by Google's review id. */
+type KnownReview = { id: number; updatedAt: string; replyText: string }
+
 async function upsertReview(db: Awaited<ReturnType<typeof ensureCmsSchema>>, params: {
   review: GoogleReview
   accountName: string
   locationName: string
   branchName: string
   backlogCutoff: string
+  known: Map<string, KnownReview>
 }) {
-  const { review, accountName, locationName, branchName, backlogCutoff } = params
+  const { review, accountName, locationName, branchName, backlogCutoff, known } = params
   const rating = starRatingToNumber[review.starRating] || 0
   // Reviews predating the connection are historical. They are stored so the
   // reporting covers the full history, but they are not treated as news and
   // never trigger an alert.
   const isBacklog = Boolean(backlogCutoff && review.createTime < backlogCutoff)
-  const existing = await db.execute({
-    sql: 'SELECT id, reply_status FROM google_reviews WHERE google_review_id = ? LIMIT 1',
-    args: [review.reviewId],
-  })
-  const existingRow = existing.rows[0] as Record<string, unknown> | undefined
+  const existingRow = known.get(review.reviewId)
 
   // Replies are written elsewhere — by staff in the Google interface, or by the
   // owner's own reply bot. This site never writes them; it mirrors whatever is
@@ -71,6 +71,14 @@ async function upsertReview(db: Awaited<ReturnType<typeof ensureCmsSchema>>, par
   const googleReply = review.reviewReply?.comment?.trim() || ''
 
   if (existingRow) {
+    // Almost every row is unchanged on any given run — there are thousands of
+    // reviews and only a handful move. Writing each one back regardless was
+    // enough on its own to exhaust the sync's time budget against a database
+    // in another region, so untouched rows are skipped.
+    const unchanged = existingRow.updatedAt === review.updateTime
+      && existingRow.replyText === googleReply
+    if (unchanged) return { id: existingRow.id, isNew: false, isBacklog, rating }
+
     // Always mirror what is on Google: if the reply bot rewrites a reply, or a
     // reply is added later, the dashboard should reflect the current text.
     const adoptGoogleReply = Boolean(googleReply)
@@ -87,15 +95,10 @@ async function upsertReview(db: Awaited<ReturnType<typeof ensureCmsSchema>>, par
         review.comment || '',
         review.updateTime,
         ...(adoptGoogleReply ? [googleReply, review.reviewReply?.updateTime || ''] : []),
-        Number(existingRow.id),
+        existingRow.id,
       ],
     })
-    return {
-      id: Number(existingRow.id),
-      isNew: false,
-      isBacklog,
-      rating,
-    }
+    return { id: existingRow.id, isNew: false, isBacklog, rating }
   }
 
   const result = await db.execute({
@@ -195,9 +198,22 @@ export async function syncGoogleReviews(): Promise<SyncSummary> {
     try {
       const reviews = await listAllReviews(toV4LocationPath(target.accountName, target.locationName))
       summary.locationsScanned += 1
+
+      // One read for the whole branch instead of one per review. The busiest
+      // branches carry ~900 reviews each, so this is the difference between a
+      // single query and nine hundred round trips.
+      const knownRows = await db.execute({
+        sql: 'SELECT id, google_review_id, review_updated_at, reply_text FROM google_reviews WHERE location_name = ?',
+        args: [target.locationName],
+      })
+      const known = new Map<string, KnownReview>(knownRows.rows.map((row) => [
+        String(row.google_review_id),
+        { id: Number(row.id), updatedAt: String(row.review_updated_at || ''), replyText: String(row.reply_text || '') },
+      ]))
+
       for (const review of reviews) {
         summary.reviewsSeen += 1
-        const { isNew, isBacklog, rating } = await upsertReview(db, { review, ...target, backlogCutoff })
+        const { isNew, isBacklog, rating } = await upsertReview(db, { review, ...target, backlogCutoff, known })
         if (!isNew) continue
         summary.newReviews += 1
         // Alert on genuinely new arrivals only. The historical backlog is not
